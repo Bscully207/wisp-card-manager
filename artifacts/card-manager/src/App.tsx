@@ -30,7 +30,7 @@ function WrappedPage({ children }: { children: React.ReactNode }) {
   return <Layout>{children}</Layout>;
 }
 
-function TelegramBackButtonHandler() {
+function AppRouter() {
   const [location] = useLocation();
   const { isTelegram, webApp } = useTelegram();
 
@@ -54,15 +54,8 @@ function TelegramBackButtonHandler() {
     };
   }, [location, isTelegram, webApp, handleBack]);
 
-  return null;
-}
-
-function AppRouter() {
-  useTelegram();
-
   return (
     <>
-      <TelegramBackButtonHandler />
       <Switch>
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />

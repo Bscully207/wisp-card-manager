@@ -31,7 +31,7 @@ export function ResponsiveDialog({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[96dvh] rounded-t-2xl px-4 pb-8 safe-area-bottom">
+        <DrawerContent className="h-[100dvh] max-h-[100dvh] rounded-none px-4 pb-8 safe-area-bottom">
           <DrawerHeader className="text-left px-0">
             <DrawerTitle className="font-display text-2xl">{title}</DrawerTitle>
             {description && <DrawerDescription>{description}</DrawerDescription>}

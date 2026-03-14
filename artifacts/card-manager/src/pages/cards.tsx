@@ -143,7 +143,7 @@ export default function Cards() {
                   card={card} 
                   onClick={() => setLocation(`/cards/${card.id}`)}
                 />
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <Button
                     size="sm"
                     variant="secondary"
