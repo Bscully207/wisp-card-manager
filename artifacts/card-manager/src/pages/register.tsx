@@ -5,7 +5,7 @@ import * as z from "zod";
 import { useRegister, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Wallet, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -68,11 +68,9 @@ export default function Register() {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md space-y-5 md:space-y-6"
         >
-          <div className="flex items-center gap-3 mb-6 md:mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-700 flex items-center justify-center shadow-lg shadow-primary/25">
-              <Wallet className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-display font-bold text-2xl tracking-tight">Nexus<span className="text-primary">Pay</span></span>
+          <div className="flex justify-center mb-6 md:mb-8">
+            <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-white_1773484134261.png`} alt="Wisp" className="h-14 dark:block hidden" />
+            <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-black_1773484130598.png`} alt="Wisp" className="h-14 dark:hidden block" />
           </div>
 
           <div>

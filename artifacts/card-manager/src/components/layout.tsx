@@ -6,8 +6,7 @@ import {
   ReceiptText, 
   User as UserIcon, 
   LifeBuoy, 
-  LogOut,
-  Wallet
+  LogOut
 } from "lucide-react";
 import { 
   SidebarProvider, 
@@ -75,11 +74,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="hidden md:block">
           <Sidebar className="border-r border-border/50 bg-card/30 backdrop-blur-xl">
             <SidebarHeader className="h-16 flex items-center px-6 border-b border-border/50">
-              <Link href="/dashboard" className="flex items-center gap-3 font-display font-bold text-xl tracking-tight text-white hover:opacity-80 transition-opacity">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-700 flex items-center justify-center shadow-lg shadow-primary/20">
-                  <Wallet className="w-4 h-4 text-white" />
-                </div>
-                Nexus<span className="text-primary">Pay</span>
+              <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity">
+                <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-white_1773484134261.png`} alt="Wisp" className="h-8 dark:block hidden" />
+                <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-black_1773484130598.png`} alt="Wisp" className="h-8 dark:hidden block" />
               </Link>
             </SidebarHeader>
             <SidebarContent className="px-4 py-6">
@@ -136,11 +133,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex flex-col flex-1 w-full min-w-0">
           <header className="flex h-14 md:h-16 shrink-0 items-center gap-4 px-4 md:px-6 border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
             <div className="md:hidden flex items-center gap-2">
-              <Link href="/dashboard" className="flex items-center gap-2 font-display font-bold text-lg tracking-tight text-white">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-blue-700 flex items-center justify-center shadow-lg shadow-primary/20">
-                  <Wallet className="w-3.5 h-3.5 text-white" />
-                </div>
-                Nexus<span className="text-primary">Pay</span>
+              <Link href="/dashboard" className="flex items-center">
+                <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-white_1773484134261.png`} alt="Wisp" className="h-7 dark:block hidden" />
+                <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-black_1773484130598.png`} alt="Wisp" className="h-7 dark:hidden block" />
               </Link>
             </div>
             <div className="hidden md:flex items-center">
