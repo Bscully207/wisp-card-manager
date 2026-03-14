@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "./components/theme-provider";
 import NotFound from "@/pages/not-found";
-import { Layout } from "@/components/layout";
+import { Layout, ROOT_PATHS } from "@/components/layout";
 import { useTelegram } from "@/hooks/use-telegram";
 
 import Login from "@/pages/login";
@@ -42,7 +42,8 @@ function AppRouter() {
   useEffect(() => {
     if (!isTelegram || !webApp) return;
 
-    const isRootPage = location === "/dashboard" || location === "/login" || location === "/register";
+    const AUTH_PAGES = ["/login", "/register"];
+    const isRootPage = ROOT_PATHS.includes(location) || AUTH_PAGES.includes(location);
     if (isRootPage) {
       webApp.BackButton.hide();
     } else {

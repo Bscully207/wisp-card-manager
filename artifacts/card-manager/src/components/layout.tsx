@@ -47,7 +47,7 @@ const navItems = [
   { title: "Transactions", url: "/transactions", icon: ReceiptText },
 ];
 
-const ROOT_PATHS = ["/dashboard", "/cards", "/transactions"];
+export const ROOT_PATHS = ["/dashboard", "/cards", "/transactions"];
 
 function ThemeCycleButton() {
   const { theme, setTheme } = useTheme();
