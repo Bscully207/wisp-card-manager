@@ -103,7 +103,7 @@ export default function Dashboard() {
           onClick={() => setLocation("/cards")}
           className="rounded-full shadow-md h-10 px-6 text-sm font-semibold w-full sm:w-auto mt-3"
         >
-          <Plus className="w-4 h-4 mr-1.5" /> Create Card
+          <Plus className="w-4 h-4 mr-1.5" /> Create a Card
         </Button>
       </motion.div>
 
