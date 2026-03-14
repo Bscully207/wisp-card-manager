@@ -245,7 +245,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
         >
           <div
-            className="flex items-center justify-center gap-3 px-3 bg-white dark:bg-[#1c1c1e] shadow-[0_4px_20px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] w-[340px]"
+            className="flex items-center justify-center gap-3 px-3 bg-white dark:bg-[#1c1c1e] shadow-[0_4px_20px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] w-[calc(100vw-24px)] max-w-[340px]"
             style={{ height: 56, borderRadius: 9999 }}
           >
             {navItems.map((item) => {
