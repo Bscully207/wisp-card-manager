@@ -61,24 +61,24 @@ function OrDivider() {
 function SocialLoginButtons() {
   return (
     <div className="grid grid-cols-2 gap-3">
-      <Button
+      <button
         type="button"
-        variant="outline"
-        className="h-12 rounded-xl bg-muted/40 border-border hover:bg-muted/70 transition-colors"
         onClick={() => {}}
+        className="inline-flex items-center justify-center gap-2 h-[44px] rounded-[12px] border-0 bg-[#F6F8FA] dark:bg-[#151520] text-[#5F6276] dark:text-[#9CA3AF] font-normal text-sm cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary/50 hover:bg-[#dddfe1] dark:hover:bg-[#1f1f30]"
+        style={{ transition: "background-color 0.15s cubic-bezier(0.4,0,0.2,1)" }}
       >
-        <GoogleIcon className="w-5 h-5 mr-2" />
-        <span className="font-medium">Google</span>
-      </Button>
-      <Button
+        <GoogleIcon className="w-[15px] h-[15px]" />
+        Google
+      </button>
+      <button
         type="button"
-        variant="outline"
-        className="h-12 rounded-xl bg-muted/40 border-border hover:bg-muted/70 transition-colors"
         onClick={() => {}}
+        className="inline-flex items-center justify-center gap-2 h-[44px] rounded-[12px] border-0 bg-[#F6F8FA] dark:bg-[#151520] text-[#5F6276] dark:text-[#9CA3AF] font-normal text-sm cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary/50 hover:bg-[#dddfe1] dark:hover:bg-[#1f1f30]"
+        style={{ transition: "background-color 0.15s cubic-bezier(0.4,0,0.2,1)" }}
       >
-        <TelegramIcon className="w-5 h-5 mr-2" />
-        <span className="font-medium">Telegram</span>
-      </Button>
+        <TelegramIcon className="w-[15px] h-[15px]" />
+        Telegram
+      </button>
     </div>
   );
 }
@@ -89,24 +89,25 @@ function PillSwitcher({ activeTab, onTabChange }: { activeTab: AuthTab; onTabCha
       <button
         type="button"
         onClick={() => onTabChange("login")}
-        className="relative z-10 flex-1 py-2.5 text-sm font-semibold text-foreground transition-colors cursor-pointer"
+        className={`relative z-10 flex-1 py-2.5 text-sm font-semibold transition-colors cursor-pointer ${activeTab === "login" ? "text-foreground" : "text-muted-foreground"}`}
       >
         Login
       </button>
       <button
         type="button"
         onClick={() => onTabChange("register")}
-        className="relative z-10 flex-1 py-2.5 text-sm font-semibold text-foreground transition-colors cursor-pointer"
+        className={`relative z-10 flex-1 py-2.5 text-sm font-semibold transition-colors cursor-pointer ${activeTab === "register" ? "text-foreground" : "text-muted-foreground"}`}
       >
         Register
       </button>
       <motion.div
         layout
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
-        className="absolute top-1 bottom-1 rounded-full bg-background shadow-sm"
+        className="absolute top-1 bottom-1 rounded-full bg-background"
         style={{
           width: "calc(50% - 4px)",
           left: activeTab === "login" ? 4 : "50%",
+          boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
         }}
       />
     </div>
@@ -279,7 +280,7 @@ function RegisterForm() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 md:space-y-5">
           <FormField
             control={form.control}
             name="email"
@@ -336,7 +337,7 @@ function RegisterForm() {
 
           <Button
             type="submit"
-            className="w-full h-12 mt-2 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 rounded-xl"
+            className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 rounded-xl"
             disabled={registerMutation.isPending}
           >
             {registerMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create account"}
@@ -392,7 +393,7 @@ export default function AuthPage({ initialTab = "login" }: { initialTab?: AuthTa
     <div className="min-h-screen w-full flex bg-background text-foreground">
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 md:p-12 relative z-10">
         <div className="w-full max-w-md space-y-6 md:space-y-8">
-          <div className="flex justify-center mb-2">
+          <div className="flex justify-center mb-6">
             <img
               src={`${import.meta.env.BASE_URL}images/wisp-logo-design-white_1773484134261.png`}
               alt="Wisp"
