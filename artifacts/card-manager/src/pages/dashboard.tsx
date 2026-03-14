@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useGetCards, useGetAllTransactions, useFreezeCard, useTopUpCard, getGetCardsQueryKey, getGetCardQueryKey } from "@workspace/api-client-react";
+import { useGetCards, useGetAllTransactions, useFreezeCard, useTopUpCard, getGetCardsQueryKey, getGetCardQueryKey, getGetAllTransactionsQueryKey } from "@workspace/api-client-react";
 import { CreditCard } from "@/components/credit-card";
 import { formatCurrency, cn, getCurrencySymbol } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -51,6 +51,7 @@ export default function Dashboard() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getGetCardsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetAllTransactionsQueryKey() });
         if (topUpCardId) queryClient.invalidateQueries({ queryKey: getGetCardQueryKey(topUpCardId) });
         toast({ title: "Top-up successful!" });
         setTopUpOpen(false);
@@ -174,6 +175,7 @@ export default function Dashboard() {
                         variant="ghost"
                         className="rounded-xl text-xs h-8 px-2"
                         onClick={() => setLocation(`/cards/${card.id}`)}
+                        title="See Transactions"
                       >
                         <ReceiptText className="w-3 h-3" />
                       </Button>
