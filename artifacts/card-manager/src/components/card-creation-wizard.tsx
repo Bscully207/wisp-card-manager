@@ -123,24 +123,24 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
     <ResponsiveDialog
       open={open}
       onOpenChange={handleOpenChange}
-      title={step < 4 ? "Create New Card" : ""}
-      description={step < 4 ? `Step ${step + 1} of 4` : undefined}
+      title={step < 4 ? "Create New Card" : step === 4 ? "Card Created" : ""}
+      description={step <= 4 ? `Step ${step + 1} of 5` : undefined}
       className="sm:max-w-lg bg-card border-border/50 shadow-2xl"
     >
       <div className="space-y-6">
-        {step < 4 && (
+        {step < 5 && (
           <div className="flex items-center justify-center gap-2">
-            {STEPS.slice(0, 4).map((s, i) => (
+            {STEPS.map((s, i) => (
               <div key={s} className="flex items-center gap-2">
                 <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all",
+                  "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all",
                   i < step ? "bg-primary text-primary-foreground" :
                   i === step ? "bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-background" :
                   "bg-muted text-muted-foreground"
                 )}>
-                  {i < step ? <Check className="w-4 h-4" /> : i + 1}
+                  {i < step ? <Check className="w-3.5 h-3.5" /> : i + 1}
                 </div>
-                {i < 3 && <div className={cn("w-6 h-0.5", i < step ? "bg-primary" : "bg-muted")} />}
+                {i < 4 && <div className={cn("w-4 h-0.5", i < step ? "bg-primary" : "bg-muted")} />}
               </div>
             ))}
           </div>
