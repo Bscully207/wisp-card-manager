@@ -144,15 +144,6 @@
   padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* Telegram theme color overrides (applied when running as Mini App) */
-:root {
-  --tg-bg-color: initial;
-  --tg-text-color: initial;
-  --tg-hint-color: initial;
-  --tg-button-color: initial;
-  --tg-secondary-bg-color: initial;
-}
-
 /* Touch-friendly tap targets */
 @media (max-width: 767px) {
   button, a, [role="button"] {

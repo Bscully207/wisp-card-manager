@@ -42,8 +42,94 @@ declare global {
         viewportHeight: number;
         viewportStableHeight: number;
         platform: string;
+        onEvent: (event: string, cb: () => void) => void;
+        offEvent: (event: string, cb: () => void) => void;
       };
     };
+  }
+}
+
+function hexToHSL(hex: string): string | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return null;
+  let r = parseInt(result[1], 16) / 255;
+  let g = parseInt(result[2], 16) / 255;
+  let b = parseInt(result[3], 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
+
+function applyTelegramTheme(tp: NonNullable<NonNullable<Window["Telegram"]>["WebApp"]>["themeParams"]) {
+  const root = document.documentElement;
+
+  if (tp.bg_color) {
+    const hsl = hexToHSL(tp.bg_color);
+    if (hsl) {
+      root.style.setProperty("--background", hsl);
+      root.style.setProperty("--sidebar", hsl);
+    }
+  }
+  if (tp.text_color) {
+    const hsl = hexToHSL(tp.text_color);
+    if (hsl) {
+      root.style.setProperty("--foreground", hsl);
+      root.style.setProperty("--card-foreground", hsl);
+      root.style.setProperty("--sidebar-foreground", hsl);
+    }
+  }
+  if (tp.hint_color) {
+    const hsl = hexToHSL(tp.hint_color);
+    if (hsl) {
+      root.style.setProperty("--muted-foreground", hsl);
+    }
+  }
+  if (tp.button_color) {
+    const hsl = hexToHSL(tp.button_color);
+    if (hsl) {
+      root.style.setProperty("--primary", hsl);
+      root.style.setProperty("--ring", hsl);
+      root.style.setProperty("--sidebar-primary", hsl);
+      root.style.setProperty("--sidebar-ring", hsl);
+    }
+  }
+  if (tp.button_text_color) {
+    const hsl = hexToHSL(tp.button_text_color);
+    if (hsl) {
+      root.style.setProperty("--primary-foreground", hsl);
+      root.style.setProperty("--sidebar-primary-foreground", hsl);
+    }
+  }
+  if (tp.secondary_bg_color) {
+    const hsl = hexToHSL(tp.secondary_bg_color);
+    if (hsl) {
+      root.style.setProperty("--card", hsl);
+      root.style.setProperty("--popover", hsl);
+      root.style.setProperty("--secondary", hsl);
+      root.style.setProperty("--muted", hsl);
+    }
+  }
+  if (tp.destructive_text_color) {
+    const hsl = hexToHSL(tp.destructive_text_color);
+    if (hsl) {
+      root.style.setProperty("--destructive", hsl);
+    }
+  }
+  if (tp.link_color) {
+    const hsl = hexToHSL(tp.link_color);
+    if (hsl) {
+      root.style.setProperty("--accent", hsl);
+    }
   }
 }
 
@@ -57,13 +143,16 @@ export function useTelegram() {
       webApp.expand();
       setIsReady(true);
 
-      const root = document.documentElement;
-      const tp = webApp.themeParams;
-      if (tp.bg_color) root.style.setProperty("--tg-bg-color", tp.bg_color);
-      if (tp.text_color) root.style.setProperty("--tg-text-color", tp.text_color);
-      if (tp.hint_color) root.style.setProperty("--tg-hint-color", tp.hint_color);
-      if (tp.button_color) root.style.setProperty("--tg-button-color", tp.button_color);
-      if (tp.secondary_bg_color) root.style.setProperty("--tg-secondary-bg-color", tp.secondary_bg_color);
+      applyTelegramTheme(webApp.themeParams);
+
+      const handleThemeChanged = () => {
+        applyTelegramTheme(webApp.themeParams);
+      };
+      webApp.onEvent("themeChanged", handleThemeChanged);
+
+      return () => {
+        webApp.offEvent("themeChanged", handleThemeChanged);
+      };
     }
   }, []);
 
@@ -73,20 +162,4 @@ export function useTelegram() {
     isTelegram: !!webApp,
     platform: webApp?.platform || "unknown",
   };
-}
-
-export function useTelegramBackButton(onBack: () => void) {
-  const webApp = window.Telegram?.WebApp;
-
-  useEffect(() => {
-    if (!webApp) return;
-
-    webApp.BackButton.show();
-    webApp.BackButton.onClick(onBack);
-
-    return () => {
-      webApp.BackButton.offClick(onBack);
-      webApp.BackButton.hide();
-    };
-  }, [onBack]);
 }
