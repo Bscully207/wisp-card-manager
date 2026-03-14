@@ -204,6 +204,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </Link>
             </div>
             <div className="flex-1" />
+            <div className="hidden md:flex items-center gap-2">
+              <button className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors">
+                <Bell className="w-[18px] h-[18px]" />
+              </button>
+            </div>
             <div className="md:hidden flex items-center gap-1.5">
               <button className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors">
                 <Bell className="w-[18px] h-[18px]" />

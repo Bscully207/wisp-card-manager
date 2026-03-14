@@ -96,17 +96,15 @@ export default function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
       >
         <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-medium">Total balance</p>
-        <div className="flex items-end justify-between gap-4 mt-1">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold tracking-tight amount">
-            {formatCurrency(totalBalance, "EUR")}
-          </h2>
-          <Button
-            onClick={() => setLocation("/cards")}
-            className="rounded-full shadow-md h-10 px-5 text-sm font-semibold shrink-0"
-          >
-            <Plus className="w-4 h-4 mr-1.5" /> Create Card
-          </Button>
-        </div>
+        <h2 className="text-4xl sm:text-5xl font-display font-bold tracking-tight amount mt-1">
+          {formatCurrency(totalBalance, "EUR")}
+        </h2>
+        <Button
+          onClick={() => setLocation("/cards")}
+          className="rounded-full shadow-md h-10 px-6 text-sm font-semibold w-full sm:w-auto mt-3"
+        >
+          <Plus className="w-4 h-4 mr-1.5" /> Create Card
+        </Button>
       </motion.div>
 
       {cards.length > 0 ? (
