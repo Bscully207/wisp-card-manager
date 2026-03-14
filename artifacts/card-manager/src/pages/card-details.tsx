@@ -132,6 +132,8 @@ export default function CardDetails() {
             key={tab.key}
             onClick={() => {
               if (tab.key === "topup") {
+                setShowCustomTopUp(false);
+                form.reset({ amount: 0, description: "Card Top Up" });
                 setTopUpOpen(true);
               } else {
                 setActiveTab(tab.key);
