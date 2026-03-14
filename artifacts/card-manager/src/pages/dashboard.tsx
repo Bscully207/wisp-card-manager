@@ -1,14 +1,28 @@
-import { useGetCards, useGetAllTransactions, useFreezeCard, getGetCardsQueryKey } from "@workspace/api-client-react";
+import { useState } from "react";
+import { useGetCards, useGetAllTransactions, useFreezeCard, useTopUpCard, getGetCardsQueryKey, getGetCardQueryKey } from "@workspace/api-client-react";
 import { CreditCard } from "@/components/credit-card";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency, cn, getCurrencySymbol } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ArrowUpRight, ArrowDownRight, Activity, Plus, CreditCard as CardIcon, PlusCircle, Snowflake, ShieldAlert, ReceiptText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { format } from "date-fns";
+
+const topUpSchema = z.object({
+  amount: z.coerce.number().min(0.01, "Amount must be at least 0.01"),
+  description: z.string().optional(),
+});
+
+const PRESET_AMOUNTS = [10, 25, 50, 100, 250];
 
 export default function Dashboard() {
   const [_, setLocation] = useLocation();
@@ -16,6 +30,13 @@ export default function Dashboard() {
   const { data: transactions = [], isLoading: txLoading } = useGetAllTransactions();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [topUpCardId, setTopUpCardId] = useState<number | null>(null);
+  const [topUpOpen, setTopUpOpen] = useState(false);
+
+  const topUpForm = useForm<z.infer<typeof topUpSchema>>({
+    resolver: zodResolver(topUpSchema),
+    defaultValues: { amount: 0, description: "Card Top Up" },
+  });
 
   const freezeMutation = useFreezeCard({
     mutation: {
@@ -26,6 +47,33 @@ export default function Dashboard() {
     }
   });
 
+  const topUpMutation = useTopUpCard({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetCardsQueryKey() });
+        if (topUpCardId) queryClient.invalidateQueries({ queryKey: getGetCardQueryKey(topUpCardId) });
+        toast({ title: "Top-up successful!" });
+        setTopUpOpen(false);
+        setTopUpCardId(null);
+        topUpForm.reset();
+      },
+      onError: (err: any) => {
+        toast({ title: "Top-up failed", description: err.message, variant: "destructive" });
+      }
+    }
+  });
+
+  const handleTopUp = (cardId: number) => {
+    setTopUpCardId(cardId);
+    topUpForm.reset({ amount: 0, description: "Card Top Up" });
+    setTopUpOpen(true);
+  };
+
+  const handlePresetTopUp = (amount: number) => {
+    topUpForm.setValue("amount", amount);
+  };
+
+  const selectedCard = cards.find(c => c.id === topUpCardId);
   const totalBalance = cards.reduce((sum, card) => sum + card.balance, 0);
   const recentTransactions = transactions.slice(0, 5);
 
@@ -101,7 +149,7 @@ export default function Dashboard() {
                         variant="secondary"
                         className="flex-1 rounded-xl text-xs h-8"
                         disabled={isFrozen}
-                        onClick={() => setLocation(`/cards/${card.id}`)}
+                        onClick={() => handleTopUp(card.id)}
                       >
                         <PlusCircle className="w-3 h-3 mr-1" /> Top Up
                       </Button>
@@ -191,6 +239,56 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </motion.div>
+
+      <Dialog open={topUpOpen} onOpenChange={(o) => { setTopUpOpen(o); if (!o) setTopUpCardId(null); }}>
+        <DialogContent className="sm:max-w-md bg-card border-border/50 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Top Up Card</DialogTitle>
+            <DialogDescription>
+              Add funds to {selectedCard?.label || 'your card'}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-5 gap-2 pt-2">
+            {PRESET_AMOUNTS.map((amt) => (
+              <Button
+                key={amt}
+                type="button"
+                variant={topUpForm.watch("amount") === amt ? "default" : "outline"}
+                size="sm"
+                className="rounded-xl text-sm font-semibold"
+                onClick={() => handlePresetTopUp(amt)}
+              >
+                {getCurrencySymbol(selectedCard?.currency)}{amt}
+              </Button>
+            ))}
+          </div>
+          <Form {...topUpForm}>
+            <form
+              onSubmit={topUpForm.handleSubmit((v) => {
+                if (topUpCardId) topUpMutation.mutate({ cardId: topUpCardId, data: v });
+              })}
+              className="space-y-4"
+            >
+              <FormField
+                control={topUpForm.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Custom Amount ({selectedCard?.currency || "EUR"})</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" className="bg-black/20 text-lg" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full rounded-xl" disabled={topUpMutation.isPending}>
+                {topUpMutation.isPending ? "Processing..." : "Confirm Top Up"}
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

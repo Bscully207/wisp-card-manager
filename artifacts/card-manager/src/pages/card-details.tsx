@@ -100,7 +100,9 @@ export default function CardDetails() {
   }
 
   const isFrozen = card.status === "frozen";
-  const lastTopUp = transactions.find(tx => tx.type === "topup");
+  const lastTopUp = transactions
+    .filter(tx => tx.type === "topup")
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
   return (
     <div className="space-y-8">
