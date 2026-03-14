@@ -16,6 +16,7 @@ import CardDetails from "@/pages/card-details";
 import Transactions from "@/pages/transactions";
 import Profile from "@/pages/profile";
 import Support from "@/pages/support";
+import SettingsPage from "@/pages/settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +66,7 @@ function AppRouter() {
         <Route path="/transactions">{() => <WrappedPage><Transactions /></WrappedPage>}</Route>
         <Route path="/profile">{() => <WrappedPage><Profile /></WrappedPage>}</Route>
         <Route path="/support">{() => <WrappedPage><Support /></WrappedPage>}</Route>
+        <Route path="/settings">{() => <WrappedPage><SettingsPage /></WrappedPage>}</Route>
         <Redirect to="/login" />
       </Switch>
     </>
