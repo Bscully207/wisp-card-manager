@@ -402,7 +402,7 @@ function BrandPanel() {
 
       <div className="relative z-10 max-w-md text-center space-y-8">
         <blockquote className="space-y-4">
-          <p className="font-display text-2xl md:text-[1.65rem] leading-relaxed font-medium text-foreground/90">
+          <p className="font-display text-xl md:text-2xl leading-relaxed font-medium text-foreground/90 text-balance">
             "In a world where privacy keeps disappearing, we chose to build for it."
           </p>
         </blockquote>
