@@ -197,7 +197,7 @@ export default function CardDetails() {
               </div>
 
               <InfoRow label="Brand" value="VISA" />
-              <InfoRow label="Card Number" value={`**** **** **** ${card.cardNumber.slice(-4)}`} mono />
+              <InfoRow label="Card Number" value={<span className="amount">{`**** **** **** ${card.cardNumber.slice(-4)}`}</span>} mono />
               <InfoRow label="Expiry Date" value={`${card.expiryMonth.toString().padStart(2, '0')}/${card.expiryYear.toString().slice(-2)}`} mono />
               <InfoRow label="Currency" value={card.currency} />
               <InfoRow 
@@ -230,14 +230,14 @@ export default function CardDetails() {
 
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Financial Details</h4>
-              <InfoRow label="Available Balance" value={`${formatCurrency(card.balance, card.currency)}`} bold />
+              <InfoRow label="Available Balance" value={<span className="amount">{formatCurrency(card.balance, card.currency)}</span>} bold />
               
               <div className="space-y-2 pl-1">
                 <p className="text-sm font-medium">Card Fees</p>
                 <div className="pl-3 space-y-1.5">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Card Issuance Fee</span>
-                    <span>25 $</span>
+                    <span className="amount">25 $</span>
                   </div>
                   <p className="text-xs text-muted-foreground pl-2">Includes platform fee of 1 $</p>
                   <div className="flex items-center justify-between text-sm">
@@ -365,7 +365,7 @@ export default function CardDetails() {
                       </div>
                     </div>
                     <div className="text-right shrink-0 ml-2">
-                      <div className={cn("font-bold text-base md:text-xl font-display", isPositive ? "text-emerald-400" : "text-foreground")}>
+                      <div className={cn("font-bold text-base md:text-xl font-display amount", isPositive ? "text-emerald-400" : "text-foreground")}>
                         {isPositive ? "+" : "-"}{formatCurrency(tx.amount, card.currency)}
                       </div>
                       <span className={cn(

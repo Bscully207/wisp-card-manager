@@ -116,7 +116,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl md:text-5xl font-display font-bold text-foreground mt-2">
+              <div className="text-3xl md:text-5xl font-display font-bold text-foreground mt-2 amount">
                 {formatCurrency(totalBalance, "EUR")}
               </div>
               <div className="mt-4 md:mt-6 flex gap-3">
@@ -226,7 +226,7 @@ export default function Dashboard() {
                           <p className="text-[10px] md:text-xs text-muted-foreground">{format(new Date(tx.createdAt), "MMM d, yyyy")}</p>
                         </div>
                       </div>
-                      <div className={cn("font-bold text-sm md:text-base shrink-0 ml-2", isPositive ? "text-emerald-400" : "text-foreground")}>
+                      <div className={cn("font-bold text-sm md:text-base shrink-0 ml-2 amount", isPositive ? "text-emerald-400" : "text-foreground")}>
                         {isPositive ? "+" : "-"}{formatCurrency(tx.amount)}
                       </div>
                     </div>

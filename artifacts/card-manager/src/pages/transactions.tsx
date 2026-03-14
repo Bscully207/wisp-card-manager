@@ -62,7 +62,7 @@ export default function Transactions() {
                   </div>
                 </div>
                 <div className="text-right shrink-0 ml-2">
-                  <div className={cn("font-bold text-sm", isPositive ? "text-emerald-400" : "text-foreground")}>
+                  <div className={cn("font-bold text-sm amount", isPositive ? "text-emerald-400" : "text-foreground")}>
                     {isPositive ? "+" : "-"}{formatCurrency(tx.amount, card?.currency)}
                   </div>
                   <span className={cn(
@@ -116,7 +116,7 @@ export default function Transactions() {
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="text-sm font-medium">{card?.label || "Card"}</span>
-                          <span className="text-xs text-muted-foreground font-mono">{card ? formatCardNumber(card.cardNumber) : "Unknown"}</span>
+                          <span className="text-xs text-muted-foreground font-mono amount">{card ? formatCardNumber(card.cardNumber) : "Unknown"}</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
@@ -131,7 +131,7 @@ export default function Transactions() {
                           {tx.status}
                         </span>
                       </TableCell>
-                      <TableCell className={cn("text-right font-bold font-display text-base", isPositive ? "text-emerald-400" : "text-foreground")}>
+                      <TableCell className={cn("text-right font-bold font-display text-base amount", isPositive ? "text-emerald-400" : "text-foreground")}>
                         {isPositive ? "+" : "-"}{formatCurrency(tx.amount, card?.currency)}
                       </TableCell>
                     </TableRow>

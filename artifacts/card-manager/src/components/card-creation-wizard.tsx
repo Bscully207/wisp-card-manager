@@ -375,7 +375,6 @@ function getCurrencyInfo(currency: string) {
 
 function StepPayment({ data, isPending }: { data: WizardData; isPending: boolean }) {
   const c = getCurrencyInfo(data.currency);
-
   return (
     <div className="space-y-4">
       <h3 className="font-display text-lg font-semibold">Payment Summary</h3>
@@ -397,15 +396,15 @@ function StepPayment({ data, isPending }: { data: WizardData; isPending: boolean
         <div className="border-t border-border/50 pt-3 space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Card Issuance Fee</span>
-            <span>{c.symbol}{c.issuance}</span>
+            <span className="amount">{c.symbol}{c.issuance}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Platform Fee</span>
-            <span>{c.symbol}{c.platform}</span>
+            <span className="amount">{c.symbol}{c.platform}</span>
           </div>
           <div className="flex items-center justify-between text-base font-bold pt-2 border-t border-border/50">
             <span>Total</span>
-            <span>{c.symbol}{c.total}</span>
+            <span className="amount">{c.symbol}{c.total}</span>
           </div>
         </div>
       </div>
@@ -449,7 +448,7 @@ function StepSuccess({ card, onViewCard }: { card: Card | null; onViewCard: () =
           <p className="text-white/70 text-xs uppercase tracking-wider mb-1">{card.label || "Debit Card"}</p>
           <p className="font-display text-lg font-bold">{card.currency} Account</p>
           <p className="font-mono text-sm mt-3 tracking-widest text-white/80">
-            •••• •••• •••• {card.cardNumber.slice(-4)}
+            <span className="amount">•••• •••• •••• {card.cardNumber.slice(-4)}</span>
           </p>
           <p className="text-xs text-white/60 mt-2">{card.cardholderName}</p>
         </div>
