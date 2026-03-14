@@ -320,12 +320,6 @@ function BrandPanel() {
 
 export default function AuthPage({ initialTab = "login" }: { initialTab?: AuthTab }) {
   const [activeTab, setActiveTab] = useState<AuthTab>(initialTab);
-  const [_, setLocation] = useLocation();
-
-  const handleTabChange = (tab: AuthTab) => {
-    setActiveTab(tab);
-    setLocation(tab === "login" ? "/login" : "/register", { replace: true });
-  };
 
   return (
     <div className="min-h-screen w-full flex bg-background text-foreground">
@@ -344,7 +338,7 @@ export default function AuthPage({ initialTab = "login" }: { initialTab?: AuthTa
             />
           </div>
 
-          <PillSwitcher activeTab={activeTab} onTabChange={handleTabChange} />
+          <PillSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
 
           <AnimatePresence mode="wait">
             <motion.div
