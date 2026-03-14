@@ -25,6 +25,10 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
 type AuthTab = "login" | "register";
@@ -245,10 +249,11 @@ function RegisterForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", confirmPassword: "" },
   });
 
   const registerMutation = useRegister({
@@ -268,7 +273,7 @@ function RegisterForm() {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof registerSchema>) => {
+  const onSubmit = ({ confirmPassword: _, ...values }: z.infer<typeof registerSchema>) => {
     registerMutation.mutate({ data: values });
   };
 
@@ -326,6 +331,41 @@ function RegisterForm() {
                         aria-label={showPassword ? "Hide password" : "Show password"}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
+                      </InputGroupButton>
+                    </InputGroupAddon>
+                  </InputGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <InputGroup className="h-12 rounded-xl border-border bg-muted/50 focus-within:border-primary/50 transition-colors">
+                    <InputGroupAddon align="inline-start">
+                      <KeyRound className="w-4 h-4 text-muted-foreground" />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="h-12 placeholder:text-muted-foreground/60"
+                      autoComplete="new-password"
+                      {...field}
+                    />
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupButton
+                        size="icon-sm"
+                        variant="ghost"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
                       </InputGroupButton>
                     </InputGroupAddon>
                   </InputGroup>
