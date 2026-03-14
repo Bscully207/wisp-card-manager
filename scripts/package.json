@@ -11,7 +11,7 @@
   "dependencies": {
     "@workspace/db": "workspace:*",
     "bcrypt": "^6.0.0",
-    "drizzle-orm": "^0.44.2"
+    "drizzle-orm": "catalog:"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
