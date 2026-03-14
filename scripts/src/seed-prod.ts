@@ -93,31 +93,34 @@ interface CardInfo {
   id: number;
   label: string;
   balance: number;
+  status: string;
 }
 
-async function createCards(): Promise<CardInfo[]> {
+const EXPECTED_CARDS = [
+  { label: "Daily Spending", color: "blue", currency: "EUR" },
+  { label: "Travel & Hotels", color: "green", currency: "EUR" },
+  { label: "Online Shopping", color: "purple", currency: "EUR" },
+];
+
+async function ensureCards(): Promise<CardInfo[]> {
   console.log("Checking existing cards...");
   const existingRes = await api("GET", "/cards");
-  if (existingRes.status === 200 && Array.isArray(existingRes.data) && existingRes.data.length > 0) {
-    console.log(`  Found ${existingRes.data.length} existing cards, skipping card creation.`);
-    return existingRes.data.map((c: any) => ({ id: c.id, label: c.label, balance: c.balance }));
-  }
+  const existing: CardInfo[] = existingRes.status === 200 && Array.isArray(existingRes.data)
+    ? existingRes.data.map((c: any) => ({ id: c.id, label: c.label, balance: c.balance, status: c.status }))
+    : [];
 
-  console.log("Creating cards...");
+  const existingLabels = new Set(existing.map(c => c.label));
+  const cards: CardInfo[] = [...existing];
 
-  const cardDefs = [
-    { label: "Daily Spending", color: "blue", currency: "EUR" },
-    { label: "Travel & Hotels", color: "green", currency: "EUR" },
-    { label: "Online Shopping", color: "purple", currency: "EUR" },
-  ];
-
-  const cards: CardInfo[] = [];
-
-  for (const def of cardDefs) {
+  for (const def of EXPECTED_CARDS) {
+    if (existingLabels.has(def.label)) {
+      console.log(`  Card "${def.label}" already exists, skipping.`);
+      continue;
+    }
     const res = await api("POST", "/cards", def);
     if (res.status === 201) {
       console.log(`  Created card: ${def.label} (id=${res.data.id})`);
-      cards.push({ id: res.data.id, label: def.label, balance: 0 });
+      cards.push({ id: res.data.id, label: def.label, balance: 0, status: res.data.status });
     } else {
       throw new Error(`Failed to create card ${def.label}: ${res.status} ${JSON.stringify(res.data)}`);
     }
@@ -137,26 +140,51 @@ async function topUpCards(cards: CardInfo[]): Promise<void> {
     throw new Error("Missing expected cards");
   }
 
-  if (daily.balance > 0 || travel.balance > 0 || shopping.balance > 0) {
-    console.log("Cards already have balances, skipping top-ups.");
+  interface TopUpDef {
+    cardId: number;
+    amount: number;
+    description: string;
+    skipIfFrozen?: boolean;
+  }
+
+  const topups: TopUpDef[] = [
+    { cardId: daily.id, amount: 600, description: "Initial top-up" },
+    { cardId: daily.id, amount: 250, description: "Monthly top-up" },
+    { cardId: daily.id, amount: 300, description: "Weekly top-up" },
+    { cardId: travel.id, amount: 1000, description: "Travel fund top-up" },
+    { cardId: travel.id, amount: 750, description: "Extra travel funds" },
+    { cardId: shopping.id, amount: 200, description: "Shopping budget", skipIfFrozen: true },
+  ];
+
+  const targetBalances: Record<string, number> = {
+    [daily.label]: 842.50,
+    [travel.label]: 1250.00,
+    [shopping.label]: 200.00,
+  };
+
+  const alreadyFunded = Object.entries(targetBalances).every(
+    ([label, target]) => cardByLabel[label] && cardByLabel[label].balance >= target
+  );
+
+  if (alreadyFunded) {
+    console.log("Cards already have target balances, skipping top-ups.");
     return;
   }
 
   console.log("Topping up cards...");
 
-  const topups: { cardId: number; amount: number; description: string }[] = [
-    { cardId: daily.id, amount: 842.50, description: "Initial top-up" },
-    { cardId: travel.id, amount: 1250.00, description: "Travel fund top-up" },
-    { cardId: shopping.id, amount: 200.00, description: "Shopping budget" },
-  ];
-
   for (const tu of topups) {
+    const card = cards.find(c => c.id === tu.cardId);
+    if (card && card.status === "frozen" && tu.skipIfFrozen) {
+      console.log(`  Skipping top-up for frozen card ${tu.cardId}`);
+      continue;
+    }
     const res = await api("POST", `/cards/${tu.cardId}/topup`, {
       amount: tu.amount,
       description: tu.description,
     });
     if (res.status === 200) {
-      console.log(`  Topped up card ${tu.cardId}: +${tu.amount} EUR`);
+      console.log(`  Topped up card ${tu.cardId}: +${tu.amount} EUR (${tu.description})`);
     } else {
       console.warn(`  Top-up failed for card ${tu.cardId}: ${res.status} ${JSON.stringify(res.data)}`);
     }
@@ -167,6 +195,11 @@ async function freezeShoppingCard(cards: CardInfo[]): Promise<void> {
   const shopping = cards.find(c => c.label === "Online Shopping");
   if (!shopping) return;
 
+  if (shopping.status === "frozen") {
+    console.log("Online Shopping card already frozen, skipping.");
+    return;
+  }
+
   console.log("Freezing Online Shopping card...");
   const res = await api("POST", `/cards/${shopping.id}/freeze`, { frozen: true });
   if (res.status === 200) {
@@ -176,15 +209,17 @@ async function freezeShoppingCard(cards: CardInfo[]): Promise<void> {
   }
 }
 
-async function createSupportTickets(): Promise<void> {
+const EXPECTED_TICKET_SUBJECTS = [
+  "Transaction not showing on statement",
+  "Card declined at POS terminal",
+  "How do I change my card PIN?",
+];
+
+async function ensureSupportTickets(): Promise<void> {
   console.log("Checking existing support tickets...");
   const existingRes = await api("GET", "/support/tickets");
-  if (existingRes.status === 200 && Array.isArray(existingRes.data) && existingRes.data.length > 0) {
-    console.log(`  Found ${existingRes.data.length} existing tickets, skipping.`);
-    return;
-  }
-
-  console.log("Creating support tickets...");
+  const existing = existingRes.status === 200 && Array.isArray(existingRes.data) ? existingRes.data : [];
+  const existingSubjects = new Set(existing.map((t: any) => t.subject));
 
   const tickets = [
     {
@@ -204,13 +239,23 @@ async function createSupportTickets(): Promise<void> {
     },
   ];
 
+  let created = 0;
   for (const ticket of tickets) {
+    if (existingSubjects.has(ticket.subject)) {
+      console.log(`  Ticket "${ticket.subject}" already exists, skipping.`);
+      continue;
+    }
     const res = await api("POST", "/support/tickets", ticket);
     if (res.status === 201) {
       console.log(`  Created ticket: "${ticket.subject}"`);
+      created++;
     } else {
       console.warn(`  Ticket creation failed: ${res.status} ${JSON.stringify(res.data)}`);
     }
+  }
+
+  if (created === 0) {
+    console.log("  All tickets already exist.");
   }
 }
 
@@ -219,10 +264,10 @@ async function main() {
 
   await ensureUser();
   await updateProfile();
-  const cards = await createCards();
+  const cards = await ensureCards();
   await topUpCards(cards);
   await freezeShoppingCard(cards);
-  await createSupportTickets();
+  await ensureSupportTickets();
 
   console.log("\nProduction seed complete!");
   console.log(`  Email: ${EMAIL}`);
