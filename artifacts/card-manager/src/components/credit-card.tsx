@@ -35,7 +35,7 @@ export function CreditCard({ card, className, onClick }: CreditCardProps) {
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
       onClick={onClick}
       className={cn(
-        "relative w-full aspect-[1.586/1] rounded-2xl p-6 text-white overflow-hidden shadow-2xl cursor-pointer group",
+        "relative w-full aspect-[1.586/1] rounded-2xl p-4 sm:p-6 text-white overflow-hidden shadow-2xl cursor-pointer group",
         "bg-gradient-to-br",
         getGradient(card.color),
         isFrozen && "opacity-75 grayscale-[50%]",
@@ -62,9 +62,9 @@ export function CreditCard({ card, className, onClick }: CreditCardProps) {
           <Wifi className="w-6 h-6 text-white/80 rotate-90" />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-2 sm:space-y-4">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-8 rounded bg-gradient-to-br from-yellow-200 to-yellow-500 opacity-80" />
+            <div className="w-8 h-6 sm:w-10 sm:h-8 rounded bg-gradient-to-br from-yellow-200 to-yellow-500 opacity-80" />
             {isFrozen && (
               <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-200 text-xs font-bold border border-red-500/30 backdrop-blur-md">
                 FROZEN
@@ -72,7 +72,7 @@ export function CreditCard({ card, className, onClick }: CreditCardProps) {
             )}
           </div>
 
-          <div className="font-mono text-lg tracking-[0.2em] text-white/90 drop-shadow-sm amount">
+          <div className="font-mono text-sm sm:text-lg tracking-[0.15em] sm:tracking-[0.2em] text-white/90 drop-shadow-sm amount">
             {formatCardNumber(card.cardNumber)}
           </div>
 
