@@ -30,7 +30,7 @@ export default function Support() {
 
   const form = useForm<z.infer<typeof ticketSchema>>({
     resolver: zodResolver(ticketSchema),
-    defaultValues: { subject: "", category: "general" as any, message: "" },
+    defaultValues: { subject: "", category: "card" as const, message: "" },
   });
 
   const createMutation = useCreateSupportTicket({
@@ -45,7 +45,7 @@ export default function Support() {
   });
 
   const onSubmit = (values: z.infer<typeof ticketSchema>) => {
-    createMutation.mutate({ data: values as any });
+    createMutation.mutate({ data: values });
   };
 
   if (isLoading) {

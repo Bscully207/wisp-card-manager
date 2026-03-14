@@ -1,11 +1,12 @@
-import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
+import { useEffect, useCallback } from "react";
+import { Switch, Route, Router as WouterRouter, Redirect, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "./components/theme-provider";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/layout";
-import { useTelegram } from "@/hooks/use-telegram";
+import { useTelegram, useTelegramBackButton } from "@/hooks/use-telegram";
 
 import Login from "@/pages/login";
 import Register from "@/pages/register";
@@ -29,21 +30,51 @@ function WrappedPage({ children }: { children: React.ReactNode }) {
   return <Layout>{children}</Layout>;
 }
 
+function TelegramBackButtonHandler() {
+  const [location] = useLocation();
+  const { isTelegram, webApp } = useTelegram();
+
+  const handleBack = useCallback(() => {
+    window.history.back();
+  }, []);
+
+  useEffect(() => {
+    if (!isTelegram || !webApp) return;
+
+    const isRootPage = location === "/dashboard" || location === "/login" || location === "/register";
+    if (isRootPage) {
+      webApp.BackButton.hide();
+    } else {
+      webApp.BackButton.show();
+      webApp.BackButton.onClick(handleBack);
+    }
+
+    return () => {
+      webApp.BackButton.offClick(handleBack);
+    };
+  }, [location, isTelegram, webApp, handleBack]);
+
+  return null;
+}
+
 function AppRouter() {
   useTelegram();
 
   return (
-    <Switch>
-      <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
-      <Route path="/dashboard">{() => <WrappedPage><Dashboard /></WrappedPage>}</Route>
-      <Route path="/cards/:id">{() => <WrappedPage><CardDetails /></WrappedPage>}</Route>
-      <Route path="/cards">{() => <WrappedPage><Cards /></WrappedPage>}</Route>
-      <Route path="/transactions">{() => <WrappedPage><Transactions /></WrappedPage>}</Route>
-      <Route path="/profile">{() => <WrappedPage><Profile /></WrappedPage>}</Route>
-      <Route path="/support">{() => <WrappedPage><Support /></WrappedPage>}</Route>
-      <Redirect to="/login" />
-    </Switch>
+    <>
+      <TelegramBackButtonHandler />
+      <Switch>
+        <Route path="/login" component={Login} />
+        <Route path="/register" component={Register} />
+        <Route path="/dashboard">{() => <WrappedPage><Dashboard /></WrappedPage>}</Route>
+        <Route path="/cards/:id">{() => <WrappedPage><CardDetails /></WrappedPage>}</Route>
+        <Route path="/cards">{() => <WrappedPage><Cards /></WrappedPage>}</Route>
+        <Route path="/transactions">{() => <WrappedPage><Transactions /></WrappedPage>}</Route>
+        <Route path="/profile">{() => <WrappedPage><Profile /></WrappedPage>}</Route>
+        <Route path="/support">{() => <WrappedPage><Support /></WrappedPage>}</Route>
+        <Redirect to="/login" />
+      </Switch>
+    </>
   );
 }
 
