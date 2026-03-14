@@ -43,7 +43,8 @@ function AppRouter() {
     if (!isTelegram || !webApp) return;
 
     const AUTH_PAGES = ["/login", "/register"];
-    const isRootPage = ROOT_PATHS.includes(location) || AUTH_PAGES.includes(location);
+    const normalizedPath = location.replace(/\/+$/, "") || "/";
+    const isRootPage = ROOT_PATHS.includes(normalizedPath) || AUTH_PAGES.includes(normalizedPath);
     if (isRootPage) {
       webApp.BackButton.hide();
     } else {

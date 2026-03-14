@@ -123,7 +123,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   if (!user) return null;
 
-  const isSubPage = !ROOT_PATHS.includes(location);
+  const normalizedPath = location.replace(/\/+$/, "") || "/";
+  const isSubPage = !ROOT_PATHS.includes(normalizedPath);
 
   return (
     <SidebarProvider style={{ "--sidebar-width": "16rem" } as React.CSSProperties}>
@@ -211,7 +212,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="md:hidden flex items-center gap-2">
               {isSubPage ? (
                 <button
-                  onClick={() => window.history.back()}
+                  onClick={() => {
+                    if (window.history.length > 1) {
+                      window.history.back();
+                    } else {
+                      setLocation("/dashboard");
+                    }
+                  }}
                   className="flex items-center text-muted-foreground hover:text-foreground transition-colors -ml-1 p-1"
                 >
                   <ChevronLeft className="w-5 h-5" />
