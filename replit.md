@@ -116,7 +116,7 @@ React + Vite frontend. Mobile-first responsive design with Telegram Mini App sup
 
 **Navigation**:
 - Desktop sidebar: logo + collapse trigger in header, nav items, user dropdown footer (Settings, Support, Theme cycle, Logout)
-- Mobile: top header (back button on sub-pages, logo, user avatar dropdown), bottom tab bar (Dashboard, Cards, Transactions)
+- Mobile: top header (back button on sub-pages, logo, user avatar dropdown), floating pill nav bar (Dashboard, Cards, Transactions) — centered ~340px pill, 56px tall, 12px above bottom edge, active item expands to show icon+label in dark pill (#474747), inactive items show icon-only
 - No standalone theme button; theme cycling integrated into user dropdowns on both mobile and desktop
 - Top-up presets: $50, $100, $1000, "Other" (reveals custom input) — consistent across dashboard, cards, and card-details pages
 
