@@ -258,7 +258,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     "flex items-center justify-center min-h-[44px] transition-all duration-300 ease-in-out",
                     isActive
                       ? "bg-[#474747] text-[#dedede] gap-3 px-4 py-2.5"
-                      : "text-[#191619] dark:text-[#a0a0a0] px-3.5 py-2.5 hover:bg-[#f9f9f9] dark:hover:bg-[#2a2a2a]"
+                      : "text-[#191619] dark:text-[#a0a0a0] px-3.5 py-2.5"
                   )}
                   style={{ borderRadius: 50, fontSize: 15, fontWeight: 500 }}
                 >
