@@ -33,7 +33,7 @@ export default function Login() {
         toast({ title: "Welcome back!" });
         setLocation("/dashboard");
       },
-      onError: (error: any) => {
+      onError: (error: Error) => {
         toast({ 
           title: "Login failed", 
           description: error.message || "Invalid credentials", 

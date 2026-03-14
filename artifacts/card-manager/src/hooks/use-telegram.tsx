@@ -138,22 +138,22 @@ export function useTelegram() {
   const webApp = window.Telegram?.WebApp;
 
   useEffect(() => {
-    if (webApp) {
-      webApp.ready();
-      webApp.expand();
-      setIsReady(true);
+    if (!webApp) return;
 
+    webApp.ready();
+    webApp.expand();
+    setIsReady(true);
+
+    applyTelegramTheme(webApp.themeParams);
+
+    const handleThemeChanged = () => {
       applyTelegramTheme(webApp.themeParams);
+    };
+    webApp.onEvent("themeChanged", handleThemeChanged);
 
-      const handleThemeChanged = () => {
-        applyTelegramTheme(webApp.themeParams);
-      };
-      webApp.onEvent("themeChanged", handleThemeChanged);
-
-      return () => {
-        webApp.offEvent("themeChanged", handleThemeChanged);
-      };
-    }
+    return () => {
+      webApp.offEvent("themeChanged", handleThemeChanged);
+    };
   }, []);
 
   return {

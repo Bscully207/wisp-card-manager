@@ -36,7 +36,7 @@ export default function Register() {
         toast({ title: "Account created successfully!" });
         setLocation("/dashboard");
       },
-      onError: (error: any) => {
+      onError: (error: Error) => {
         toast({ 
           title: "Registration failed", 
           description: error.message || "An error occurred", 

@@ -58,7 +58,7 @@ export default function Dashboard() {
         setTopUpCardId(null);
         topUpForm.reset();
       },
-      onError: (err: any) => {
+      onError: (err: Error) => {
         toast({ title: "Top-up failed", description: err.message, variant: "destructive" });
       }
     }

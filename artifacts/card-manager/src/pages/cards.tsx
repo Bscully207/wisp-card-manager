@@ -56,7 +56,7 @@ export default function Cards() {
         setOpen(false);
         form.reset();
       },
-      onError: (err: any) => {
+      onError: (err: Error) => {
         toast({ title: "Failed to create card", description: err.message, variant: "destructive" });
       }
     }
@@ -72,7 +72,7 @@ export default function Cards() {
         setTopUpCardId(null);
         topUpForm.reset();
       },
-      onError: (err: any) => {
+      onError: (err: Error) => {
         toast({ title: "Top-up failed", description: err.message, variant: "destructive" });
       }
     }

@@ -74,7 +74,7 @@ export default function Profile() {
         toast({ title: "Password changed successfully" });
         passwordForm.reset();
       },
-      onError: (err: any) => {
+      onError: (err: Error) => {
         toast({ title: "Error", description: err.message, variant: "destructive" });
       }
     }
