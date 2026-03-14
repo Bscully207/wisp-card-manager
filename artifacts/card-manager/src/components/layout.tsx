@@ -141,10 +141,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <SidebarFooter className="p-4 border-t border-border/50">
               <div className="flex items-center gap-3 px-3 py-2 mb-4">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                  {user.firstName[0]}{user.lastName[0]}
+                  {user.firstName?.[0] || user.email[0].toUpperCase()}{user.lastName?.[0] || ""}
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-semibold leading-tight">{user.firstName} {user.lastName}</span>
+                  <span className="text-sm font-semibold leading-tight">{user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email.split("@")[0]}</span>
                   <span className="text-xs text-muted-foreground truncate w-32">{user.email}</span>
                 </div>
               </div>
