@@ -135,6 +135,36 @@
   @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-2xl;
 }
 
+/* Safe area insets for mobile devices with notches */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Telegram theme color overrides (applied when running as Mini App) */
+:root {
+  --tg-bg-color: initial;
+  --tg-text-color: initial;
+  --tg-hint-color: initial;
+  --tg-button-color: initial;
+  --tg-secondary-bg-color: initial;
+}
+
+/* Touch-friendly tap targets */
+@media (max-width: 767px) {
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

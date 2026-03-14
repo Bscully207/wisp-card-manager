@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -62,14 +61,14 @@ export default function Register() {
         />
       </div>
 
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 relative z-10">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 md:p-12 relative z-10">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md space-y-6"
+          className="w-full max-w-md space-y-5 md:space-y-6"
         >
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3 mb-6 md:mb-8">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-700 flex items-center justify-center shadow-lg shadow-primary/25">
               <Wallet className="w-5 h-5 text-white" />
             </div>
@@ -77,13 +76,13 @@ export default function Register() {
           </div>
 
           <div>
-            <h1 className="font-display text-3xl font-bold tracking-tight mb-2">Create an account</h1>
-            <p className="text-muted-foreground text-base">Join us to start managing your cards today.</p>
+            <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight mb-2">Create an account</h1>
+            <p className="text-muted-foreground text-sm md:text-base">Join us to start managing your cards today.</p>
           </div>
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
                 <FormField
                   control={form.control}
                   name="firstName"
@@ -91,7 +90,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel>First Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="John" className="bg-black/20 border-white/10" {...field} />
+                        <Input placeholder="John" className="bg-black/20 border-white/10" autoComplete="given-name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -104,7 +103,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel>Last Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Doe" className="bg-black/20 border-white/10" {...field} />
+                        <Input placeholder="Doe" className="bg-black/20 border-white/10" autoComplete="family-name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -119,7 +118,7 @@ export default function Register() {
                   <FormItem>
                     <FormLabel>Email address</FormLabel>
                     <FormControl>
-                      <Input placeholder="john@example.com" className="bg-black/20 border-white/10" {...field} />
+                      <Input placeholder="john@example.com" className="bg-black/20 border-white/10" autoComplete="email" inputMode="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -133,7 +132,7 @@ export default function Register() {
                   <FormItem>
                     <FormLabel>Phone (Optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="+1 (555) 000-0000" className="bg-black/20 border-white/10" {...field} />
+                      <Input placeholder="+1 (555) 000-0000" className="bg-black/20 border-white/10" autoComplete="tel" inputMode="tel" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -147,7 +146,7 @@ export default function Register() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" className="bg-black/20 border-white/10" {...field} />
+                      <Input type="password" placeholder="••••••••" className="bg-black/20 border-white/10" autoComplete="new-password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -156,7 +155,7 @@ export default function Register() {
               
               <Button 
                 type="submit" 
-                className="w-full h-12 mt-4 text-base font-semibold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 rounded-xl hover-elevate"
+                className="w-full h-12 mt-2 text-base font-semibold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 rounded-xl hover-elevate"
                 disabled={registerMutation.isPending}
               >
                 {registerMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign up"}
@@ -164,7 +163,7 @@ export default function Register() {
             </form>
           </Form>
 
-          <p className="text-center text-muted-foreground mt-6">
+          <p className="text-center text-muted-foreground mt-4 md:mt-6">
             Already have an account?{" "}
             <Link href="/login" className="text-primary font-medium hover:underline">
               Sign in instead

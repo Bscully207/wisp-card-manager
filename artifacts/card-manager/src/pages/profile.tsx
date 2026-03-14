@@ -85,27 +85,27 @@ export default function Profile() {
   }
 
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="space-y-6 md:space-y-8 max-w-4xl">
       <div>
-        <h1 className="font-display text-4xl font-bold tracking-tight">Account Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your personal information and security preferences.</p>
+        <h1 className="font-display text-2xl md:text-4xl font-bold tracking-tight">Account Settings</h1>
+        <p className="text-muted-foreground text-sm md:text-base mt-1">Manage your personal information and security preferences.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         <Card className="bg-card/50 backdrop-blur border-border/50 shadow-xl">
-          <CardHeader>
+          <CardHeader className="px-4 md:px-6">
             <div className="flex items-center gap-3">
-              <UserCircle className="w-6 h-6 text-primary" />
+              <UserCircle className="w-5 h-5 md:w-6 md:h-6 text-primary" />
               <div>
-                <CardTitle>Personal Details</CardTitle>
-                <CardDescription>Update your contact information.</CardDescription>
+                <CardTitle className="text-base md:text-lg">Personal Details</CardTitle>
+                <CardDescription className="text-xs md:text-sm">Update your contact information.</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 md:px-6">
             <Form {...profileForm}>
               <form onSubmit={profileForm.handleSubmit((v) => updateProfileMutation.mutate({ data: v }))} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 md:gap-4">
                   <FormField control={profileForm.control} name="firstName" render={({ field }) => (
                     <FormItem><FormLabel>First Name</FormLabel><FormControl><Input className="bg-black/20" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
@@ -119,7 +119,7 @@ export default function Profile() {
                 <FormField control={profileForm.control} name="address" render={({ field }) => (
                   <FormItem><FormLabel>Address</FormLabel><FormControl><Input className="bg-black/20" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 md:gap-4">
                   <FormField control={profileForm.control} name="city" render={({ field }) => (
                     <FormItem><FormLabel>City</FormLabel><FormControl><Input className="bg-black/20" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
@@ -137,16 +137,16 @@ export default function Profile() {
         </Card>
 
         <Card className="bg-card/50 backdrop-blur border-border/50 shadow-xl h-fit">
-          <CardHeader>
+          <CardHeader className="px-4 md:px-6">
             <div className="flex items-center gap-3">
-              <ShieldCheck className="w-6 h-6 text-primary" />
+              <ShieldCheck className="w-5 h-5 md:w-6 md:h-6 text-primary" />
               <div>
-                <CardTitle>Security</CardTitle>
-                <CardDescription>Update your password.</CardDescription>
+                <CardTitle className="text-base md:text-lg">Security</CardTitle>
+                <CardDescription className="text-xs md:text-sm">Update your password.</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 md:px-6">
             <Form {...passwordForm}>
               <form onSubmit={passwordForm.handleSubmit(({ currentPassword, newPassword }) => changePasswordMutation.mutate({ data: { currentPassword, newPassword } }))} className="space-y-4">
                 <FormField control={passwordForm.control} name="currentPassword" render={({ field }) => (

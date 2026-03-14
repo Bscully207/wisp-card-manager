@@ -87,14 +87,37 @@ Express 5 API server. Routes are split by domain in `src/routes/`.
 
 ### `artifacts/card-manager` (`@workspace/card-manager`)
 
-React + Vite frontend. Pages under `src/pages/`:
-- `login.tsx`, `register.tsx` — auth pages
-- `dashboard.tsx` — card overview + total balance
-- `cards.tsx` — card list + create card modal
-- `card-details.tsx` — single card with transactions + top-up
-- `transactions.tsx` — all transactions
-- `profile.tsx` — edit profile + change password
+React + Vite frontend. Mobile-first responsive design with Telegram Mini App support.
+
+**Layout**:
+- Desktop (≥768px): Sidebar navigation via shadcn `SidebarProvider`
+- Mobile (<768px): Fixed bottom navigation bar (5 icons), compact top header with logo
+- Layout component: `src/components/layout.tsx`
+
+**Telegram Mini App**:
+- Telegram WebApp script loaded in `index.html`
+- `src/hooks/use-telegram.tsx` — calls `WebApp.ready()` + `WebApp.expand()`, sets CSS vars from theme
+- `useTelegramBackButton()` hook for hardware back button integration
+- Viewport meta: `user-scalable=no, viewport-fit=cover`
+
+**Responsive Dialogs**:
+- `src/components/responsive-dialog.tsx` — uses `Dialog` on desktop, `Drawer` (vaul) on mobile
+- All modals (top-up, create card, balance, delete, support ticket) use `ResponsiveDialog`
+
+**Pages** under `src/pages/`:
+- `login.tsx`, `register.tsx` — auth pages (full-width on mobile, side image on desktop)
+- `dashboard.tsx` — card overview + total balance + quick actions
+- `cards.tsx` — card list + create card + top-up
+- `card-details.tsx` — single card with 4-col action tiles (mobile) or 2-col (desktop)
+- `transactions.tsx` — card list view on mobile, table on desktop
+- `profile.tsx` — single-column forms on mobile, side-by-side on desktop
 - `support.tsx` — support tickets
+
+**CSS**:
+- Safe area insets via `safe-area-bottom` / `safe-area-top` classes
+- 44px minimum tap targets on mobile
+- 16px font-size on inputs to prevent iOS zoom
+- Telegram theme CSS variables support
 
 ### `lib/db` (`@workspace/db`)
 

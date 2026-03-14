@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,15 +49,14 @@ export default function Login() {
 
   return (
     <div className="min-h-screen w-full flex bg-background text-foreground">
-      {/* Left side - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 relative z-10">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 md:p-12 relative z-10">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md space-y-8"
+          className="w-full max-w-md space-y-6 md:space-y-8"
         >
-          <div className="flex items-center gap-3 mb-12">
+          <div className="flex items-center gap-3 mb-8 md:mb-12">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-700 flex items-center justify-center shadow-lg shadow-primary/25">
               <Wallet className="w-5 h-5 text-white" />
             </div>
@@ -66,12 +64,12 @@ export default function Login() {
           </div>
 
           <div>
-            <h1 className="font-display text-4xl font-bold tracking-tight mb-2">Welcome back</h1>
-            <p className="text-muted-foreground text-lg">Enter your details to access your account.</p>
+            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight mb-2">Welcome back</h1>
+            <p className="text-muted-foreground text-base md:text-lg">Enter your details to access your account.</p>
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 md:space-y-6">
               <FormField
                 control={form.control}
                 name="email"
@@ -82,6 +80,8 @@ export default function Login() {
                       <Input 
                         placeholder="john@example.com" 
                         className="h-12 bg-black/20 border-white/10 focus:border-primary/50 transition-colors" 
+                        autoComplete="email"
+                        inputMode="email"
                         {...field} 
                       />
                     </FormControl>
@@ -100,6 +100,7 @@ export default function Login() {
                         type="password" 
                         placeholder="••••••••" 
                         className="h-12 bg-black/20 border-white/10 focus:border-primary/50 transition-colors" 
+                        autoComplete="current-password"
                         {...field} 
                       />
                     </FormControl>
@@ -127,7 +128,6 @@ export default function Login() {
         </motion.div>
       </div>
 
-      {/* Right side - Image */}
       <div className="hidden lg:block w-1/2 relative overflow-hidden bg-card border-l border-white/5">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent z-10 mix-blend-overlay"></div>
         <img 

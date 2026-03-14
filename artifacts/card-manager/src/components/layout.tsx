@@ -26,10 +26,12 @@ import {
 import { useGetMe, useLogout } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetMeQueryKey } from "@workspace/api-client-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "My Cards", url: "/cards", icon: CreditCard },
+  { title: "Cards", url: "/cards", icon: CreditCard },
   { title: "Transactions", url: "/transactions", icon: ReceiptText },
   { title: "Profile", url: "/profile", icon: UserIcon },
   { title: "Support", url: "/support", icon: LifeBuoy },
@@ -38,6 +40,7 @@ const navItems = [
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   
   const { data: user, isLoading, isError } = useGetMe({
     query: { retry: false }
@@ -67,6 +70,55 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) return null;
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col min-h-screen w-full bg-background text-foreground selection:bg-primary/30">
+        <header className="flex h-14 shrink-0 items-center justify-between px-4 border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
+          <Link href="/dashboard" className="flex items-center gap-2 font-display font-bold text-lg tracking-tight text-white">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-blue-700 flex items-center justify-center shadow-lg shadow-primary/20">
+              <Wallet className="w-3.5 h-3.5 text-white" />
+            </div>
+            Nexus<span className="text-primary">Pay</span>
+          </Link>
+          <button
+            onClick={() => logoutMutation.mutate({})}
+            className="text-muted-foreground hover:text-red-400 p-2 -mr-2 transition-colors"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+        </header>
+
+        <main className="flex-1 p-4 pb-24 overflow-x-hidden">
+          <div className="max-w-6xl mx-auto w-full">
+            {children}
+          </div>
+        </main>
+
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50 safe-area-bottom">
+          <div className="flex items-center justify-around h-16">
+            {navItems.map((item) => {
+              const isActive = location === item.url || (item.url !== "/dashboard" && location.startsWith(item.url));
+              return (
+                <Link
+                  key={item.title}
+                  href={item.url}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-colors min-h-[44px]",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  <item.icon className={cn("w-5 h-5", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary))]")} />
+                  <span className="text-[10px] font-medium leading-tight">{item.title}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider style={{ "--sidebar-width": "16rem" } as React.CSSProperties}>

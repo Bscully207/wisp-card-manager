@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "./components/theme-provider";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/layout";
+import { useTelegram } from "@/hooks/use-telegram";
 
 import Login from "@/pages/login";
 import Register from "@/pages/register";
@@ -29,6 +30,8 @@ function WrappedPage({ children }: { children: React.ReactNode }) {
 }
 
 function AppRouter() {
+  useTelegram();
+
   return (
     <Switch>
       <Route path="/login" component={Login} />
