@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, cardsTable, transactionsTable } from "@workspace/db";
+import { db, cardsTable, transactionsTable, usersTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import {
   GetCardsResponse,
@@ -63,9 +63,11 @@ router.post("/cards", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const { db: dbClient } = await import("@workspace/db");
-  const { usersTable: ut } = await import("@workspace/db");
-  const [user] = await dbClient.select().from(ut).where(eq(ut.id, req.session.userId!));
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId!));
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized", message: "User not found" });
+    return;
+  }
 
   const now = new Date();
   const expiryMonth = now.getMonth() + 1;
