@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { 
   useGetCard, 
@@ -54,16 +54,15 @@ export default function CardDetails() {
   });
 
   const [activeTab, setActiveTab] = useState<TabType>("details");
+  const [topUpOpen, setTopUpOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [showCvv, setShowCvv] = useState(false);
   const [cardName, setCardName] = useState("");
-  const [cardNameInitialized, setCardNameInitialized] = useState(false);
   const [cardEmail, setCardEmail] = useState("");
 
-  if (card && !cardNameInitialized) {
-    setCardName(card.label || "");
-    setCardNameInitialized(true);
-  }
+  useEffect(() => {
+    if (card) setCardName(card.label || "");
+  }, [card?.id]);
 
   const form = useForm<z.infer<typeof topUpSchema>>({
     resolver: zodResolver(topUpSchema),
@@ -76,6 +75,7 @@ export default function CardDetails() {
         queryClient.invalidateQueries({ queryKey: getGetCardQueryKey(cardId) });
         queryClient.invalidateQueries({ queryKey: getGetCardTransactionsQueryKey(cardId) });
         toast({ title: "Top-up successful!" });
+        setTopUpOpen(false);
         form.reset();
       }
     }
@@ -128,12 +128,20 @@ export default function CardDetails() {
         {tabs.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => {
+              if (tab.key === "topup") {
+                setTopUpOpen(true);
+              } else {
+                setActiveTab(tab.key);
+              }
+            }}
             className={cn(
               "flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-medium transition-all",
-              activeTab === tab.key
-                ? "bg-primary text-primary-foreground shadow-lg"
-                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/50"
+              tab.key === "topup"
+                ? "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/50"
+                : activeTab === tab.key
+                  ? "bg-primary text-primary-foreground shadow-lg"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/50"
             )}
           >
             {tab.icon}
@@ -153,57 +161,6 @@ export default function CardDetails() {
           Add to Google Pay
         </button>
       </div>
-
-      {activeTab === "topup" && (
-        <Card className="border-border/50 bg-card/50 backdrop-blur">
-          <CardContent className="p-4 md:p-6 space-y-4">
-            <h3 className="font-display text-lg font-semibold">Top Up Card</h3>
-            {isFrozen ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Snowflake className="w-8 h-8 mx-auto mb-2 text-blue-400" />
-                <p>Card is frozen. Unfreeze it to top up.</p>
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-5 gap-2">
-                  {PRESET_AMOUNTS.map((amt) => (
-                    <Button
-                      key={amt}
-                      type="button"
-                      variant={form.watch("amount") === amt ? "default" : "outline"}
-                      size="sm"
-                      className="rounded-xl text-sm font-semibold"
-                      onClick={() => handlePresetTopUp(amt)}
-                    >
-                      {getCurrencySymbol(card.currency)}{amt}
-                    </Button>
-                  ))}
-                </div>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit((v) => topUpMutation.mutate({ cardId, data: v }))} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="amount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Custom Amount ({card.currency})</FormLabel>
-                          <FormControl>
-                            <Input type="number" step="0.01" className="bg-muted/50 text-lg" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button type="submit" className="w-full rounded-xl" disabled={topUpMutation.isPending}>
-                      {topUpMutation.isPending ? "Processing..." : "Confirm Top Up"}
-                    </Button>
-                  </form>
-                </Form>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       {activeTab === "details" && (
         <Card className="border-border/50 bg-card/50 backdrop-blur">
@@ -432,6 +389,48 @@ export default function CardDetails() {
           )}
         </CardContent>
       </Card>
+
+      <ResponsiveDialog
+        open={topUpOpen}
+        onOpenChange={setTopUpOpen}
+        title="Top Up Card"
+        description={`Add funds to ${card.label || 'your card'}.`}
+      >
+        <div className="grid grid-cols-5 gap-2 pt-2">
+          {PRESET_AMOUNTS.map((amt) => (
+            <Button
+              key={amt}
+              type="button"
+              variant={form.watch("amount") === amt ? "default" : "outline"}
+              size="sm"
+              className="rounded-xl text-sm font-semibold"
+              onClick={() => handlePresetTopUp(amt)}
+            >
+              {getCurrencySymbol(card.currency)}{amt}
+            </Button>
+          ))}
+        </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit((v) => topUpMutation.mutate({ cardId, data: v }))} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Custom Amount ({card.currency})</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" className="bg-muted/50 text-lg" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full rounded-xl" disabled={topUpMutation.isPending}>
+              {topUpMutation.isPending ? "Processing..." : "Confirm Top Up"}
+            </Button>
+          </form>
+        </Form>
+      </ResponsiveDialog>
 
       <ResponsiveDialog
         open={deleteOpen}
