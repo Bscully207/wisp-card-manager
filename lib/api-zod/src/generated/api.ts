@@ -17,7 +17,7 @@ export const HealthCheckResponse = zod.object({
 /**
  * @summary Register a new user
  */
-export const registerBodyPasswordMin = 8;
+export const registerBodyPasswordMin = 4;
 
 export const RegisterBody = zod.object({
   email: zod.string().email(),

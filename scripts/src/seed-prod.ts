@@ -1,7 +1,78 @@
 const BASE_URL = process.env.PROD_API_URL || "https://client-card-manager.replit.app/api";
 
-const EMAIL = "test@testapp.com";
-const PASSWORD = "Test1234";
+const USERS = [
+  {
+    email: "test@testapp.com",
+    password: "Test1234",
+    firstName: "Sofia",
+    lastName: "Martinez",
+    phone: "+34 612 345 678",
+    profile: {
+      firstName: "Sofia",
+      lastName: "Martinez",
+      phone: "+34 612 345 678",
+      address: "Calle Gran Via 28, 3 B",
+      city: "Madrid",
+      country: "Spain",
+    },
+    cards: [
+      { label: "Daily Spending", color: "blue", currency: "EUR" },
+      { label: "Travel & Hotels", color: "green", currency: "EUR" },
+      { label: "Online Shopping", color: "purple", currency: "EUR" },
+    ],
+    freezeCard: "Online Shopping",
+    tickets: [
+      {
+        subject: "Transaction not showing on statement",
+        message: "Hi, I made a purchase at Mercadona three days ago for EUR 47.82 but it is not appearing in my transaction history for my Daily Spending card. The payment was confirmed on my receipt. Could you please look into this?",
+        category: "billing",
+      },
+      {
+        subject: "Card declined at POS terminal",
+        message: "My Travel & Hotels card was declined at a restaurant in Barcelona even though I have sufficient balance. The terminal showed Card not authorized. I have tried twice. Is there a regional block on the card?",
+        category: "card",
+      },
+      {
+        subject: "How do I change my card PIN?",
+        message: "I would like to update the PIN on my Daily Spending card. I cannot find the option in the app. Could you guide me through the process or do it on your end?",
+        category: "account",
+      },
+    ],
+  },
+  {
+    email: "demo@testapp.com",
+    password: "1234",
+    firstName: "Alex",
+    lastName: "Johnson",
+    phone: "+1 415 555 0198",
+    profile: {
+      firstName: "Alex",
+      lastName: "Johnson",
+      phone: "+1 415 555 0198",
+      address: "742 Evergreen Terrace, Apt 4A",
+      city: "San Francisco",
+      country: "United States",
+    },
+    cards: [
+      { label: "Everyday Card", color: "blue", currency: "USD" },
+      { label: "Savings Reserve", color: "green", currency: "USD" },
+      { label: "Subscriptions", color: "purple", currency: "USD" },
+    ],
+    freezeCard: null,
+    tickets: [
+      {
+        subject: "Duplicate charge on my account",
+        message: "I noticed two identical charges of $29.99 on my Everyday Card from Netflix dated March 10. I only have one subscription. Could you investigate and refund the duplicate?",
+        category: "billing",
+      },
+      {
+        subject: "Request to increase card limit",
+        message: "I would like to increase the spending limit on my Everyday Card. My current limit feels too low for my monthly expenses. What documentation do you need from me?",
+        category: "card",
+      },
+    ],
+  },
+];
 
 let sessionCookie = "";
 
@@ -40,9 +111,9 @@ async function api(method: string, path: string, body?: unknown): Promise<{ stat
   return { status: res.status, data };
 }
 
-async function ensureUser(): Promise<void> {
-  console.log("Attempting login...");
-  const loginRes = await api("POST", "/auth/login", { email: EMAIL, password: PASSWORD });
+async function ensureUser(user: typeof USERS[number]): Promise<void> {
+  console.log(`Attempting login for ${user.email}...`);
+  const loginRes = await api("POST", "/auth/login", { email: user.email, password: user.password });
 
   if (loginRes.status === 200) {
     console.log("  User already exists, logged in successfully.");
@@ -51,18 +122,18 @@ async function ensureUser(): Promise<void> {
 
   console.log("  User not found, registering...");
   const regRes = await api("POST", "/auth/register", {
-    email: EMAIL,
-    password: PASSWORD,
-    firstName: "Sofia",
-    lastName: "Martinez",
-    phone: "+34 612 345 678",
+    email: user.email,
+    password: user.password,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phone: user.phone,
   });
 
   if (regRes.status === 201) {
     console.log("  Registered successfully.");
   } else if (regRes.status === 409) {
     console.log("  Already registered, logging in...");
-    const retryLogin = await api("POST", "/auth/login", { email: EMAIL, password: PASSWORD });
+    const retryLogin = await api("POST", "/auth/login", { email: user.email, password: user.password });
     if (retryLogin.status !== 200) {
       throw new Error(`Login failed after registration conflict: ${JSON.stringify(retryLogin.data)}`);
     }
@@ -71,16 +142,9 @@ async function ensureUser(): Promise<void> {
   }
 }
 
-async function updateProfile(): Promise<void> {
+async function updateProfile(profile: typeof USERS[number]["profile"]): Promise<void> {
   console.log("Updating profile...");
-  const res = await api("PUT", "/users/profile", {
-    firstName: "Sofia",
-    lastName: "Martinez",
-    phone: "+34 612 345 678",
-    address: "Calle Gran Via 28, 3 B",
-    city: "Madrid",
-    country: "Spain",
-  });
+  const res = await api("PUT", "/users/profile", profile);
 
   if (res.status === 200) {
     console.log("  Profile updated.");
@@ -96,13 +160,7 @@ interface CardInfo {
   status: string;
 }
 
-const EXPECTED_CARDS = [
-  { label: "Daily Spending", color: "blue", currency: "EUR" },
-  { label: "Travel & Hotels", color: "green", currency: "EUR" },
-  { label: "Online Shopping", color: "purple", currency: "EUR" },
-];
-
-async function ensureCards(): Promise<CardInfo[]> {
+async function ensureCards(expectedCards: typeof USERS[number]["cards"]): Promise<CardInfo[]> {
   console.log("Checking existing cards...");
   const existingRes = await api("GET", "/cards");
   const existing: CardInfo[] = existingRes.status === 200 && Array.isArray(existingRes.data)
@@ -112,7 +170,7 @@ async function ensureCards(): Promise<CardInfo[]> {
   const existingLabels = new Set(existing.map(c => c.label));
   const cards: CardInfo[] = [...existing];
 
-  for (const def of EXPECTED_CARDS) {
+  for (const def of expectedCards) {
     if (existingLabels.has(def.label)) {
       console.log(`  Card "${def.label}" already exists, skipping.`);
       continue;
@@ -129,14 +187,14 @@ async function ensureCards(): Promise<CardInfo[]> {
   return cards;
 }
 
-async function topUpCards(cards: CardInfo[]): Promise<void> {
+async function topUpCards(cards: CardInfo[], expectedCards: typeof USERS[number]["cards"]): Promise<void> {
   const cardByLabel = Object.fromEntries(cards.map(c => [c.label, c]));
 
-  const daily = cardByLabel["Daily Spending"];
-  const travel = cardByLabel["Travel & Hotels"];
-  const shopping = cardByLabel["Online Shopping"];
+  const firstCard = cardByLabel[expectedCards[0]?.label];
+  const secondCard = cardByLabel[expectedCards[1]?.label];
+  const thirdCard = cardByLabel[expectedCards[2]?.label];
 
-  if (!daily || !travel || !shopping) {
+  if (!firstCard || !secondCard || !thirdCard) {
     throw new Error("Missing expected cards");
   }
 
@@ -148,26 +206,18 @@ async function topUpCards(cards: CardInfo[]): Promise<void> {
   }
 
   const topups: TopUpDef[] = [
-    { cardId: daily.id, amount: 600, description: "Initial top-up" },
-    { cardId: daily.id, amount: 250, description: "Monthly top-up" },
-    { cardId: daily.id, amount: 300, description: "Weekly top-up" },
-    { cardId: travel.id, amount: 1000, description: "Travel fund top-up" },
-    { cardId: travel.id, amount: 750, description: "Extra travel funds" },
-    { cardId: shopping.id, amount: 200, description: "Shopping budget", skipIfFrozen: true },
+    { cardId: firstCard.id, amount: 600, description: "Initial top-up" },
+    { cardId: firstCard.id, amount: 250, description: "Monthly top-up" },
+    { cardId: firstCard.id, amount: 300, description: "Weekly top-up" },
+    { cardId: secondCard.id, amount: 1000, description: "Savings deposit" },
+    { cardId: secondCard.id, amount: 750, description: "Extra funds" },
+    { cardId: thirdCard.id, amount: 200, description: "Subscription budget", skipIfFrozen: true },
   ];
 
-  const targetBalances: Record<string, number> = {
-    [daily.label]: 842.50,
-    [travel.label]: 1250.00,
-    [shopping.label]: 200.00,
-  };
-
-  const alreadyFunded = Object.entries(targetBalances).every(
-    ([label, target]) => cardByLabel[label] && cardByLabel[label].balance >= target
-  );
+  const alreadyFunded = cards.every(c => c.balance > 0);
 
   if (alreadyFunded) {
-    console.log("Cards already have target balances, skipping top-ups.");
+    console.log("Cards already have balances, skipping top-ups.");
     return;
   }
 
@@ -184,24 +234,26 @@ async function topUpCards(cards: CardInfo[]): Promise<void> {
       description: tu.description,
     });
     if (res.status === 200) {
-      console.log(`  Topped up card ${tu.cardId}: +${tu.amount} EUR (${tu.description})`);
+      console.log(`  Topped up card ${tu.cardId}: +${tu.amount} (${tu.description})`);
     } else {
       console.warn(`  Top-up failed for card ${tu.cardId}: ${res.status} ${JSON.stringify(res.data)}`);
     }
   }
 }
 
-async function freezeShoppingCard(cards: CardInfo[]): Promise<void> {
-  const shopping = cards.find(c => c.label === "Online Shopping");
-  if (!shopping) return;
+async function freezeCard(cards: CardInfo[], cardLabel: string | null): Promise<void> {
+  if (!cardLabel) return;
 
-  if (shopping.status === "frozen") {
-    console.log("Online Shopping card already frozen, skipping.");
+  const card = cards.find(c => c.label === cardLabel);
+  if (!card) return;
+
+  if (card.status === "frozen") {
+    console.log(`${cardLabel} card already frozen, skipping.`);
     return;
   }
 
-  console.log("Freezing Online Shopping card...");
-  const res = await api("POST", `/cards/${shopping.id}/freeze`, { frozen: true });
+  console.log(`Freezing ${cardLabel} card...`);
+  const res = await api("POST", `/cards/${card.id}/freeze`, { frozen: true });
   if (res.status === 200) {
     console.log("  Card frozen.");
   } else {
@@ -209,35 +261,11 @@ async function freezeShoppingCard(cards: CardInfo[]): Promise<void> {
   }
 }
 
-const EXPECTED_TICKET_SUBJECTS = [
-  "Transaction not showing on statement",
-  "Card declined at POS terminal",
-  "How do I change my card PIN?",
-];
-
-async function ensureSupportTickets(): Promise<void> {
+async function ensureSupportTickets(tickets: typeof USERS[number]["tickets"]): Promise<void> {
   console.log("Checking existing support tickets...");
   const existingRes = await api("GET", "/support/tickets");
   const existing = existingRes.status === 200 && Array.isArray(existingRes.data) ? existingRes.data : [];
   const existingSubjects = new Set(existing.map((t: any) => t.subject));
-
-  const tickets = [
-    {
-      subject: "Transaction not showing on statement",
-      message: "Hi, I made a purchase at Mercadona three days ago for EUR 47.82 but it is not appearing in my transaction history for my Daily Spending card. The payment was confirmed on my receipt. Could you please look into this?",
-      category: "billing",
-    },
-    {
-      subject: "Card declined at POS terminal",
-      message: "My Travel & Hotels card was declined at a restaurant in Barcelona even though I have sufficient balance. The terminal showed Card not authorized. I have tried twice. Is there a regional block on the card?",
-      category: "card",
-    },
-    {
-      subject: "How do I change my card PIN?",
-      message: "I would like to update the PIN on my Daily Spending card. I cannot find the option in the app. Could you guide me through the process or do it on your end?",
-      category: "account",
-    },
-  ];
 
   let created = 0;
   for (const ticket of tickets) {
@@ -259,19 +287,28 @@ async function ensureSupportTickets(): Promise<void> {
   }
 }
 
+async function seedUser(user: typeof USERS[number]): Promise<void> {
+  console.log(`\n--- Seeding user: ${user.email} ---`);
+  sessionCookie = "";
+  await ensureUser(user);
+  await updateProfile(user.profile);
+  const cards = await ensureCards(user.cards);
+  await topUpCards(cards, user.cards);
+  await freezeCard(cards, user.freezeCard);
+  await ensureSupportTickets(user.tickets);
+}
+
 async function main() {
   console.log(`Seeding production via API: ${BASE_URL}\n`);
 
-  await ensureUser();
-  await updateProfile();
-  const cards = await ensureCards();
-  await topUpCards(cards);
-  await freezeShoppingCard(cards);
-  await ensureSupportTickets();
+  for (const user of USERS) {
+    await seedUser(user);
+  }
 
-  console.log("\nProduction seed complete!");
-  console.log(`  Email: ${EMAIL}`);
-  console.log(`  Password: ${PASSWORD}`);
+  console.log("\n\nProduction seed complete!");
+  for (const user of USERS) {
+    console.log(`  ${user.email} / ${user.password}`);
+  }
 }
 
 main().catch((err) => {

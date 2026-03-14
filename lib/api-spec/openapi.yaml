@@ -448,7 +448,7 @@ components:
           format: email
         password:
           type: string
-          minLength: 8
+          minLength: 4
         firstName:
           type: string
         lastName:
@@ -458,8 +458,6 @@ components:
       required:
         - email
         - password
-        - firstName
-        - lastName
 
     LoginRequest:
       type: object
@@ -493,8 +491,10 @@ components:
           type: string
         firstName:
           type: string
+          nullable: true
         lastName:
           type: string
+          nullable: true
         phone:
           type: string
           nullable: true
@@ -513,8 +513,6 @@ components:
       required:
         - id
         - email
-        - firstName
-        - lastName
         - createdAt
 
     UpdateProfileRequest:

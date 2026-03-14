@@ -20,7 +20,7 @@ export interface MessageResponse {
 
 export interface RegisterRequest {
   email: string;
-  /** @minLength 8 */
+  /** @minLength 4 */
   password: string;
   firstName?: string;
   lastName?: string;
