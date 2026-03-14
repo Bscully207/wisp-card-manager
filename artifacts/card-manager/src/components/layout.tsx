@@ -233,17 +233,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </DropdownMenu>
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-6 lg:p-8 pb-[88px] md:pb-6 lg:pb-8 overflow-x-hidden">
+          <main className="flex-1 p-4 md:p-6 lg:p-8 pb-[calc(88px+env(safe-area-inset-bottom,0px))] md:pb-6 lg:pb-8 overflow-x-hidden">
             <div className="max-w-6xl mx-auto w-full">
               {children}
             </div>
           </main>
         </div>
 
-        <nav className="md:hidden fixed bottom-3 left-1/2 -translate-x-1/2 z-50">
+        <nav
+          className="md:hidden fixed left-1/2 -translate-x-1/2 z-50"
+          style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
+        >
           <div
-            className="flex items-center gap-3 px-3 bg-white dark:bg-[#1c1c1e] shadow-[0_4px_20px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
-            style={{ height: 56, borderRadius: 9999, width: 'fit-content' }}
+            className="flex items-center justify-center gap-3 px-3 bg-white dark:bg-[#1c1c1e] shadow-[0_4px_20px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] w-[340px]"
+            style={{ height: 56, borderRadius: 9999 }}
           >
             {navItems.map((item) => {
               const isActive = location === item.url || (item.url !== "/dashboard" && location.startsWith(item.url));
