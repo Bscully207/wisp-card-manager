@@ -1,0 +1,13 @@
+packages:
+  "framer-motion": "For fluid page transitions, card hover effects, and premium micro-interactions."
+  "@hookform/resolvers": "Zod validation resolver for React Hook Form."
+  "react-hook-form": "Performant, flexible and extensible forms with easy-to-use validation."
+  "zod": "TypeScript-first schema validation with static type inference."
+  "date-fns": "For formatting transaction dates and timestamps cleanly."
+  "clsx": "Utility for constructing className strings conditionally."
+  "tailwind-merge": "Utility function to efficiently merge Tailwind CSS classes."
+
+images:
+  - path: "artifacts/card-manager/public/images/auth-bg.png"
+    description: "Abstract 3D glassmorphism debit cards floating in dark navy space with electric blue glowing neon edges, shallow depth of field, highly detailed premium 8k render, fintech aesthetic."
+    aspect_ratio: "16:9"
