@@ -103,7 +103,7 @@ async function main() {
   }
 
   const txDefs: TxDef[] = [
-    { cardId: card1.id, type: "topup",   amount: 500,    description: "Initial top-up",              dayOffset: 57 },
+    { cardId: card1.id, type: "topup",   amount: 600,    description: "Initial top-up",              dayOffset: 57 },
     { cardId: card1.id, type: "payment", amount: -47.82, description: "Mercadona grocery",            dayOffset: 55 },
     { cardId: card1.id, type: "payment", amount: -12.99, description: "Netflix subscription",         dayOffset: 50 },
     { cardId: card1.id, type: "payment", amount: -3.50,  description: "Cafe La Bicicleta",            dayOffset: 48 },
@@ -115,8 +115,9 @@ async function main() {
     { cardId: card1.id, type: "payment", amount: -65.00, description: "Renfe train tickets",          dayOffset: 22 },
     { cardId: card1.id, type: "topup",   amount: 300,    description: "Weekly top-up",                dayOffset: 18 },
     { cardId: card1.id, type: "payment", amount: -34.75, description: "Zara online order",            dayOffset: 14 },
-    { cardId: card1.id, type: "payment", amount: -8.50,  description: "Glovo food delivery",          dayOffset: 10 },
-    { cardId: card1.id, type: "payment", amount: -5.40,  description: "Metro de Madrid pass",         dayOffset: 6 },
+    { cardId: card1.id, type: "payment", amount: -38.10, description: "Decathlon sports gear",        dayOffset: 11 },
+    { cardId: card1.id, type: "payment", amount: -8.50,  description: "Glovo food delivery",          dayOffset: 8 },
+    { cardId: card1.id, type: "payment", amount: -5.40,  description: "Metro de Madrid pass",         dayOffset: 5 },
     { cardId: card1.id, type: "payment", amount: -18.70, description: "Farmacia online",              dayOffset: 3 },
     { cardId: card1.id, type: "payment", amount: -35.24, description: "Carrefour weekly shop",        dayOffset: 1 },
 
