@@ -16,3 +16,8 @@ export function formatCardNumber(cardNumber: string) {
   if (!cardNumber) return "**** **** **** ****";
   return `**** **** **** ${cardNumber.slice(-4)}`;
 }
+
+export function getCurrencySymbol(currency: string = "EUR"): string {
+  const symbols: Record<string, string> = { EUR: "€", USD: "$", GBP: "£" };
+  return symbols[currency] || currency;
+}

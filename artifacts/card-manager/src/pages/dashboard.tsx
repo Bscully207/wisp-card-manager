@@ -1,17 +1,30 @@
-import { useGetCards, useGetAllTransactions } from "@workspace/api-client-react";
+import { useGetCards, useGetAllTransactions, useFreezeCard, getGetCardsQueryKey } from "@workspace/api-client-react";
 import { CreditCard } from "@/components/credit-card";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { ArrowUpRight, ArrowDownRight, Activity, Plus, CreditCard as CardIcon } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Activity, Plus, CreditCard as CardIcon, PlusCircle, Snowflake, ShieldAlert, ReceiptText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 export default function Dashboard() {
   const [_, setLocation] = useLocation();
   const { data: cards = [], isLoading: cardsLoading } = useGetCards();
   const { data: transactions = [], isLoading: txLoading } = useGetAllTransactions();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const freezeMutation = useFreezeCard({
+    mutation: {
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({ queryKey: getGetCardsQueryKey() });
+        toast({ title: data.status === 'frozen' ? "Card frozen" : "Card unfrozen" });
+      }
+    }
+  });
 
   const totalBalance = cards.reduce((sum, card) => sum + card.balance, 0);
   const recentTransactions = transactions.slice(0, 5);
@@ -41,7 +54,6 @@ export default function Dashboard() {
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Total Balance Card */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -67,7 +79,6 @@ export default function Dashboard() {
           </Card>
         </motion.div>
 
-        {/* My Cards Carousel */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -76,13 +87,52 @@ export default function Dashboard() {
         >
           {cards.length > 0 ? (
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {cards.slice(0, 2).map((card, i) => (
-                <CreditCard 
-                  key={card.id} 
-                  card={card} 
-                  onClick={() => setLocation(`/cards/${card.id}`)}
-                />
-              ))}
+              {cards.slice(0, 2).map((card) => {
+                const isFrozen = card.status === "frozen";
+                return (
+                  <div key={card.id} className="space-y-3">
+                    <CreditCard 
+                      card={card} 
+                      onClick={() => setLocation(`/cards/${card.id}`)}
+                    />
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="flex-1 rounded-xl text-xs h-8"
+                        disabled={isFrozen}
+                        onClick={() => setLocation(`/cards/${card.id}`)}
+                      >
+                        <PlusCircle className="w-3 h-3 mr-1" /> Top Up
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={cn(
+                          "flex-1 rounded-xl text-xs h-8",
+                          isFrozen && "text-blue-400 border-blue-400/50 bg-blue-500/10"
+                        )}
+                        onClick={() => freezeMutation.mutate({ cardId: card.id, data: { frozen: !isFrozen } })}
+                        disabled={freezeMutation.isPending}
+                      >
+                        {isFrozen ? (
+                          <><ShieldAlert className="w-3 h-3 mr-1" /> Unfreeze</>
+                        ) : (
+                          <><Snowflake className="w-3 h-3 mr-1" /> Freeze</>
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="rounded-xl text-xs h-8 px-2"
+                        onClick={() => setLocation(`/cards/${card.id}`)}
+                      >
+                        <ReceiptText className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <Card className="h-full border-dashed flex flex-col items-center justify-center p-8 bg-card/30">

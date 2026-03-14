@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useRoute, useLocation } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { 
   useGetCard, 
   useGetCardTransactions, 
@@ -12,12 +12,12 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CreditCard } from "@/components/credit-card";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency, cn, getCurrencySymbol } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowUpRight, ArrowDownRight, Snowflake, Trash2, PlusCircle, ShieldAlert } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, ArrowDownRight, Snowflake, Trash2, PlusCircle, ShieldAlert, Eye, ReceiptText, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
@@ -31,8 +31,10 @@ const topUpSchema = z.object({
   description: z.string().optional(),
 });
 
+const PRESET_AMOUNTS = [10, 25, 50, 100, 250];
+
 export default function CardDetails() {
-  const [match, params] = useRoute("/cards/:id");
+  const params = useParams<{ id: string }>();
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -47,6 +49,7 @@ export default function CardDetails() {
 
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [balanceOpen, setBalanceOpen] = useState(false);
 
   const form = useForm<z.infer<typeof topUpSchema>>({
     resolver: zodResolver(topUpSchema),
@@ -84,6 +87,10 @@ export default function CardDetails() {
     }
   });
 
+  const handlePresetTopUp = (amount: number) => {
+    form.setValue("amount", amount);
+  };
+
   if (cardLoading || txLoading) {
     return <div className="animate-spin w-8 h-8 border-2 border-primary rounded-full border-t-transparent mx-auto mt-20"></div>;
   }
@@ -93,6 +100,7 @@ export default function CardDetails() {
   }
 
   const isFrozen = card.status === "frozen";
+  const lastTopUp = transactions.find(tx => tx.type === "topup");
 
   return (
     <div className="space-y-8">
@@ -104,81 +112,66 @@ export default function CardDetails() {
         <div className="lg:col-span-1 space-y-6">
           <CreditCard card={card} className="pointer-events-none" />
 
-          <Card className="bg-card/50 backdrop-blur border-border/50">
-            <CardHeader>
-              <CardTitle className="text-lg">Card Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Dialog open={topUpOpen} onOpenChange={setTopUpOpen}>
-                <DialogTrigger asChild>
-                  <Button className="w-full justify-start hover-elevate" variant="secondary" disabled={isFrozen}>
-                    <PlusCircle className="w-4 h-4 mr-3" /> Top Up Balance
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Top Up Card</DialogTitle>
-                    <DialogDescription>Add funds to {card.label || 'your card'}.</DialogDescription>
-                  </DialogHeader>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit((v) => topUpMutation.mutate({ cardId, data: v }))} className="space-y-4 pt-4">
-                      <FormField
-                        control={form.control}
-                        name="amount"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Amount ({card.currency})</FormLabel>
-                            <FormControl>
-                              <Input type="number" step="0.01" className="bg-black/20 text-lg" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button type="submit" className="w-full mt-4" disabled={topUpMutation.isPending}>
-                        {topUpMutation.isPending ? "Processing..." : "Confirm Top Up"}
-                      </Button>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setTopUpOpen(true)}
+              disabled={isFrozen}
+              className={cn(
+                "flex flex-col items-center gap-2 p-4 rounded-2xl border border-border/50 bg-card/50 backdrop-blur transition-all",
+                isFrozen ? "opacity-50 cursor-not-allowed" : "hover:bg-white/10 hover:border-primary/30 active:scale-95"
+              )}
+            >
+              <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <PlusCircle className="w-6 h-6 text-emerald-400" />
+              </div>
+              <span className="text-sm font-medium">Top Up</span>
+            </button>
 
-              <Button 
-                variant="outline" 
-                className={cn("w-full justify-start", isFrozen && "text-blue-400 border-blue-400/50 bg-blue-500/10")}
-                onClick={() => freezeMutation.mutate({ cardId, data: { frozen: !isFrozen } })}
-                disabled={freezeMutation.isPending}
-              >
+            <button
+              onClick={() => setBalanceOpen(true)}
+              className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-border/50 bg-card/50 backdrop-blur transition-all hover:bg-white/10 hover:border-primary/30 active:scale-95"
+            >
+              <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <Eye className="w-6 h-6 text-blue-400" />
+              </div>
+              <span className="text-sm font-medium">Balance</span>
+            </button>
+
+            <button
+              onClick={() => freezeMutation.mutate({ cardId, data: { frozen: !isFrozen } })}
+              disabled={freezeMutation.isPending}
+              className={cn(
+                "flex flex-col items-center gap-2 p-4 rounded-2xl border border-border/50 bg-card/50 backdrop-blur transition-all active:scale-95",
+                isFrozen
+                  ? "border-blue-400/50 bg-blue-500/10 hover:bg-blue-500/20"
+                  : "hover:bg-white/10 hover:border-primary/30"
+              )}
+            >
+              <div className={cn(
+                "w-12 h-12 rounded-full flex items-center justify-center",
+                isFrozen ? "bg-blue-500/20" : "bg-orange-500/20"
+              )}>
                 {isFrozen ? (
-                  <><ShieldAlert className="w-4 h-4 mr-3" /> Unfreeze Card</>
+                  <ShieldAlert className="w-6 h-6 text-blue-400" />
                 ) : (
-                  <><Snowflake className="w-4 h-4 mr-3" /> Freeze Card</>
+                  <Snowflake className="w-6 h-6 text-orange-400" />
                 )}
-              </Button>
+              </div>
+              <span className="text-sm font-medium">
+                {isFrozen ? "Unfreeze" : "Freeze"}
+              </span>
+            </button>
 
-              <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-400 hover:bg-red-500/10">
-                    <Trash2 className="w-4 h-4 mr-3" /> Delete Card
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Are you sure?</DialogTitle>
-                    <DialogDescription>
-                      This will permanently delete the card and its history. This action cannot be undone.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="flex justify-end gap-3 mt-4">
-                    <Button variant="ghost" onClick={() => setDeleteOpen(false)}>Cancel</Button>
-                    <Button variant="destructive" onClick={() => deleteMutation.mutate({ cardId })} disabled={deleteMutation.isPending}>
-                      Yes, delete card
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </CardContent>
-          </Card>
+            <button
+              onClick={() => setDeleteOpen(true)}
+              className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-border/50 bg-card/50 backdrop-blur transition-all hover:bg-red-500/10 hover:border-red-500/30 active:scale-95"
+            >
+              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-400" />
+              </div>
+              <span className="text-sm font-medium text-red-400">Close Card</span>
+            </button>
+          </div>
         </div>
 
         <div className="lg:col-span-2">
@@ -237,6 +230,102 @@ export default function CardDetails() {
           </Card>
         </div>
       </div>
+
+      <Dialog open={topUpOpen} onOpenChange={setTopUpOpen}>
+        <DialogContent className="sm:max-w-md bg-card border-border/50 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Top Up Card</DialogTitle>
+            <DialogDescription>Add funds to {card.label || 'your card'}.</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-5 gap-2 pt-2">
+            {PRESET_AMOUNTS.map((amt) => (
+              <Button
+                key={amt}
+                type="button"
+                variant={form.watch("amount") === amt ? "default" : "outline"}
+                size="sm"
+                className="rounded-xl text-sm font-semibold"
+                onClick={() => handlePresetTopUp(amt)}
+              >
+                {getCurrencySymbol(card.currency)}{amt}
+              </Button>
+            ))}
+          </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit((v) => topUpMutation.mutate({ cardId, data: v }))} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Custom Amount ({card.currency})</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" className="bg-black/20 text-lg" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full rounded-xl" disabled={topUpMutation.isPending}>
+                {topUpMutation.isPending ? "Processing..." : "Confirm Top Up"}
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={balanceOpen} onOpenChange={setBalanceOpen}>
+        <DialogContent className="sm:max-w-sm bg-card border-border/50 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Card Balance</DialogTitle>
+            <DialogDescription>{card.label || 'Debit Card'}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center py-6 space-y-4">
+            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+              <Wallet className="w-8 h-8 text-primary" />
+            </div>
+            <div className="text-center">
+              <p className="text-4xl font-display font-bold">{formatCurrency(card.balance, card.currency)}</p>
+              <p className="text-sm text-muted-foreground mt-1">{card.currency} Account</p>
+            </div>
+            <div className="w-full border-t border-border/50 pt-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Status</span>
+                <span className={cn("font-medium capitalize", isFrozen ? "text-blue-400" : "text-emerald-400")}>
+                  {card.status}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Card Number</span>
+                <span className="font-mono">•••• {card.cardNumber.slice(-4)}</span>
+              </div>
+              {lastTopUp && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Last Top Up</span>
+                  <span>{format(new Date(lastTopUp.createdAt), "MMM d, yyyy")}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="sm:max-w-sm bg-card border-border/50 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl text-red-400">Close Card Permanently</DialogTitle>
+            <DialogDescription>
+              This will permanently delete <strong>{card.label || 'this card'}</strong> and all its transaction history. Any remaining balance of <strong>{formatCurrency(card.balance, card.currency)}</strong> will be lost. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="ghost" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => deleteMutation.mutate({ cardId })} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? "Deleting..." : "Yes, close card"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
