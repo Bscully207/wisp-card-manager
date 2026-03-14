@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useGetCards, useCreateCard, useTopUpCard, useFreezeCard, getGetCardsQueryKey, getGetCardQueryKey } from "@workspace/api-client-react";
+import { useGetCards, useTopUpCard, useFreezeCard, getGetCardsQueryKey, getGetCardQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CreditCard } from "@/components/credit-card";
 import { Plus, CreditCard as CardIcon, PlusCircle, Snowflake, ShieldAlert, Settings } from "lucide-react";
@@ -8,19 +8,13 @@ import { Button } from "@/components/ui/button";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { cn, getCurrencySymbol } from "@/lib/utils";
-
-const createCardSchema = z.object({
-  label: z.string().min(1, "Label is required"),
-  currency: z.string().default("EUR"),
-  color: z.string().default("blue"),
-});
+import { CardCreationWizard } from "@/components/card-creation-wizard";
 
 const topUpSchema = z.object({
   amount: z.coerce.number().min(0.01, "Amount must be at least 0.01"),
@@ -34,32 +28,13 @@ export default function Cards() {
   const { data: cards = [], isLoading } = useGetCards();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [topUpCardId, setTopUpCardId] = useState<number | null>(null);
   const [topUpOpen, setTopUpOpen] = useState(false);
-
-  const form = useForm<z.infer<typeof createCardSchema>>({
-    resolver: zodResolver(createCardSchema),
-    defaultValues: { label: "", currency: "EUR", color: "blue" },
-  });
 
   const topUpForm = useForm<z.infer<typeof topUpSchema>>({
     resolver: zodResolver(topUpSchema),
     defaultValues: { amount: 0, description: "Card Top Up" },
-  });
-
-  const createMutation = useCreateCard({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetCardsQueryKey() });
-        toast({ title: "Card created successfully" });
-        setOpen(false);
-        form.reset();
-      },
-      onError: (err: Error) => {
-        toast({ title: "Failed to create card", description: err.message, variant: "destructive" });
-      }
-    }
   });
 
   const topUpMutation = useTopUpCard({
@@ -87,10 +62,6 @@ export default function Cards() {
     }
   });
 
-  const onSubmit = (values: z.infer<typeof createCardSchema>) => {
-    createMutation.mutate({ data: values });
-  };
-
   const handleTopUp = (cardId: number) => {
     setTopUpCardId(cardId);
     topUpForm.reset({ amount: 0, description: "Card Top Up" });
@@ -115,7 +86,7 @@ export default function Cards() {
           <p className="text-muted-foreground text-sm md:text-base mt-1">Manage your virtual and physical cards.</p>
         </div>
         
-        <Button className="rounded-xl shadow-lg hover-elevate" size="sm" onClick={() => setOpen(true)}>
+        <Button className="rounded-xl shadow-lg hover-elevate" size="sm" onClick={() => setWizardOpen(true)}>
           <Plus className="w-4 h-4 mr-2" /> Create Card
         </Button>
       </div>
@@ -125,7 +96,7 @@ export default function Cards() {
           <CardIcon className="w-16 h-16 text-muted-foreground mb-4 opacity-40" />
           <h2 className="text-xl font-semibold mb-2">No cards active</h2>
           <p className="text-muted-foreground mb-6 max-w-sm text-sm">You haven't created any cards yet. Create your first virtual card to start transacting.</p>
-          <Button onClick={() => setOpen(true)} variant="outline">Create a Card Now</Button>
+          <Button onClick={() => setWizardOpen(true)} variant="outline">Create a Card Now</Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
@@ -188,84 +159,7 @@ export default function Cards() {
         </div>
       )}
 
-      <ResponsiveDialog
-        open={open}
-        onOpenChange={setOpen}
-        title="Create New Card"
-        description="Configure the details for your new virtual debit card."
-      >
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
-            <FormField
-              control={form.control}
-              name="label"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Card Label</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Groceries, Travel" className="bg-muted/50" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="currency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Currency</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="bg-muted/50">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="EUR">EUR (€)</SelectItem>
-                        <SelectItem value="USD">USD ($)</SelectItem>
-                        <SelectItem value="GBP">GBP (£)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Card Design</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="bg-muted/50">
-                          <SelectValue placeholder="Select color" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="blue">Electric Blue</SelectItem>
-                        <SelectItem value="black">Obsidian Black</SelectItem>
-                        <SelectItem value="silver">Titanium Silver</SelectItem>
-                        <SelectItem value="purple">Neon Purple</SelectItem>
-                        <SelectItem value="green">Emerald Green</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <Button type="submit" className="w-full mt-6 rounded-xl hover-elevate" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Creating..." : "Issue Card"}
-            </Button>
-          </form>
-        </Form>
-      </ResponsiveDialog>
+      <CardCreationWizard open={wizardOpen} onOpenChange={setWizardOpen} />
 
       <ResponsiveDialog
         open={topUpOpen}
