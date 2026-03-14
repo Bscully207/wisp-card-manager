@@ -233,21 +233,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </DropdownMenu>
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-6 lg:p-8 pb-[calc(88px+env(safe-area-inset-bottom,0px))] md:pb-6 lg:pb-8 overflow-x-hidden">
+          <main className="flex-1 p-4 md:p-6 lg:p-8 pb-24 md:pb-6 lg:pb-8 overflow-x-hidden">
             <div className="max-w-6xl mx-auto w-full">
               {children}
             </div>
           </main>
         </div>
 
-        <nav
-          className="md:hidden fixed left-1/2 -translate-x-1/2 z-50"
-          style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
-        >
-          <div
-            className="flex items-center justify-center gap-3 px-3 bg-white dark:bg-[#1c1c1e] shadow-[0_4px_20px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] w-[calc(100vw-24px)] max-w-[340px]"
-            style={{ height: 56, borderRadius: 9999 }}
-          >
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border/50 safe-area-bottom">
+          <div className="flex items-center justify-around h-16">
             {navItems.map((item) => {
               const isActive = location === item.url || (item.url !== "/dashboard" && location.startsWith(item.url));
               return (
@@ -255,17 +249,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   key={item.title}
                   href={item.url}
                   className={cn(
-                    "flex items-center justify-center min-h-[44px] transition-all duration-300 ease-in-out",
-                    isActive
-                      ? "bg-[#474747] text-[#dedede] gap-3 px-4 py-2.5"
-                      : "text-[#191619] dark:text-[#a0a0a0] px-3.5 py-2.5"
+                    "flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-colors min-h-[44px]",
+                    isActive ? "text-primary" : "text-muted-foreground"
                   )}
-                  style={{ borderRadius: 50, fontSize: 15, fontWeight: 500 }}
                 >
-                  <item.icon className="w-6 h-6 shrink-0" style={{ strokeWidth: 1.8 }} />
-                  {isActive && (
-                    <span className="whitespace-nowrap">{item.title}</span>
-                  )}
+                  <item.icon className={cn("w-5 h-5", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary))]")} />
+                  <span className="text-[10px] font-medium leading-tight">{item.title}</span>
                 </Link>
               );
             })}
