@@ -6,7 +6,7 @@ import * as z from "zod";
 import { useLogin, useRegister, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, ShieldCheck, Lock, Fingerprint, Mail, KeyRound, Eye, EyeOff, Phone, User } from "lucide-react";
+import { Loader2, ShieldCheck, Lock, Fingerprint, Mail, KeyRound, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
@@ -25,9 +25,6 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  firstName: z.string().min(2, "First name is required"),
-  lastName: z.string().min(2, "Last name is required"),
-  phone: z.string().optional(),
 });
 
 type AuthTab = "login" | "register";
@@ -250,7 +247,7 @@ function RegisterForm() {
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { email: "", password: "", firstName: "", lastName: "", phone: "" },
+    defaultValues: { email: "", password: "" },
   });
 
   const registerMutation = useRegister({
@@ -283,45 +280,6 @@ function RegisterForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 md:gap-4">
-            <FormField
-              control={form.control}
-              name="firstName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>First Name</FormLabel>
-                  <FormControl>
-                    <InputGroup className="h-12 rounded-xl border-border bg-muted/50 focus-within:border-primary/50 transition-colors">
-                      <InputGroupAddon align="inline-start">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                      </InputGroupAddon>
-                      <InputGroupInput placeholder="John" className="h-12 placeholder:text-muted-foreground/60" autoComplete="given-name" {...field} />
-                    </InputGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="lastName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Last Name</FormLabel>
-                  <FormControl>
-                    <InputGroup className="h-12 rounded-xl border-border bg-muted/50 focus-within:border-primary/50 transition-colors">
-                      <InputGroupAddon align="inline-start">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                      </InputGroupAddon>
-                      <InputGroupInput placeholder="Doe" className="h-12 placeholder:text-muted-foreground/60" autoComplete="family-name" {...field} />
-                    </InputGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
           <FormField
             control={form.control}
             name="email"
@@ -334,25 +292,6 @@ function RegisterForm() {
                       <Mail className="w-4 h-4 text-muted-foreground" />
                     </InputGroupAddon>
                     <InputGroupInput placeholder="john@example.com" className="h-12 placeholder:text-muted-foreground/60" autoComplete="email" inputMode="email" {...field} />
-                  </InputGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone (Optional)</FormLabel>
-                <FormControl>
-                  <InputGroup className="h-12 rounded-xl border-border bg-muted/50 focus-within:border-primary/50 transition-colors">
-                    <InputGroupAddon align="inline-start">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                    </InputGroupAddon>
-                    <InputGroupInput placeholder="+1 (555) 000-0000" className="h-12 placeholder:text-muted-foreground/60" autoComplete="tel" inputMode="tel" {...field} />
                   </InputGroup>
                 </FormControl>
                 <FormMessage />
@@ -414,24 +353,13 @@ function RegisterForm() {
 function BrandPanel() {
   return (
     <div className="hidden lg:flex w-1/2 relative overflow-hidden flex-col items-center justify-center p-12">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-background dark:from-primary/15 dark:via-primary/5 dark:to-card" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#e8f5f0] via-[#ede8fa] to-[#f0f4ff] dark:from-[#0d2b24] dark:via-[#1a1535] dark:to-[#0f1829]" />
 
-      <div className="absolute top-[15%] left-[10%] w-64 h-64 rounded-full bg-primary/8 dark:bg-primary/10 blur-3xl" />
-      <div className="absolute bottom-[20%] right-[5%] w-80 h-80 rounded-full bg-accent/6 dark:bg-accent/8 blur-3xl" />
-      <div className="absolute top-[60%] left-[50%] w-48 h-48 rounded-full bg-primary/5 dark:bg-primary/8 blur-2xl" />
+      <div className="absolute top-[15%] left-[10%] w-64 h-64 rounded-full bg-emerald-400/10 dark:bg-emerald-500/10 blur-3xl" />
+      <div className="absolute bottom-[20%] right-[5%] w-80 h-80 rounded-full bg-purple-400/10 dark:bg-purple-500/10 blur-3xl" />
+      <div className="absolute top-[60%] left-[50%] w-48 h-48 rounded-full bg-indigo-400/8 dark:bg-indigo-500/10 blur-2xl" />
 
       <div className="relative z-10 max-w-md text-center space-y-8">
-        <img
-          src={`${import.meta.env.BASE_URL}images/wisp-logo-design-white_1773484134261.png`}
-          alt="Wisp"
-          className="h-16 mx-auto dark:block hidden"
-        />
-        <img
-          src={`${import.meta.env.BASE_URL}images/wisp-logo-design-black_1773484130598.png`}
-          alt="Wisp"
-          className="h-16 mx-auto dark:hidden block"
-        />
-
         <blockquote className="space-y-4">
           <p className="font-display text-2xl md:text-[1.65rem] leading-relaxed font-medium text-foreground/90">
             "In a world where privacy keeps disappearing, we chose to build for it."

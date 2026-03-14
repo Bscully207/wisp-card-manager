@@ -77,7 +77,9 @@ router.post("/cards", requireAuth, async (req, res): Promise<void> => {
   const [card] = await db.insert(cardsTable).values({
     userId: req.session.userId!,
     cardNumber: generateCardNumber(),
-    cardholderName: `${user.firstName} ${user.lastName}`,
+    cardholderName: user.firstName && user.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user.email.split("@")[0].toUpperCase(),
     expiryMonth,
     expiryYear,
     cvv: generateCvv(),

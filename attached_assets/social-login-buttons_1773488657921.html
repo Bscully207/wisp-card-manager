@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Social Login Buttons – OxaPay Style</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    /* ─── Reset ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Poppins', Inter, Helvetica, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 48px;
+      padding: 40px 20px;
+    }
+
+    h2 {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #9ca3af;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    /* ─── Wrapper card ───────────────────────────────────── */
+    .card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%;
+      max-width: 440px;
+    }
+    .card.dark {
+      background: #0e0e1a;
+    }
+
+    /* ─── Divider ────────────────────────────────────────── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e5e7eb;
+    }
+    .card.dark .divider::before,
+    .card.dark .divider::after {
+      background: #2a2a3d;
+    }
+    .divider span {
+      font-size: 13px;
+      color: #9ca3af;
+      white-space: nowrap;
+    }
+
+    /* ─── Button row ─────────────────────────────────────── */
+    .social-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* ─── THE BUTTON ─────────────────────────────────────── */
+    /*
+      Exact values extracted from app.oxapay.com/login:
+        background:    #F6F8FA  (light) / #151520 (dark)
+        hover bg:      #dddfe1  (light) / #1f1f30 (dark)
+        text color:    rgb(95, 98, 118)  ≈ #5F6276
+        border-radius: 12px
+        padding:       12px 8px
+        height:        44px
+        font:          Poppins 14px / 400
+        gap:           8px
+        transition:    background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1)
+        icon size:     15 × 15 px
+        border:        none
+    */
+    .btn-social {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+
+      height: 44px;
+      padding: 12px 8px;
+      border: none;
+      border-radius: 12px;
+
+      background-color: #F6F8FA;
+      color: #5F6276;
+
+      font-family: 'Poppins', Inter, Helvetica, sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 20px;
+      letter-spacing: normal;
+
+      cursor: pointer;
+      outline: none;
+      text-decoration: none;
+
+      transition:
+        background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+        color            0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-social:hover {
+      background-color: #dddfe1;
+    }
+
+    .btn-social img,
+    .btn-social svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+    }
+
+    /* ── Dark mode variants ── */
+    .dark .btn-social {
+      background-color: #151520;
+      color: #c5c8d8;
+    }
+    .dark .btn-social:hover {
+      background-color: #1f1f30;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════ LIGHT MODE -->
+  <div class="card">
+    <h2>Light Mode</h2>
+
+    <div class="divider"><span>Or Continue With</span></div>
+
+    <div class="social-row">
+
+      <!-- Google Button -->
+      <button class="btn-social" type="button">
+        <!-- Google "G" SVG icon -->
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          <path fill="none" d="M0 0h48v48H0z"/>
+        </svg>
+        Google
+      </button>
+
+      <!-- Telegram Button -->
+      <button class="btn-social" type="button">
+        <!-- Telegram SVG icon -->
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="24" r="24" fill="#29B6F6"/>
+          <path fill="#fff" d="M34.11 14.27 10.53 23.2c-1.56.6-1.55 1.44-.28 1.81l6.12 1.91 14.14-8.92c.67-.41 1.28-.19.78.26L19.4 28.5l-.44 6.35c.64 0 .92-.29 1.27-.63l3.06-2.97 6.35 4.69c1.17.65 2.01.31 2.3-1.08l4.17-19.64c.42-1.68-.64-2.44-1.99-1.95z"/>
+        </svg>
+        Telegram
+      </button>
+
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════ DARK MODE -->
+  <div class="card dark">
+    <h2 style="color:#555875;">Dark Mode</h2>
+
+    <div class="divider"><span>Or Continue With</span></div>
+
+    <div class="social-row">
+
+      <!-- Google Button (dark) -->
+      <button class="btn-social" type="button">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          <path fill="none" d="M0 0h48v48H0z"/>
+        </svg>
+        Google
+      </button>
+
+      <!-- Telegram Button (dark) -->
+      <button class="btn-social" type="button">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="24" r="24" fill="#29B6F6"/>
+          <path fill="#fff" d="M34.11 14.27 10.53 23.2c-1.56.6-1.55 1.44-.28 1.81l6.12 1.91 14.14-8.92c.67-.41 1.28-.19.78.26L19.4 28.5l-.44 6.35c.64 0 .92-.29 1.27-.63l3.06-2.97 6.35 4.69c1.17.65 2.01.31 2.3-1.08l4.17-19.64c.42-1.68-.64-2.44-1.99-1.95z"/>
+        </svg>
+        Telegram
+      </button>
+
+    </div>
+  </div>
+
+</body>
+</html>

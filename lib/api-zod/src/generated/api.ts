@@ -22,8 +22,8 @@ export const registerBodyPasswordMin = 8;
 export const RegisterBody = zod.object({
   email: zod.string().email(),
   password: zod.string().min(registerBodyPasswordMin),
-  firstName: zod.string(),
-  lastName: zod.string(),
+  firstName: zod.string().optional(),
+  lastName: zod.string().optional(),
   phone: zod.string().optional(),
 });
 
@@ -39,8 +39,8 @@ export const LoginResponse = zod.object({
   user: zod.object({
     id: zod.number(),
     email: zod.string(),
-    firstName: zod.string(),
-    lastName: zod.string(),
+    firstName: zod.string().nullish(),
+    lastName: zod.string().nullish(),
     phone: zod.string().nullish(),
     address: zod.string().nullish(),
     city: zod.string().nullish(),
@@ -63,8 +63,8 @@ export const LogoutResponse = zod.object({
 export const GetMeResponse = zod.object({
   id: zod.number(),
   email: zod.string(),
-  firstName: zod.string(),
-  lastName: zod.string(),
+  firstName: zod.string().nullish(),
+  lastName: zod.string().nullish(),
   phone: zod.string().nullish(),
   address: zod.string().nullish(),
   city: zod.string().nullish(),
@@ -87,8 +87,8 @@ export const UpdateProfileBody = zod.object({
 export const UpdateProfileResponse = zod.object({
   id: zod.number(),
   email: zod.string(),
-  firstName: zod.string(),
-  lastName: zod.string(),
+  firstName: zod.string().nullish(),
+  lastName: zod.string().nullish(),
   phone: zod.string().nullish(),
   address: zod.string().nullish(),
   city: zod.string().nullish(),

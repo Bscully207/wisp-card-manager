@@ -27,8 +27,8 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   const [user] = await db.insert(usersTable).values({
     email,
     passwordHash,
-    firstName,
-    lastName,
+    firstName: firstName ?? null,
+    lastName: lastName ?? null,
     phone: phone ?? null,
   }).returning();
 
