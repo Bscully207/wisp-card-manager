@@ -14,9 +14,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CreditCard } from "@/components/credit-card";
 import { formatCurrency, cn, getCurrencySymbol } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowUpRight, ArrowDownRight, Snowflake, Trash2, PlusCircle, ShieldAlert, Eye, ReceiptText, Wallet } from "lucide-react";
+import { 
+  ArrowUpRight, ArrowDownRight, Snowflake, Trash2, PlusCircle, 
+  ShieldAlert, Eye, EyeOff, ReceiptText, Wallet, Mail, Save, 
+  CreditCard as CreditCardIcon, Settings as SettingsIcon, CheckCircle2, XCircle
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -33,6 +37,8 @@ const topUpSchema = z.object({
 
 const PRESET_AMOUNTS = [10, 25, 50, 100, 250];
 
+type TabType = "topup" | "details" | "settings";
+
 export default function CardDetails() {
   const params = useParams<{ id: string }>();
   const [_, setLocation] = useLocation();
@@ -47,9 +53,17 @@ export default function CardDetails() {
     query: { enabled: !!cardId }
   });
 
-  const [topUpOpen, setTopUpOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>("details");
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [balanceOpen, setBalanceOpen] = useState(false);
+  const [showCvv, setShowCvv] = useState(false);
+  const [cardName, setCardName] = useState("");
+  const [cardNameInitialized, setCardNameInitialized] = useState(false);
+  const [cardEmail, setCardEmail] = useState("");
+
+  if (card && !cardNameInitialized) {
+    setCardName(card.label || "");
+    setCardNameInitialized(true);
+  }
 
   const form = useForm<z.infer<typeof topUpSchema>>({
     resolver: zodResolver(topUpSchema),
@@ -62,7 +76,6 @@ export default function CardDetails() {
         queryClient.invalidateQueries({ queryKey: getGetCardQueryKey(cardId) });
         queryClient.invalidateQueries({ queryKey: getGetCardTransactionsQueryKey(cardId) });
         toast({ title: "Top-up successful!" });
-        setTopUpOpen(false);
         form.reset();
       }
     }
@@ -100,216 +113,325 @@ export default function CardDetails() {
   }
 
   const isFrozen = card.status === "frozen";
-  const lastTopUp = transactions
-    .filter(tx => tx.type === "topup")
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+
+  const tabs: { key: TabType; label: string; icon: React.ReactNode }[] = [
+    { key: "topup", label: "Top Up", icon: <PlusCircle className="w-4 h-4" /> },
+    { key: "details", label: "Card Details", icon: <CreditCardIcon className="w-4 h-4" /> },
+    { key: "settings", label: "Settings", icon: <SettingsIcon className="w-4 h-4" /> },
+  ];
 
   return (
-    <div className="space-y-6 md:space-y-8">
-      <Button variant="ghost" className="pl-0 hover:bg-transparent hover:text-primary -mb-2" onClick={() => setLocation("/cards")}>
-        <ArrowLeft className="w-4 h-4 mr-2" /> Back to My Cards
-      </Button>
+    <div className="space-y-6 max-w-2xl mx-auto">
+      <CreditCard card={card} className="pointer-events-none" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-        <div className="lg:col-span-1 space-y-4 md:space-y-6">
-          <CreditCard card={card} className="pointer-events-none" />
-
-          <div className="grid grid-cols-4 md:grid-cols-2 gap-2 md:gap-3">
-            <button
-              onClick={() => setTopUpOpen(true)}
-              disabled={isFrozen}
-              className={cn(
-                "flex flex-col items-center gap-1.5 md:gap-2 p-3 md:p-4 rounded-2xl border border-border/50 bg-card/50 backdrop-blur transition-all",
-                isFrozen ? "opacity-50 cursor-not-allowed" : "hover:bg-foreground/5 hover:border-primary/30 active:scale-95"
-              )}
-            >
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <PlusCircle className="w-5 h-5 md:w-6 md:h-6 text-emerald-400" />
-              </div>
-              <span className="text-[11px] md:text-sm font-medium">Top Up</span>
-            </button>
-
-            <button
-              onClick={() => setBalanceOpen(true)}
-              className="flex flex-col items-center gap-1.5 md:gap-2 p-3 md:p-4 rounded-2xl border border-border/50 bg-card/50 backdrop-blur transition-all hover:bg-foreground/5 hover:border-primary/30 active:scale-95"
-            >
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                <Eye className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
-              </div>
-              <span className="text-[11px] md:text-sm font-medium">Balance</span>
-            </button>
-
-            <button
-              onClick={() => freezeMutation.mutate({ cardId, data: { frozen: !isFrozen } })}
-              disabled={freezeMutation.isPending}
-              className={cn(
-                "flex flex-col items-center gap-1.5 md:gap-2 p-3 md:p-4 rounded-2xl border border-border/50 bg-card/50 backdrop-blur transition-all active:scale-95",
-                isFrozen
-                  ? "border-blue-400/50 bg-blue-500/10 hover:bg-blue-500/20"
-                  : "hover:bg-foreground/5 hover:border-primary/30"
-              )}
-            >
-              <div className={cn(
-                "w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center",
-                isFrozen ? "bg-blue-500/20" : "bg-orange-500/20"
-              )}>
-                {isFrozen ? (
-                  <ShieldAlert className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
-                ) : (
-                  <Snowflake className="w-5 h-5 md:w-6 md:h-6 text-orange-400" />
-                )}
-              </div>
-              <span className="text-[11px] md:text-sm font-medium">
-                {isFrozen ? "Unfreeze" : "Freeze"}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setDeleteOpen(true)}
-              className="flex flex-col items-center gap-1.5 md:gap-2 p-3 md:p-4 rounded-2xl border border-border/50 bg-card/50 backdrop-blur transition-all hover:bg-red-500/10 hover:border-red-500/30 active:scale-95"
-            >
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-red-500/20 flex items-center justify-center">
-                <Trash2 className="w-5 h-5 md:w-6 md:h-6 text-red-400" />
-              </div>
-              <span className="text-[11px] md:text-sm font-medium text-red-400">Close</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="lg:col-span-2">
-          <Card className="h-full border-border/50 bg-card/50 backdrop-blur shadow-xl">
-            <CardHeader className="px-4 md:px-6">
-              <CardTitle className="text-base md:text-lg">Transaction History</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 md:px-6">
-              {transactions.length > 0 ? (
-                <div className="space-y-3 md:space-y-4">
-                  {transactions.map((tx) => {
-                    const isPositive = tx.type === "topup" || tx.type === "refund";
-                    return (
-                      <motion.div 
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        key={tx.id} 
-                        className="flex items-center justify-between p-3 md:p-4 rounded-xl bg-foreground/5 border border-foreground/5 hover:bg-foreground/10 transition-colors"
-                      >
-                        <div className="flex items-center gap-3 md:gap-4 min-w-0">
-                          <div className={cn(
-                            "w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-inner shrink-0",
-                            isPositive ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"
-                          )}>
-                            {isPositive ? <ArrowUpRight className="w-5 h-5 md:w-6 md:h-6" /> : <ArrowDownRight className="w-5 h-5 md:w-6 md:h-6" />}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-medium text-sm md:text-lg capitalize truncate">{tx.type} <span className="text-muted-foreground text-xs md:text-sm font-normal lowercase ml-1 hidden sm:inline">{tx.description && `- ${tx.description}`}</span></p>
-                            <p className="text-[10px] md:text-sm text-muted-foreground">{format(new Date(tx.createdAt), "MMM d, yyyy • h:mm a")}</p>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0 ml-2">
-                          <div className={cn("font-bold text-base md:text-xl font-display", isPositive ? "text-emerald-400" : "text-foreground")}>
-                            {isPositive ? "+" : "-"}{formatCurrency(tx.amount, card.currency)}
-                          </div>
-                          <span className={cn(
-                            "text-[9px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full inline-block mt-1 uppercase font-semibold",
-                            tx.status === 'completed' ? "bg-emerald-500/20 text-emerald-300" : 
-                            tx.status === 'pending' ? "bg-yellow-500/20 text-yellow-300" : "bg-red-500/20 text-red-300"
-                          )}>
-                            {tx.status}
-                          </span>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center">
-                  <ReceiptText className="w-12 h-12 text-muted-foreground mb-4 opacity-30" />
-                  <h3 className="text-lg font-medium">No transactions yet</h3>
-                  <p className="text-muted-foreground text-sm">Top up your card to start making transactions.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+      <div className="grid grid-cols-3 gap-2">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={cn(
+              "flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-medium transition-all",
+              activeTab === tab.key
+                ? "bg-primary text-primary-foreground shadow-lg"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/50"
+            )}
+          >
+            {tab.icon}
+            <span className="hidden sm:inline">{tab.label}</span>
+            <span className="sm:hidden text-xs">{tab.label.split(" ").pop()}</span>
+          </button>
+        ))}
       </div>
 
-      <ResponsiveDialog
-        open={topUpOpen}
-        onOpenChange={setTopUpOpen}
-        title="Top Up Card"
-        description={`Add funds to ${card.label || 'your card'}.`}
-      >
-        <div className="grid grid-cols-5 gap-2 pt-2">
-          {PRESET_AMOUNTS.map((amt) => (
-            <Button
-              key={amt}
-              type="button"
-              variant={form.watch("amount") === amt ? "default" : "outline"}
-              size="sm"
-              className="rounded-xl text-sm font-semibold"
-              onClick={() => handlePresetTopUp(amt)}
-            >
-              {getCurrencySymbol(card.currency)}{amt}
-            </Button>
-          ))}
-        </div>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit((v) => topUpMutation.mutate({ cardId, data: v }))} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Custom Amount ({card.currency})</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" className="bg-muted/50 text-lg" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full rounded-xl" disabled={topUpMutation.isPending}>
-              {topUpMutation.isPending ? "Processing..." : "Confirm Top Up"}
-            </Button>
-          </form>
-        </Form>
-      </ResponsiveDialog>
+      <div className="flex gap-3">
+        <button className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-black text-white text-sm font-medium border border-border/30 opacity-50 cursor-not-allowed">
+          <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+          Add to Apple Pay
+        </button>
+        <button className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white text-black text-sm font-medium border border-border/30 opacity-50 cursor-not-allowed dark:bg-muted dark:text-foreground">
+          <svg viewBox="0 0 24 24" className="w-5 h-5"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          Add to Google Pay
+        </button>
+      </div>
 
-      <ResponsiveDialog
-        open={balanceOpen}
-        onOpenChange={setBalanceOpen}
-        title="Card Balance"
-        description={card.label || 'Debit Card'}
-        className="sm:max-w-sm bg-card border-border/50 shadow-2xl"
-      >
-        <div className="flex flex-col items-center py-4 md:py-6 space-y-4">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-            <Wallet className="w-8 h-8 text-primary" />
-          </div>
-          <div className="text-center">
-            <p className="text-3xl md:text-4xl font-display font-bold">{formatCurrency(card.balance, card.currency)}</p>
-            <p className="text-sm text-muted-foreground mt-1">{card.currency} Account</p>
-          </div>
-          <div className="w-full border-t border-border/50 pt-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Status</span>
-              <span className={cn("font-medium capitalize", isFrozen ? "text-blue-400" : "text-emerald-400")}>
-                {card.status}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Card Number</span>
-              <span className="font-mono">•••• {card.cardNumber.slice(-4)}</span>
-            </div>
-            {lastTopUp && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Last Top Up</span>
-                <span>{format(new Date(lastTopUp.createdAt), "MMM d, yyyy")}</span>
+      {activeTab === "topup" && (
+        <Card className="border-border/50 bg-card/50 backdrop-blur">
+          <CardContent className="p-4 md:p-6 space-y-4">
+            <h3 className="font-display text-lg font-semibold">Top Up Card</h3>
+            {isFrozen ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Snowflake className="w-8 h-8 mx-auto mb-2 text-blue-400" />
+                <p>Card is frozen. Unfreeze it to top up.</p>
               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-5 gap-2">
+                  {PRESET_AMOUNTS.map((amt) => (
+                    <Button
+                      key={amt}
+                      type="button"
+                      variant={form.watch("amount") === amt ? "default" : "outline"}
+                      size="sm"
+                      className="rounded-xl text-sm font-semibold"
+                      onClick={() => handlePresetTopUp(amt)}
+                    >
+                      {getCurrencySymbol(card.currency)}{amt}
+                    </Button>
+                  ))}
+                </div>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit((v) => topUpMutation.mutate({ cardId, data: v }))} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="amount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Custom Amount ({card.currency})</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.01" className="bg-muted/50 text-lg" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" className="w-full rounded-xl" disabled={topUpMutation.isPending}>
+                      {topUpMutation.isPending ? "Processing..." : "Confirm Top Up"}
+                    </Button>
+                  </form>
+                </Form>
+              </>
             )}
-          </div>
-        </div>
-      </ResponsiveDialog>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === "details" && (
+        <Card className="border-border/50 bg-card/50 backdrop-blur">
+          <CardContent className="p-4 md:p-6 space-y-6">
+            <div>
+              <h3 className="font-display text-lg font-semibold mb-1">About your card</h3>
+              <p className="text-sm text-muted-foreground">View and manage your card information.</p>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Card Information</h4>
+              
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Card Name</label>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    value={cardName}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 70) setCardName(e.target.value);
+                    }}
+                    className="bg-muted/50 flex-1"
+                    placeholder="Enter card name"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0 rounded-lg"
+                    onClick={() => toast({ title: "Card name saved" })}
+                  >
+                    <Save className="w-3.5 h-3.5 mr-1" /> Save
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground text-right">{cardName.length}/70</p>
+              </div>
+
+              <InfoRow label="Brand" value="VISA" />
+              <InfoRow label="Card Number" value={`**** **** **** ${card.cardNumber.slice(-4)}`} mono />
+              <InfoRow label="Expiry Date" value={`${card.expiryMonth.toString().padStart(2, '0')}/${card.expiryYear.toString().slice(-2)}`} mono />
+              <InfoRow label="Currency" value={card.currency} />
+              <InfoRow 
+                label="Status" 
+                value={
+                  <span className={cn(
+                    "px-2 py-0.5 rounded-full text-xs font-semibold uppercase",
+                    card.status === "active" ? "bg-emerald-500/20 text-emerald-400" :
+                    card.status === "frozen" ? "bg-blue-500/20 text-blue-400" :
+                    "bg-red-500/20 text-red-400"
+                  )}>
+                    {card.status}
+                  </span>
+                } 
+              />
+              <InfoRow label="Cardholder Name" value={card.cardholderName} />
+              <InfoRow label="Created" value={format(new Date(card.createdAt), "MMM d, yyyy")} />
+              
+              <div className="flex items-center justify-between py-2 border-b border-border/30">
+                <span className="text-sm text-muted-foreground">CVV</span>
+                <button 
+                  onClick={() => setShowCvv(!showCvv)}
+                  className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
+                >
+                  <span className="font-mono">{showCvv ? card.cvv : "***"}</span>
+                  {showCvv ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Financial Details</h4>
+              <InfoRow label="Available Balance" value={`${formatCurrency(card.balance, card.currency)}`} bold />
+              
+              <div className="space-y-2 pl-1">
+                <p className="text-sm font-medium">Card Fees</p>
+                <div className="pl-3 space-y-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Card Issuance Fee</span>
+                    <span>25 $</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground pl-2">Includes platform fee of 1 $</p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Card Top-up Fee</span>
+                    <span>3%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Virtual Card – Supported</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <XCircle className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Physical Card – Not Supported</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === "settings" && (
+        <Card className="border-border/50 bg-card/50 backdrop-blur">
+          <CardContent className="p-4 md:p-6 space-y-6">
+            <div>
+              <h3 className="font-display text-lg font-semibold mb-1">Card Settings</h3>
+              <p className="text-sm text-muted-foreground">Manage your card preferences and actions.</p>
+            </div>
+
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start rounded-xl h-14 text-left",
+                  isFrozen && "border-blue-400/50 bg-blue-500/10"
+                )}
+                onClick={() => freezeMutation.mutate({ cardId, data: { frozen: !isFrozen } })}
+                disabled={freezeMutation.isPending}
+              >
+                {isFrozen ? (
+                  <ShieldAlert className="w-5 h-5 mr-3 text-blue-400" />
+                ) : (
+                  <Snowflake className="w-5 h-5 mr-3 text-orange-400" />
+                )}
+                <div>
+                  <p className="font-medium">{isFrozen ? "Unfreeze Card" : "Freeze Card"}</p>
+                  <p className="text-xs text-muted-foreground">{isFrozen ? "Re-enable transactions on this card" : "Temporarily disable all transactions"}</p>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full justify-start rounded-xl h-14 text-left border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="w-5 h-5 mr-3 text-red-400" />
+                <div>
+                  <p className="font-medium text-red-400">Delete / Close Card</p>
+                  <p className="text-xs text-muted-foreground">Permanently close this card</p>
+                </div>
+              </Button>
+            </div>
+
+            <div className="border-t border-border/50 pt-4 space-y-3">
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Update Card Email</h4>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    value={cardEmail}
+                    onChange={(e) => setCardEmail(e.target.value)}
+                    placeholder="new@email.com"
+                    className="bg-muted/50 pl-10"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0 rounded-lg"
+                  onClick={() => {
+                    if (cardEmail.trim()) {
+                      toast({ title: "Saved", description: "Card email updated successfully." });
+                      setCardEmail("");
+                    }
+                  }}
+                >
+                  <Save className="w-3.5 h-3.5 mr-1" /> Save
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="border-border/50 bg-card/50 backdrop-blur shadow-xl">
+        <CardContent className="p-4 md:p-6">
+          <h3 className="font-display text-base md:text-lg font-semibold mb-4 flex items-center gap-2">
+            <ReceiptText className="w-4 h-4 text-muted-foreground" /> Transaction History
+          </h3>
+          {transactions.length > 0 ? (
+            <div className="space-y-3">
+              {transactions.map((tx) => {
+                const isPositive = tx.type === "topup" || tx.type === "refund";
+                return (
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    key={tx.id} 
+                    className="flex items-center justify-between p-3 md:p-4 rounded-xl bg-foreground/5 border border-foreground/5 hover:bg-foreground/10 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                      <div className={cn(
+                        "w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-inner shrink-0",
+                        isPositive ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"
+                      )}>
+                        {isPositive ? <ArrowUpRight className="w-5 h-5 md:w-6 md:h-6" /> : <ArrowDownRight className="w-5 h-5 md:w-6 md:h-6" />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm md:text-lg capitalize truncate">{tx.type} <span className="text-muted-foreground text-xs md:text-sm font-normal lowercase ml-1 hidden sm:inline">{tx.description && `- ${tx.description}`}</span></p>
+                        <p className="text-[10px] md:text-sm text-muted-foreground">{format(new Date(tx.createdAt), "MMM d, yyyy • h:mm a")}</p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 ml-2">
+                      <div className={cn("font-bold text-base md:text-xl font-display", isPositive ? "text-emerald-400" : "text-foreground")}>
+                        {isPositive ? "+" : "-"}{formatCurrency(tx.amount, card.currency)}
+                      </div>
+                      <span className={cn(
+                        "text-[9px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full inline-block mt-1 uppercase font-semibold",
+                        tx.status === 'completed' ? "bg-emerald-500/20 text-emerald-300" : 
+                        tx.status === 'pending' ? "bg-yellow-500/20 text-yellow-300" : "bg-red-500/20 text-red-300"
+                      )}>
+                        {tx.status}
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center">
+              <ReceiptText className="w-12 h-12 text-muted-foreground mb-4 opacity-30" />
+              <h3 className="text-lg font-medium">No transactions yet</h3>
+              <p className="text-muted-foreground text-sm">Top up your card to start making transactions.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <ResponsiveDialog
         open={deleteOpen}
@@ -325,6 +447,15 @@ export default function CardDetails() {
           </Button>
         </div>
       </ResponsiveDialog>
+    </div>
+  );
+}
+
+function InfoRow({ label, value, mono, bold }: { label: string; value: React.ReactNode; mono?: boolean; bold?: boolean }) {
+  return (
+    <div className="flex items-center justify-between py-2 border-b border-border/30">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className={cn("text-sm text-right", mono && "font-mono", bold && "font-bold text-base")}>{value}</span>
     </div>
   );
 }

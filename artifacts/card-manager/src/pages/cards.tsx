@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useGetCards, useCreateCard, useTopUpCard, useFreezeCard, getGetCardsQueryKey, getGetCardQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CreditCard } from "@/components/credit-card";
-import { Plus, CreditCard as CardIcon, PlusCircle, Snowflake, ShieldAlert, ArrowRight } from "lucide-react";
+import { Plus, CreditCard as CardIcon, PlusCircle, Snowflake, ShieldAlert, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -143,7 +143,7 @@ export default function Cards() {
                   card={card} 
                   onClick={() => setLocation(`/cards/${card.id}`)}
                 />
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="flex items-center gap-2">
                   <Button
                     size="sm"
                     variant="secondary"
@@ -173,12 +173,13 @@ export default function Cards() {
                     )}
                   </Button>
                   <Button
-                    size="sm"
-                    variant="ghost"
-                    className="rounded-xl text-xs h-9 px-3"
+                    size="icon"
+                    variant="outline"
+                    className="rounded-full w-9 h-9 shrink-0"
                     onClick={() => setLocation(`/cards/${card.id}`)}
+                    title="Card settings"
                   >
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <Settings className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               </motion.div>

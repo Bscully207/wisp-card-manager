@@ -3,7 +3,7 @@ import { useGetCards, useGetAllTransactions, useFreezeCard, useTopUpCard, getGet
 import { CreditCard } from "@/components/credit-card";
 import { formatCurrency, cn, getCurrencySymbol } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { ArrowUpRight, ArrowDownRight, Activity, Plus, CreditCard as CardIcon, PlusCircle, Snowflake, ShieldAlert, ReceiptText } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Activity, Plus, CreditCard as CardIcon, PlusCircle, Snowflake, ShieldAlert, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
@@ -171,13 +171,13 @@ export default function Dashboard() {
                         )}
                       </Button>
                       <Button
-                        size="sm"
-                        variant="ghost"
-                        className="rounded-xl text-xs h-9 px-2"
+                        size="icon"
+                        variant="outline"
+                        className="rounded-full w-9 h-9 shrink-0"
                         onClick={() => setLocation(`/cards/${card.id}`)}
-                        title="See Transactions"
+                        title="Card settings"
                       >
-                        <ReceiptText className="w-3 h-3" />
+                        <Settings className="w-3 h-3" />
                       </Button>
                     </div>
                   </div>
