@@ -22,7 +22,7 @@ const topUpSchema = z.object({
   description: z.string().optional(),
 });
 
-const PRESET_AMOUNTS = [10, 25, 50, 100, 250];
+const PRESET_AMOUNTS = [50, 100, 1000];
 
 export default function Dashboard() {
   const [_, setLocation] = useLocation();
@@ -32,6 +32,7 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [topUpCardId, setTopUpCardId] = useState<number | null>(null);
   const [topUpOpen, setTopUpOpen] = useState(false);
+  const [showCustomTopUp, setShowCustomTopUp] = useState(false);
 
   const topUpForm = useForm<z.infer<typeof topUpSchema>>({
     resolver: zodResolver(topUpSchema),
@@ -67,11 +68,13 @@ export default function Dashboard() {
   const handleTopUp = (cardId: number) => {
     setTopUpCardId(cardId);
     topUpForm.reset({ amount: 0, description: "Card Top Up" });
+    setShowCustomTopUp(false);
     setTopUpOpen(true);
   };
 
   const handlePresetTopUp = (amount: number) => {
     topUpForm.setValue("amount", amount);
+    setShowCustomTopUp(false);
   };
 
   const selectedCard = cards.find(c => c.id === topUpCardId);
@@ -116,7 +119,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl md:text-5xl font-display font-bold text-foreground mt-2 amount">
+              <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-foreground mt-2 amount break-all">
                 {formatCurrency(totalBalance, "EUR")}
               </div>
               <div className="mt-4 md:mt-6 flex gap-3">
@@ -248,12 +251,12 @@ export default function Dashboard() {
         title="Top Up Card"
         description={`Add funds to ${selectedCard?.label || 'your card'}.`}
       >
-        <div className="grid grid-cols-5 gap-2 pt-2">
+        <div className="grid grid-cols-4 gap-2 pt-2">
           {PRESET_AMOUNTS.map((amt) => (
             <Button
               key={amt}
               type="button"
-              variant={topUpForm.watch("amount") === amt ? "default" : "outline"}
+              variant={!showCustomTopUp && topUpForm.watch("amount") === amt ? "default" : "outline"}
               size="sm"
               className="rounded-xl text-sm font-semibold"
               onClick={() => handlePresetTopUp(amt)}
@@ -261,6 +264,15 @@ export default function Dashboard() {
               {getCurrencySymbol(selectedCard?.currency)}{amt}
             </Button>
           ))}
+          <Button
+            type="button"
+            variant={showCustomTopUp ? "default" : "outline"}
+            size="sm"
+            className="rounded-xl text-sm font-semibold"
+            onClick={() => { setShowCustomTopUp(true); topUpForm.setValue("amount", 0); }}
+          >
+            Other
+          </Button>
         </div>
         <Form {...topUpForm}>
           <form
@@ -269,19 +281,21 @@ export default function Dashboard() {
             })}
             className="space-y-4"
           >
-            <FormField
-              control={topUpForm.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Custom Amount ({selectedCard?.currency || "EUR"})</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" className="bg-muted/50 text-lg" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {showCustomTopUp && (
+              <FormField
+                control={topUpForm.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Custom Amount ({selectedCard?.currency || "EUR"})</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" className="bg-muted/50 text-lg" placeholder="Enter amount" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <Button type="submit" className="w-full rounded-xl" disabled={topUpMutation.isPending}>
               {topUpMutation.isPending ? "Processing..." : "Confirm Top Up"}
             </Button>

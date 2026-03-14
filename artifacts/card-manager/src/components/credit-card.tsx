@@ -55,7 +55,7 @@ export function CreditCard({ card, className, onClick }: CreditCardProps) {
             <p className="text-white/70 text-xs font-medium uppercase tracking-wider mb-1">
               {card.label || "Debit Card"}
             </p>
-            <h3 className="font-display text-2xl font-bold tracking-tight amount">
+            <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight amount truncate">
               {formatCurrency(card.balance, card.currency)}
             </h3>
           </div>

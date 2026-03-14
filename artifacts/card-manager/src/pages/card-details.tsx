@@ -35,7 +35,7 @@ const topUpSchema = z.object({
   description: z.string().optional(),
 });
 
-const PRESET_AMOUNTS = [10, 25, 50, 100, 250];
+const PRESET_AMOUNTS = [50, 100, 1000];
 
 type TabType = "topup" | "details" | "settings";
 
@@ -59,6 +59,7 @@ export default function CardDetails() {
   const [showCvv, setShowCvv] = useState(false);
   const [cardName, setCardName] = useState("");
   const [cardEmail, setCardEmail] = useState("");
+  const [showCustomTopUp, setShowCustomTopUp] = useState(false);
 
   useEffect(() => {
     if (card) setCardName(card.label || "");
@@ -102,6 +103,7 @@ export default function CardDetails() {
 
   const handlePresetTopUp = (amount: number) => {
     form.setValue("amount", amount);
+    setShowCustomTopUp(false);
   };
 
   if (cardLoading || txLoading) {
@@ -396,12 +398,12 @@ export default function CardDetails() {
         title="Top Up Card"
         description={`Add funds to ${card.label || 'your card'}.`}
       >
-        <div className="grid grid-cols-5 gap-2 pt-2">
+        <div className="grid grid-cols-4 gap-2 pt-2">
           {PRESET_AMOUNTS.map((amt) => (
             <Button
               key={amt}
               type="button"
-              variant={form.watch("amount") === amt ? "default" : "outline"}
+              variant={!showCustomTopUp && form.watch("amount") === amt ? "default" : "outline"}
               size="sm"
               className="rounded-xl text-sm font-semibold"
               onClick={() => handlePresetTopUp(amt)}
@@ -409,22 +411,33 @@ export default function CardDetails() {
               {getCurrencySymbol(card.currency)}{amt}
             </Button>
           ))}
+          <Button
+            type="button"
+            variant={showCustomTopUp ? "default" : "outline"}
+            size="sm"
+            className="rounded-xl text-sm font-semibold"
+            onClick={() => { setShowCustomTopUp(true); form.setValue("amount", 0); }}
+          >
+            Other
+          </Button>
         </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit((v) => topUpMutation.mutate({ cardId, data: v }))} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Custom Amount ({card.currency})</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" className="bg-muted/50 text-lg" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {showCustomTopUp && (
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Custom Amount ({card.currency})</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" className="bg-muted/50 text-lg" placeholder="Enter amount" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <Button type="submit" className="w-full rounded-xl" disabled={topUpMutation.isPending}>
               {topUpMutation.isPending ? "Processing..." : "Confirm Top Up"}
             </Button>

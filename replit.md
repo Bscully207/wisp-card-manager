@@ -110,8 +110,15 @@ React + Vite frontend. Mobile-first responsive design with Telegram Mini App sup
 - `cards.tsx` — card list + create card + top-up
 - `card-details.tsx` — single card with 4-col action tiles (mobile) or 2-col (desktop)
 - `transactions.tsx` — card list view on mobile, table on desktop
-- `profile.tsx` — single-column forms on mobile, side-by-side on desktop
+- `settings.tsx` — comprehensive settings: profile (read-only + edit/save), security (change password), appearance (theme toggle), legal (T&C/Privacy), help (contact support)
 - `support.tsx` — support tickets
+- `profile.tsx` — DEPRECATED, /profile redirects to /settings
+
+**Navigation**:
+- Desktop sidebar: logo + collapse trigger in header, nav items, user dropdown footer (Settings, Support, Theme cycle, Logout)
+- Mobile: top header (back button on sub-pages, logo, user avatar dropdown), bottom tab bar (Dashboard, Cards, Transactions)
+- No standalone theme button; theme cycling integrated into user dropdowns on both mobile and desktop
+- Top-up presets: $50, $100, $1000, "Other" (reveals custom input) — consistent across dashboard, cards, and card-details pages
 
 **CSS**:
 - Safe area insets via `safe-area-bottom` / `safe-area-top` classes

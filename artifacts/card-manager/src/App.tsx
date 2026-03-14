@@ -14,7 +14,6 @@ import Dashboard from "@/pages/dashboard";
 import Cards from "@/pages/cards";
 import CardDetails from "@/pages/card-details";
 import Transactions from "@/pages/transactions";
-import Profile from "@/pages/profile";
 import Support from "@/pages/support";
 import SettingsPage from "@/pages/settings";
 
@@ -66,7 +65,7 @@ function AppRouter() {
         <Route path="/cards/:id">{() => <WrappedPage><CardDetails /></WrappedPage>}</Route>
         <Route path="/cards">{() => <WrappedPage><Cards /></WrappedPage>}</Route>
         <Route path="/transactions">{() => <WrappedPage><Transactions /></WrappedPage>}</Route>
-        <Route path="/profile">{() => <WrappedPage><Profile /></WrappedPage>}</Route>
+        <Route path="/profile">{() => <Redirect to="/settings" />}</Route>
         <Route path="/support">{() => <WrappedPage><Support /></WrappedPage>}</Route>
         <Route path="/settings">{() => <WrappedPage><SettingsPage /></WrappedPage>}</Route>
         <Redirect to="/login" />

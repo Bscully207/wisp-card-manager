@@ -49,30 +49,7 @@ const navItems = [
 
 export const ROOT_PATHS = ["/dashboard", "/cards", "/transactions"];
 
-function ThemeCycleButton() {
-  const { theme, setTheme } = useTheme();
-
-  const cycle = () => {
-    if (theme === "light") setTheme("dark");
-    else if (theme === "dark") setTheme("system");
-    else setTheme("light");
-  };
-
-  const Icon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
-  const label = theme === "light" ? "Light" : theme === "dark" ? "Dark" : "System";
-
-  return (
-    <button
-      onClick={cycle}
-      className="flex items-center justify-center w-9 h-9 rounded-lg bg-muted/50 border border-border/50 text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-      title={`Theme: ${label} (click to cycle)`}
-    >
-      <Icon className="h-4 w-4" />
-    </button>
-  );
-}
-
-function MobileThemeMenuItem() {
+function ThemeMenuItem() {
   const { theme, setTheme } = useTheme();
   const cycle = () => {
     if (theme === "light") setTheme("dark");
@@ -131,11 +108,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen w-full bg-background text-foreground selection:bg-primary/30">
         <div className="hidden md:block">
           <Sidebar className="border-r border-border/50 bg-card/30 backdrop-blur-xl">
-            <SidebarHeader className="h-16 flex items-center px-6 border-b border-border/50">
+            <SidebarHeader className="h-16 flex items-center justify-between px-6 border-b border-border/50">
               <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity">
                 <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-white_1773484134261.png`} alt="Wisp" className="h-8 dark:block hidden" />
                 <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-black_1773484130598.png`} alt="Wisp" className="h-8 dark:hidden block" />
               </Link>
+              <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             </SidebarHeader>
             <SidebarContent className="px-4 py-6">
               <SidebarGroup>
@@ -164,9 +142,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </SidebarGroup>
             </SidebarContent>
             <SidebarFooter className="p-4 border-t border-border/50">
-              <div className="flex items-center justify-between px-3 mb-3">
-                <ThemeCycleButton />
-              </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg hover:bg-foreground/5 transition-colors cursor-pointer text-left">
@@ -181,18 +156,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top" align="start" className="w-56">
-                  <DropdownMenuItem onClick={() => setLocation("/profile")} className="cursor-pointer">
-                    <UserIcon className="w-4 h-4 mr-2" />
-                    Profile
+                  <DropdownMenuItem onClick={() => setLocation("/settings")} className="cursor-pointer">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setLocation("/support")} className="cursor-pointer">
                     <LifeBuoy className="w-4 h-4 mr-2" />
                     Support
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setLocation("/settings")} className="cursor-pointer">
-                    <Settings className="w-4 h-4 mr-2" />
-                    App Settings
-                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <ThemeMenuItem />
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => logoutMutation.mutate({})}
@@ -229,9 +202,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-black_1773484130598.png`} alt="Wisp" className="h-7 dark:hidden block" />
               </Link>
             </div>
-            <div className="hidden md:flex items-center">
-              <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-            </div>
             <div className="flex-1" />
             <div className="md:hidden flex items-center gap-1">
               <DropdownMenu>
@@ -241,20 +211,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => setLocation("/profile")} className="cursor-pointer">
-                    <UserIcon className="w-4 h-4 mr-2" />
-                    Profile
+                  <DropdownMenuItem onClick={() => setLocation("/settings")} className="cursor-pointer">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setLocation("/support")} className="cursor-pointer">
                     <LifeBuoy className="w-4 h-4 mr-2" />
                     Support
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setLocation("/settings")} className="cursor-pointer">
-                    <Settings className="w-4 h-4 mr-2" />
-                    App Settings
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <MobileThemeMenuItem />
+                  <ThemeMenuItem />
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => logoutMutation.mutate({})}
