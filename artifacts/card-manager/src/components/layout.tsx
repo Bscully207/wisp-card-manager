@@ -12,7 +12,8 @@ import {
   Monitor,
   ChevronLeft,
   Settings,
-  ChevronUp
+  ChevronUp,
+  Bell
 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { 
@@ -203,10 +204,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </Link>
             </div>
             <div className="flex-1" />
-            <div className="md:hidden flex items-center gap-1">
+            <div className="md:hidden flex items-center gap-1.5">
+              <button className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors">
+                <Bell className="w-[18px] h-[18px]" />
+              </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center justify-center w-9 h-9 rounded-full bg-primary/20 text-primary font-bold text-xs">
+                  <button className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold text-[10px]">
                     {user.firstName?.[0] || user.email[0].toUpperCase()}{user.lastName?.[0] || ""}
                   </button>
                 </DropdownMenuTrigger>
@@ -233,7 +237,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </DropdownMenu>
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-6 lg:p-8 pb-24 md:pb-6 lg:pb-8 overflow-x-hidden">
+          <main className="flex-1 px-4 py-3 md:p-6 lg:p-8 pb-24 md:pb-6 lg:pb-8 overflow-x-hidden">
             <div className="max-w-6xl mx-auto w-full">
               {children}
             </div>

@@ -3,7 +3,7 @@ import { useGetCards, useGetAllTransactions, useFreezeCard, useTopUpCard, getGet
 import { CreditCard } from "@/components/credit-card";
 import { formatCurrency, cn, getCurrencySymbol } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { ArrowUpRight, ArrowDownRight, Activity, Plus, CreditCard as CardIcon, PlusCircle, Snowflake, ShieldAlert, Settings } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Plus, CreditCard as CardIcon, PlusCircle, Snowflake, ShieldAlert, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
@@ -90,146 +90,128 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-4 md:space-y-6">
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"
       >
-        <div>
-          <h1 className="font-display text-2xl md:text-4xl font-bold tracking-tight">Overview</h1>
-          <p className="text-muted-foreground text-sm md:text-base mt-1">Welcome back. Here's a summary of your accounts.</p>
+        <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-medium">Total balance</p>
+        <div className="flex items-end justify-between gap-4 mt-1">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold tracking-tight amount">
+            {formatCurrency(totalBalance, "EUR")}
+          </h2>
+          <Button
+            onClick={() => setLocation("/cards")}
+            className="rounded-full shadow-md h-10 px-5 text-sm font-semibold shrink-0"
+          >
+            <Plus className="w-4 h-4 mr-1.5" /> Create Card
+          </Button>
         </div>
-        <Button onClick={() => setLocation("/cards")} className="rounded-xl shadow-lg hover-elevate" size="sm">
-          <Plus className="w-4 h-4 mr-2" /> New Card
-        </Button>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
+      {cards.length > 0 ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="lg:col-span-1"
         >
-          <Card className="bg-card border-border/50 shadow-xl overflow-hidden h-full">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                <Activity className="w-4 h-4 text-primary" /> Total Balance
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-foreground mt-2 amount break-all">
-                {formatCurrency(totalBalance, "EUR")}
-              </div>
-              <div className="mt-4 md:mt-6 flex gap-3">
-                <Button variant="outline" className="flex-1 bg-foreground/5 border-foreground/10 hover:bg-foreground/10" onClick={() => setLocation("/cards")}>
-                  Manage Cards
-                </Button>
-              </div>
-            </CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-5">
+            {cards.slice(0, 2).map((card) => {
+              const isFrozen = card.status === "frozen";
+              return (
+                <div key={card.id} className="space-y-2">
+                  <CreditCard 
+                    card={card} 
+                    onClick={() => setLocation(`/cards/${card.id}`)}
+                  />
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="flex-1 rounded-xl text-xs h-8"
+                      disabled={isFrozen}
+                      onClick={() => handleTopUp(card.id)}
+                    >
+                      <PlusCircle className="w-3 h-3 mr-1" /> Top Up
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className={cn(
+                        "flex-1 rounded-xl text-xs h-8",
+                        isFrozen && "text-blue-400 border-blue-400/50 bg-blue-500/10"
+                      )}
+                      onClick={() => freezeMutation.mutate({ cardId: card.id, data: { frozen: !isFrozen } })}
+                      disabled={freezeMutation.isPending}
+                    >
+                      {isFrozen ? (
+                        <><ShieldAlert className="w-3 h-3 mr-1" /> Unfreeze</>
+                      ) : (
+                        <><Snowflake className="w-3 h-3 mr-1" /> Freeze</>
+                      )}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="rounded-full w-8 h-8 shrink-0"
+                      onClick={() => setLocation(`/cards/${card.id}`)}
+                      title="Card settings"
+                    >
+                      <Settings className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Card className="border-dashed flex flex-col items-center justify-center p-5 md:p-8 bg-card/30">
+            <CardIcon className="w-10 h-10 text-muted-foreground mb-3 opacity-50" />
+            <h3 className="font-medium text-base">No cards yet</h3>
+            <p className="text-xs text-muted-foreground mb-3 text-center">Create your first virtual debit card to get started.</p>
+            <Button size="sm" onClick={() => setLocation("/cards")}>Create Card</Button>
           </Card>
         </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-          className="lg:col-span-2"
-        >
-          {cards.length > 0 ? (
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-              {cards.slice(0, 2).map((card) => {
-                const isFrozen = card.status === "frozen";
-                return (
-                  <div key={card.id} className="space-y-3">
-                    <CreditCard 
-                      card={card} 
-                      onClick={() => setLocation(`/cards/${card.id}`)}
-                    />
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="flex-1 rounded-xl text-xs h-9"
-                        disabled={isFrozen}
-                        onClick={() => handleTopUp(card.id)}
-                      >
-                        <PlusCircle className="w-3 h-3 mr-1" /> Top Up
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className={cn(
-                          "flex-1 rounded-xl text-xs h-9",
-                          isFrozen && "text-blue-400 border-blue-400/50 bg-blue-500/10"
-                        )}
-                        onClick={() => freezeMutation.mutate({ cardId: card.id, data: { frozen: !isFrozen } })}
-                        disabled={freezeMutation.isPending}
-                      >
-                        {isFrozen ? (
-                          <><ShieldAlert className="w-3 h-3 mr-1" /> Unfreeze</>
-                        ) : (
-                          <><Snowflake className="w-3 h-3 mr-1" /> Freeze</>
-                        )}
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        className="rounded-full w-9 h-9 shrink-0"
-                        onClick={() => setLocation(`/cards/${card.id}`)}
-                        title="Card settings"
-                      >
-                        <Settings className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <Card className="h-full border-dashed flex flex-col items-center justify-center p-6 md:p-8 bg-card/30">
-              <CardIcon className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
-              <h3 className="font-medium text-lg">No cards found</h3>
-              <p className="text-sm text-muted-foreground mb-4 text-center">Create your first virtual debit card to get started.</p>
-              <Button onClick={() => setLocation("/cards")}>Create Card</Button>
-            </Card>
-          )}
-        </motion.div>
-      </div>
+      )}
 
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
+        transition={{ delay: 0.2 }}
       >
-        <Card className="border-border/50 shadow-xl bg-card/50 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between px-4 md:px-6">
-            <CardTitle className="text-base md:text-lg">Recent Transactions</CardTitle>
-            <Button variant="ghost" size="sm" asChild className="text-primary hover:text-primary/80">
+        <Card className="border-border/50 shadow-lg bg-card/50 backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between px-4 md:px-6 py-3 md:py-4">
+            <CardTitle className="text-sm md:text-base font-semibold">Recent Transactions</CardTitle>
+            <Button variant="ghost" size="sm" asChild className="text-primary hover:text-primary/80 text-xs h-7">
               <Link href="/transactions">View All</Link>
             </Button>
           </CardHeader>
-          <CardContent className="px-4 md:px-6">
+          <CardContent className="px-4 md:px-6 pt-0">
             {recentTransactions.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-1.5">
                 {recentTransactions.map((tx) => {
                   const isPositive = tx.type === "topup" || tx.type === "refund";
                   return (
-                    <div key={tx.id} className="flex items-center justify-between p-3 md:p-4 rounded-xl bg-foreground/5 border border-foreground/5 hover:bg-foreground/10 transition-colors">
-                      <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                    <div key={tx.id} className="flex items-center justify-between p-2.5 md:p-3 rounded-xl bg-foreground/5 border border-foreground/5 hover:bg-foreground/10 transition-colors">
+                      <div className="flex items-center gap-2.5 md:gap-3 min-w-0">
                         <div className={cn(
-                          "w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0",
+                          "w-7 h-7 md:w-9 md:h-9 rounded-full flex items-center justify-center shrink-0",
                           isPositive ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"
                         )}>
-                          {isPositive ? <ArrowUpRight className="w-4 h-4 md:w-5 md:h-5" /> : <ArrowDownRight className="w-4 h-4 md:w-5 md:h-5" />}
+                          {isPositive ? <ArrowUpRight className="w-3.5 h-3.5 md:w-4 md:h-4" /> : <ArrowDownRight className="w-3.5 h-3.5 md:w-4 md:h-4" />}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-medium capitalize text-sm md:text-base truncate">{tx.type} <span className="text-muted-foreground font-normal lowercase ml-1 hidden sm:inline">{tx.description && `- ${tx.description}`}</span></p>
-                          <p className="text-[10px] md:text-xs text-muted-foreground">{format(new Date(tx.createdAt), "MMM d, yyyy")}</p>
+                          <p className="font-medium capitalize text-xs md:text-sm truncate">{tx.type} <span className="text-muted-foreground font-normal lowercase ml-1 hidden sm:inline">{tx.description && `- ${tx.description}`}</span></p>
+                          <p className="text-[9px] md:text-[11px] text-muted-foreground">{format(new Date(tx.createdAt), "MMM d, yyyy")}</p>
                         </div>
                       </div>
-                      <div className={cn("font-bold text-sm md:text-base shrink-0 ml-2 amount", isPositive ? "text-emerald-400" : "text-foreground")}>
+                      <div className={cn("font-bold text-xs md:text-sm shrink-0 ml-2 amount", isPositive ? "text-emerald-400" : "text-foreground")}>
                         {isPositive ? "+" : "-"}{formatCurrency(tx.amount)}
                       </div>
                     </div>
@@ -237,7 +219,7 @@ export default function Dashboard() {
                 })}
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-6 text-muted-foreground text-sm">
                 No recent transactions
               </div>
             )}
