@@ -120,7 +120,7 @@ export default function Dashboard() {
                 {formatCurrency(totalBalance, "EUR")}
               </div>
               <div className="mt-4 md:mt-6 flex gap-3">
-                <Button variant="outline" className="flex-1 bg-white/5 border-white/10 hover:bg-white/10" onClick={() => setLocation("/cards")}>
+                <Button variant="outline" className="flex-1 bg-foreground/5 border-foreground/10 hover:bg-foreground/10" onClick={() => setLocation("/cards")}>
                   Manage Cards
                 </Button>
               </div>
@@ -213,7 +213,7 @@ export default function Dashboard() {
                 {recentTransactions.map((tx) => {
                   const isPositive = tx.type === "topup" || tx.type === "refund";
                   return (
-                    <div key={tx.id} className="flex items-center justify-between p-3 md:p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                    <div key={tx.id} className="flex items-center justify-between p-3 md:p-4 rounded-xl bg-foreground/5 border border-foreground/5 hover:bg-foreground/10 transition-colors">
                       <div className="flex items-center gap-3 md:gap-4 min-w-0">
                         <div className={cn(
                           "w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0",
@@ -276,7 +276,7 @@ export default function Dashboard() {
                 <FormItem>
                   <FormLabel>Custom Amount ({selectedCard?.currency || "EUR"})</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" className="bg-black/20 text-lg" {...field} />
+                    <Input type="number" step="0.01" className="bg-muted/50 text-lg" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

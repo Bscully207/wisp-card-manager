@@ -120,7 +120,7 @@ export default function CardDetails() {
               disabled={isFrozen}
               className={cn(
                 "flex flex-col items-center gap-1.5 md:gap-2 p-3 md:p-4 rounded-2xl border border-border/50 bg-card/50 backdrop-blur transition-all",
-                isFrozen ? "opacity-50 cursor-not-allowed" : "hover:bg-white/10 hover:border-primary/30 active:scale-95"
+                isFrozen ? "opacity-50 cursor-not-allowed" : "hover:bg-foreground/5 hover:border-primary/30 active:scale-95"
               )}
             >
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
@@ -131,7 +131,7 @@ export default function CardDetails() {
 
             <button
               onClick={() => setBalanceOpen(true)}
-              className="flex flex-col items-center gap-1.5 md:gap-2 p-3 md:p-4 rounded-2xl border border-border/50 bg-card/50 backdrop-blur transition-all hover:bg-white/10 hover:border-primary/30 active:scale-95"
+              className="flex flex-col items-center gap-1.5 md:gap-2 p-3 md:p-4 rounded-2xl border border-border/50 bg-card/50 backdrop-blur transition-all hover:bg-foreground/5 hover:border-primary/30 active:scale-95"
             >
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
                 <Eye className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
@@ -146,7 +146,7 @@ export default function CardDetails() {
                 "flex flex-col items-center gap-1.5 md:gap-2 p-3 md:p-4 rounded-2xl border border-border/50 bg-card/50 backdrop-blur transition-all active:scale-95",
                 isFrozen
                   ? "border-blue-400/50 bg-blue-500/10 hover:bg-blue-500/20"
-                  : "hover:bg-white/10 hover:border-primary/30"
+                  : "hover:bg-foreground/5 hover:border-primary/30"
               )}
             >
               <div className={cn(
@@ -191,7 +191,7 @@ export default function CardDetails() {
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         key={tx.id} 
-                        className="flex items-center justify-between p-3 md:p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
+                        className="flex items-center justify-between p-3 md:p-4 rounded-xl bg-foreground/5 border border-foreground/5 hover:bg-foreground/10 transition-colors"
                       >
                         <div className="flex items-center gap-3 md:gap-4 min-w-0">
                           <div className={cn(
@@ -262,7 +262,7 @@ export default function CardDetails() {
                 <FormItem>
                   <FormLabel>Custom Amount ({card.currency})</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" className="bg-black/20 text-lg" {...field} />
+                    <Input type="number" step="0.01" className="bg-muted/50 text-lg" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -61,18 +61,74 @@
 }
 
 :root {
+  /* LIGHT MODE - CLEAN FINTECH THEME */
+  --background: 210 20% 98%;
+  --foreground: 222 47% 11%;
+
+  --border: 214 20% 88%;
+  --input: 214 20% 88%;
+  --ring: 217 91% 60%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --card-border: 214 20% 88%;
+
+  --sidebar: 210 20% 96%;
+  --sidebar-foreground: 222 47% 11%;
+  --sidebar-border: 214 20% 88%;
+  --sidebar-primary: 217 91% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 214 20% 92%;
+  --sidebar-accent-foreground: 222 47% 11%;
+  --sidebar-ring: 217 91% 60%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --popover-border: 214 20% 88%;
+
+  --primary: 217 91% 60%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 214 20% 92%;
+  --secondary-foreground: 222 47% 11%;
+
+  --muted: 214 20% 92%;
+  --muted-foreground: 215 16% 47%;
+
+  --accent: 190 90% 40%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --radius: 0.75rem;
+
+  --opaque-button-border-intensity: -5;
+  --elevate-1: rgba(0, 0, 0, 0.03);
+  --elevate-2: rgba(0, 0, 0, 0.06);
+
+  --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+}
+
+.dark {
   /* DARK NAVY & ELECTRIC BLUE FINTECH THEME */
   --background: 224 71% 4%;
   --foreground: 213 31% 91%;
-  
+
   --border: 216 34% 17%;
   --input: 216 34% 17%;
   --ring: 217 91% 60%;
-  
+
   --card: 222 47% 11%;
   --card-foreground: 213 31% 91%;
   --card-border: 216 34% 17%;
-  
+
   --sidebar: 224 71% 4%;
   --sidebar-foreground: 213 31% 91%;
   --sidebar-border: 216 34% 17%;
@@ -81,33 +137,30 @@
   --sidebar-accent: 216 34% 17%;
   --sidebar-accent-foreground: 213 31% 91%;
   --sidebar-ring: 217 91% 60%;
-  
+
   --popover: 222 47% 11%;
   --popover-foreground: 213 31% 91%;
   --popover-border: 216 34% 17%;
-  
+
   --primary: 217 91% 60%;
   --primary-foreground: 0 0% 100%;
-  
+
   --secondary: 216 34% 17%;
   --secondary-foreground: 213 31% 91%;
-  
+
   --muted: 216 34% 17%;
   --muted-foreground: 215 20.2% 65.1%;
-  
+
   --accent: 190 90% 50%;
   --accent-foreground: 0 0% 100%;
-  
+
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
-
-  --radius: 0.75rem;
 
   --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  /* Fallbacks */
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
@@ -132,7 +185,7 @@
 
 /* Glassmorphism utilities */
 .glass-panel {
-  @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-2xl;
+  @apply bg-card/60 backdrop-blur-xl border border-border/50 shadow-2xl;
 }
 
 /* Safe area insets for mobile devices with notches */

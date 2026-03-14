@@ -77,7 +77,7 @@ export default function Login() {
                     <FormControl>
                       <Input 
                         placeholder="john@example.com" 
-                        className="h-12 bg-black/20 border-white/10 focus:border-primary/50 transition-colors" 
+                        className="h-12 bg-muted/50 border-border focus:border-primary/50 transition-colors" 
                         autoComplete="email"
                         inputMode="email"
                         {...field} 
@@ -97,7 +97,7 @@ export default function Login() {
                       <Input 
                         type="password" 
                         placeholder="••••••••" 
-                        className="h-12 bg-black/20 border-white/10 focus:border-primary/50 transition-colors" 
+                        className="h-12 bg-muted/50 border-border focus:border-primary/50 transition-colors" 
                         autoComplete="current-password"
                         {...field} 
                       />
@@ -109,7 +109,7 @@ export default function Login() {
               
               <Button 
                 type="submit" 
-                className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 rounded-xl hover-elevate"
+                className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 rounded-xl hover-elevate"
                 disabled={loginMutation.isPending}
               >
                 {loginMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign in"}
@@ -126,7 +126,8 @@ export default function Login() {
         </motion.div>
       </div>
 
-      <div className="hidden lg:block w-1/2 relative overflow-hidden bg-card border-l border-white/5">
+      {/* Right side - Image */}
+      <div className="hidden lg:block w-1/2 relative overflow-hidden bg-card border-l border-border/50">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent z-10 mix-blend-overlay"></div>
         <img 
           src={`${import.meta.env.BASE_URL}images/auth-bg.png`} 
@@ -134,7 +135,7 @@ export default function Login() {
           className="w-full h-full object-cover opacity-80"
         />
         <div className="absolute bottom-12 left-12 right-12 z-20 glass-panel p-8 rounded-2xl">
-          <p className="font-display text-2xl font-medium text-white mb-2">"The future of debit card management is here. Fast, secure, and beautiful."</p>
+          <p className="font-display text-2xl font-medium text-foreground mb-2">"The future of debit card management is here. Fast, secure, and beautiful."</p>
           <p className="text-primary font-medium tracking-wide uppercase text-sm">NexusPay Experience</p>
         </div>
       </div>

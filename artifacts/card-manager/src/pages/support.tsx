@@ -84,7 +84,7 @@ export default function Support() {
                 <div className="min-w-0">
                   <h3 className="text-base md:text-lg font-semibold truncate">{ticket.subject}</h3>
                   <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm text-muted-foreground mt-1">
-                    <span className="uppercase tracking-wider text-[10px] md:text-xs font-medium text-foreground border border-border/50 px-2 py-0.5 rounded-full bg-black/20">
+                    <span className="uppercase tracking-wider text-[10px] md:text-xs font-medium text-foreground border border-border/50 px-2 py-0.5 rounded-full bg-muted/50">
                       {ticket.category}
                     </span>
                     <span className="flex items-center"><Clock className="w-3 h-3 md:w-3.5 md:h-3.5 mr-1" /> {format(new Date(ticket.createdAt), "MMM d, yyyy")}</span>
@@ -130,7 +130,7 @@ export default function Support() {
                 <FormItem>
                   <FormLabel>Subject</FormLabel>
                   <FormControl>
-                    <Input placeholder="Brief summary of the issue" className="bg-black/20" {...field} />
+                    <Input placeholder="Brief summary of the issue" className="bg-muted/50" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -145,7 +145,7 @@ export default function Support() {
                   <FormLabel>Category</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="bg-black/20">
+                      <SelectTrigger className="bg-muted/50">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                     </FormControl>
@@ -171,7 +171,7 @@ export default function Support() {
                   <FormControl>
                     <Textarea 
                       placeholder="Provide details about your problem..." 
-                      className="bg-black/20 min-h-[120px]" 
+                      className="bg-muted/50 min-h-[120px]" 
                       {...field} 
                     />
                   </FormControl>

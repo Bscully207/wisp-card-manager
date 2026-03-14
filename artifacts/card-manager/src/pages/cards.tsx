@@ -202,7 +202,7 @@ export default function Cards() {
                 <FormItem>
                   <FormLabel>Card Label</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Groceries, Travel" className="bg-black/20" {...field} />
+                    <Input placeholder="e.g. Groceries, Travel" className="bg-muted/50" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -218,7 +218,7 @@ export default function Cards() {
                     <FormLabel>Currency</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="bg-black/20">
+                        <SelectTrigger className="bg-muted/50">
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                       </FormControl>
@@ -241,7 +241,7 @@ export default function Cards() {
                     <FormLabel>Card Design</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="bg-black/20">
+                        <SelectTrigger className="bg-muted/50">
                           <SelectValue placeholder="Select color" />
                         </SelectTrigger>
                       </FormControl>
@@ -300,7 +300,7 @@ export default function Cards() {
                 <FormItem>
                   <FormLabel>Custom Amount ({selectedCard?.currency || "EUR"})</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" className="bg-black/20 text-lg" {...field} />
+                    <Input type="number" step="0.01" className="bg-muted/50 text-lg" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

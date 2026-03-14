@@ -100,7 +100,7 @@ export default function Transactions() {
                   const card = getCardDetails(tx.cardId);
                   const isPositive = tx.type === "topup" || tx.type === "refund";
                   return (
-                    <TableRow key={tx.id} className="hover:bg-white/5 border-border/30">
+                    <TableRow key={tx.id} className="hover:bg-foreground/5 border-border/30">
                       <TableCell>
                         <div className={cn(
                           "w-8 h-8 rounded-full flex items-center justify-center",

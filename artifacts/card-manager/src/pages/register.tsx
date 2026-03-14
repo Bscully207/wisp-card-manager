@@ -52,7 +52,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen w-full flex bg-background text-foreground">
-      <div className="hidden lg:block w-1/2 relative overflow-hidden bg-card border-r border-white/5">
+      <div className="hidden lg:block w-1/2 relative overflow-hidden bg-card border-r border-border/50">
         <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent z-10 mix-blend-overlay"></div>
         <img 
           src={`${import.meta.env.BASE_URL}images/auth-bg.png`} 
@@ -88,7 +88,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel>First Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="John" className="bg-black/20 border-white/10" autoComplete="given-name" {...field} />
+                        <Input placeholder="John" className="bg-muted/50 border-border" autoComplete="given-name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -101,7 +101,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel>Last Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Doe" className="bg-black/20 border-white/10" autoComplete="family-name" {...field} />
+                        <Input placeholder="Doe" className="bg-muted/50 border-border" autoComplete="family-name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -116,7 +116,7 @@ export default function Register() {
                   <FormItem>
                     <FormLabel>Email address</FormLabel>
                     <FormControl>
-                      <Input placeholder="john@example.com" className="bg-black/20 border-white/10" autoComplete="email" inputMode="email" {...field} />
+                      <Input placeholder="john@example.com" className="bg-muted/50 border-border" autoComplete="email" inputMode="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -130,7 +130,7 @@ export default function Register() {
                   <FormItem>
                     <FormLabel>Phone (Optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="+1 (555) 000-0000" className="bg-black/20 border-white/10" autoComplete="tel" inputMode="tel" {...field} />
+                      <Input placeholder="+1 (555) 000-0000" className="bg-muted/50 border-border" autoComplete="tel" inputMode="tel" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -144,7 +144,7 @@ export default function Register() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" className="bg-black/20 border-white/10" autoComplete="new-password" {...field} />
+                      <Input type="password" placeholder="••••••••" className="bg-muted/50 border-border" autoComplete="new-password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -153,7 +153,7 @@ export default function Register() {
               
               <Button 
                 type="submit" 
-                className="w-full h-12 mt-2 text-base font-semibold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 rounded-xl hover-elevate"
+                className="w-full h-12 mt-4 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 rounded-xl hover-elevate"
                 disabled={registerMutation.isPending}
               >
                 {registerMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign up"}

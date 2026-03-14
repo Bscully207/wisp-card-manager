@@ -6,8 +6,12 @@ import {
   ReceiptText, 
   User as UserIcon, 
   LifeBuoy, 
-  LogOut
+  LogOut,
+  Sun,
+  Moon,
+  Monitor
 } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
 import { 
   SidebarProvider, 
   Sidebar, 
@@ -34,6 +38,35 @@ const navItems = [
   { title: "Profile", url: "/profile", icon: UserIcon },
   { title: "Support", url: "/support", icon: LifeBuoy },
 ];
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  const options = [
+    { value: "light" as const, icon: Sun, label: "Light" },
+    { value: "dark" as const, icon: Moon, label: "Dark" },
+    { value: "system" as const, icon: Monitor, label: "System" },
+  ];
+
+  return (
+    <div className="flex items-center gap-1 rounded-lg border border-border/50 bg-muted/50 p-1">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          onClick={() => setTheme(opt.value)}
+          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all ${
+            theme === opt.value
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          title={opt.label}
+        >
+          <opt.icon className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">{opt.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
@@ -91,7 +124,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           <SidebarMenuButton 
                             asChild 
                             isActive={isActive}
-                            className={isActive ? "bg-primary/10 text-primary hover:bg-primary/15" : "hover:bg-white/5"}
+                            className={isActive ? "bg-primary/10 text-primary hover:bg-primary/15" : "hover:bg-foreground/5"}
                           >
                             <Link href={item.url} className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all">
                               <item.icon className="w-5 h-5" />
@@ -142,6 +175,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             </div>
             <div className="flex-1" />
+            <div className="ml-auto">
+              <ThemeToggle />
+            </div>
             <button
               onClick={() => logoutMutation.mutate({})}
               className="md:hidden text-muted-foreground hover:text-red-400 p-2 -mr-2 transition-colors"

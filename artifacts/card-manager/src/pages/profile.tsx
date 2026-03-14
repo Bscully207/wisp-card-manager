@@ -107,24 +107,24 @@ export default function Profile() {
               <form onSubmit={profileForm.handleSubmit((v) => updateProfileMutation.mutate({ data: v }))} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                   <FormField control={profileForm.control} name="firstName" render={({ field }) => (
-                    <FormItem><FormLabel>First Name</FormLabel><FormControl><Input className="bg-black/20" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>First Name</FormLabel><FormControl><Input className="bg-muted/50" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={profileForm.control} name="lastName" render={({ field }) => (
-                    <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input className="bg-black/20" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input className="bg-muted/50" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
                 <FormField control={profileForm.control} name="phone" render={({ field }) => (
-                  <FormItem><FormLabel>Phone</FormLabel><FormControl><Input className="bg-black/20" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Phone</FormLabel><FormControl><Input className="bg-muted/50" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={profileForm.control} name="address" render={({ field }) => (
-                  <FormItem><FormLabel>Address</FormLabel><FormControl><Input className="bg-black/20" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Address</FormLabel><FormControl><Input className="bg-muted/50" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                   <FormField control={profileForm.control} name="city" render={({ field }) => (
-                    <FormItem><FormLabel>City</FormLabel><FormControl><Input className="bg-black/20" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>City</FormLabel><FormControl><Input className="bg-muted/50" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={profileForm.control} name="country" render={({ field }) => (
-                    <FormItem><FormLabel>Country</FormLabel><FormControl><Input className="bg-black/20" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Country</FormLabel><FormControl><Input className="bg-muted/50" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                 </div>
                 <Button type="submit" className="w-full mt-2" disabled={updateProfileMutation.isPending}>
@@ -150,13 +150,13 @@ export default function Profile() {
             <Form {...passwordForm}>
               <form onSubmit={passwordForm.handleSubmit(({ currentPassword, newPassword }) => changePasswordMutation.mutate({ data: { currentPassword, newPassword } }))} className="space-y-4">
                 <FormField control={passwordForm.control} name="currentPassword" render={({ field }) => (
-                  <FormItem><FormLabel>Current Password</FormLabel><FormControl><Input type="password" className="bg-black/20" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Current Password</FormLabel><FormControl><Input type="password" className="bg-muted/50" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={passwordForm.control} name="newPassword" render={({ field }) => (
-                  <FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" className="bg-black/20" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" className="bg-muted/50" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={passwordForm.control} name="confirmPassword" render={({ field }) => (
-                  <FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><Input type="password" className="bg-black/20" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Confirm New Password</FormLabel><FormControl><Input type="password" className="bg-muted/50" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <Button type="submit" variant="secondary" className="w-full mt-2" disabled={changePasswordMutation.isPending}>
                   {changePasswordMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
