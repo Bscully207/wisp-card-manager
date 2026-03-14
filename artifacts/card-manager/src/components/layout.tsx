@@ -72,6 +72,24 @@ function ThemeCycleButton() {
   );
 }
 
+function MobileThemeMenuItem() {
+  const { theme, setTheme } = useTheme();
+  const cycle = () => {
+    if (theme === "light") setTheme("dark");
+    else if (theme === "dark") setTheme("system");
+    else setTheme("light");
+  };
+  const Icon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
+  const label = theme === "light" ? "Light" : theme === "dark" ? "Dark" : "System";
+
+  return (
+    <DropdownMenuItem onClick={cycle} className="cursor-pointer">
+      <Icon className="w-4 h-4 mr-2" />
+      Theme: {label}
+    </DropdownMenuItem>
+  );
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -209,7 +227,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex-1" />
             <div className="md:hidden flex items-center gap-1">
-              <ThemeCycleButton />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center justify-center w-9 h-9 rounded-full bg-primary/20 text-primary font-bold text-xs">
@@ -229,6 +246,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <Settings className="w-4 h-4 mr-2" />
                     App Settings
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <MobileThemeMenuItem />
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => logoutMutation.mutate({})}
