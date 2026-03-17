@@ -77,7 +77,7 @@ function AppRouter() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="system">
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
             <AppRouter />
