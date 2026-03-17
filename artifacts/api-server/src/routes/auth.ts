@@ -34,20 +34,26 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 
   req.session.userId = user.id;
 
-  res.status(201).json(LoginResponse.parse({
-    user: {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phone: user.phone ?? null,
-      address: user.address ?? null,
-      city: user.city ?? null,
-      country: user.country ?? null,
-      createdAt: user.createdAt,
-    },
-    message: "Registration successful",
-  }));
+  req.session.save((err) => {
+    if (err) {
+      res.status(500).json({ error: "Session error", message: "Failed to save session" });
+      return;
+    }
+    res.status(201).json(LoginResponse.parse({
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone ?? null,
+        address: user.address ?? null,
+        city: user.city ?? null,
+        country: user.country ?? null,
+        createdAt: user.createdAt,
+      },
+      message: "Registration successful",
+    }));
+  });
 });
 
 router.post("/auth/login", async (req, res): Promise<void> => {
@@ -73,20 +79,26 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 
   req.session.userId = user.id;
 
-  res.json(LoginResponse.parse({
-    user: {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phone: user.phone ?? null,
-      address: user.address ?? null,
-      city: user.city ?? null,
-      country: user.country ?? null,
-      createdAt: user.createdAt,
-    },
-    message: "Login successful",
-  }));
+  req.session.save((err) => {
+    if (err) {
+      res.status(500).json({ error: "Session error", message: "Failed to save session" });
+      return;
+    }
+    res.json(LoginResponse.parse({
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone ?? null,
+        address: user.address ?? null,
+        city: user.city ?? null,
+        country: user.country ?? null,
+        createdAt: user.createdAt,
+      },
+      message: "Login successful",
+    }));
+  });
 });
 
 router.post("/auth/logout", async (req, res): Promise<void> => {
