@@ -75,56 +75,59 @@ export function TopUpDialog({ open, onOpenChange, cardId, cardLabel, currency = 
       title="Top Up Card"
       description={`Add funds to ${cardLabel || "your card"}.`}
     >
-      <div className="grid grid-cols-4 gap-2 pt-2">
-        {PRESET_AMOUNTS.map((amt) => (
+      <div className="space-y-5 pt-2">
+        <div className="grid grid-cols-4 gap-2">
+          {PRESET_AMOUNTS.map((amt) => (
+            <Button
+              key={amt}
+              type="button"
+              variant={!showCustom && form.watch("amount") === amt ? "default" : "outline"}
+              size="sm"
+              className="rounded-xl text-sm font-semibold"
+              onClick={() => handlePreset(amt)}
+            >
+              {getCurrencySymbol(currency)}{amt}
+            </Button>
+          ))}
           <Button
-            key={amt}
             type="button"
-            variant={!showCustom && form.watch("amount") === amt ? "default" : "outline"}
+            variant={showCustom ? "default" : "outline"}
             size="sm"
             className="rounded-xl text-sm font-semibold"
-            onClick={() => handlePreset(amt)}
+            onClick={() => { setShowCustom(true); form.setValue("amount", 0); }}
           >
-            {getCurrencySymbol(currency)}{amt}
+            Other
           </Button>
-        ))}
-        <Button
-          type="button"
-          variant={showCustom ? "default" : "outline"}
-          size="sm"
-          className="rounded-xl text-sm font-semibold"
-          onClick={() => { setShowCustom(true); form.setValue("amount", 0); }}
-        >
-          Other
-        </Button>
+        </div>
+
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit((v) => {
+              if (cardId) topUpMutation.mutate({ cardId, data: v });
+            })}
+            className="space-y-4"
+          >
+            {showCustom && (
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Custom Amount ({currency})</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" className="bg-muted/50 text-lg" placeholder="Enter amount" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            <Button type="submit" className="w-full rounded-xl" disabled={topUpMutation.isPending}>
+              {topUpMutation.isPending ? "Processing..." : "Confirm Top Up"}
+            </Button>
+          </form>
+        </Form>
       </div>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit((v) => {
-            if (cardId) topUpMutation.mutate({ cardId, data: v });
-          })}
-          className="space-y-4"
-        >
-          {showCustom && (
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Custom Amount ({currency})</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" className="bg-muted/50 text-lg" placeholder="Enter amount" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-          <Button type="submit" className="w-full rounded-xl" disabled={topUpMutation.isPending}>
-            {topUpMutation.isPending ? "Processing..." : "Confirm Top Up"}
-          </Button>
-        </form>
-      </Form>
     </ResponsiveDialog>
   );
 }

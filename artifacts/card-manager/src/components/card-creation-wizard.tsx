@@ -23,6 +23,32 @@ interface WizardData {
   email: string;
   phone: string;
   termsAccepted: boolean[];
+  referralCode: string;
+}
+
+// ============================================================
+// REFERRAL CODE CONFIGURATION
+// Add your referral codes here. Each code maps to a discount.
+// The discount is subtracted from the base issuance fee ($25).
+// Examples:
+//   "FRIEND10"  → $10 off  → card costs $15
+//   "VIP2025"   → $25 off  → card is free
+//   "BETA5"     → $5 off   → card costs $20
+// ============================================================
+const REFERRAL_CODES: Record<string, { discount: number; label: string }> = {
+  // "FRIEND10": { discount: 10, label: "$10 off card issuance" },
+  // "VIP2025":  { discount: 25, label: "Free card issuance" },
+  // "BETA5":    { discount: 5,  label: "$5 off card issuance" },
+  // "SAVE15":   { discount: 15, label: "$15 off card issuance" },
+  // "LAUNCH20": { discount: 20, label: "$20 off card issuance" },
+};
+
+function validateReferralCode(code: string): { valid: boolean; discount: number; label: string } {
+  const trimmed = code.trim().toUpperCase();
+  if (!trimmed) return { valid: false, discount: 0, label: "" };
+  const match = REFERRAL_CODES[trimmed];
+  if (match) return { valid: true, discount: match.discount, label: match.label };
+  return { valid: false, discount: 0, label: "" };
 }
 
 const STEPS = ["Card Type", "Details", "Terms", "Payment", "Success"];
@@ -55,6 +81,7 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
     email: "",
     phone: "",
     termsAccepted: [false, false, false, false],
+    referralCode: "",
   });
 
   const createMutation = useCreateCard({
@@ -81,6 +108,7 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
       email: user?.email || "",
       phone: "",
       termsAccepted: [false, false, false, false],
+      referralCode: "",
     });
   };
 
@@ -186,7 +214,8 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
             {step === 3 && (
               <StepPayment 
                 data={data} 
-                isPending={createMutation.isPending} 
+                isPending={createMutation.isPending}
+                onReferralChange={(code) => setData(prev => ({ ...prev, referralCode: code }))}
               />
             )}
             {step === 4 && (
@@ -386,16 +415,23 @@ function StepTerms({ accepted, onToggle }: { accepted: boolean[]; onToggle: (i: 
   );
 }
 
-function getCurrencyInfo(currency: string) {
+const BASE_ISSUANCE_FEE = 25;
+
+function getCurrencySymbolForWizard(currency: string) {
   switch (currency) {
-    case "EUR": return { symbol: "€", issuance: "25.00", total: "25.00" };
-    case "GBP": return { symbol: "£", issuance: "25.00", total: "25.00" };
-    default: return { symbol: "$", issuance: "25.00", total: "25.00" };
+    case "EUR": return "€";
+    case "GBP": return "£";
+    default: return "$";
   }
 }
 
-function StepPayment({ data, isPending }: { data: WizardData; isPending: boolean }) {
-  const c = getCurrencyInfo(data.currency);
+function StepPayment({ data, isPending, onReferralChange }: { data: WizardData; isPending: boolean; onReferralChange: (code: string) => void }) {
+  const symbol = getCurrencySymbolForWizard(data.currency);
+  const referralResult = validateReferralCode(data.referralCode);
+  const discount = referralResult.valid ? referralResult.discount : 0;
+  const issuanceFee = BASE_ISSUANCE_FEE;
+  const total = Math.max(0, issuanceFee - discount);
+
   return (
     <div className="space-y-4">
       <h3 className="font-display text-lg font-semibold">Payment Summary</h3>
@@ -418,14 +454,44 @@ function StepPayment({ data, isPending }: { data: WizardData; isPending: boolean
           <span className="text-muted-foreground">Currency</span>
           <span className="font-medium">{data.currency}</span>
         </div>
-        <div className="border-t border-border/50 pt-3 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Card Issuance Fee</span>
-            <span className="amount">{c.symbol}{c.issuance}</span>
+
+        <div className="border-t border-border/50 pt-3 space-y-3">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Referral Code</label>
+            <div className="flex items-center gap-2">
+              <Input
+                value={data.referralCode}
+                onChange={(e) => onReferralChange(e.target.value)}
+                placeholder="Enter referral code"
+                className="bg-background/50 h-9 text-sm uppercase"
+              />
+            </div>
+            {data.referralCode.trim() && (
+              referralResult.valid ? (
+                <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                  <Check className="w-3 h-3" /> {referralResult.label}
+                </p>
+              ) : (
+                <p className="text-xs text-destructive">Invalid referral code</p>
+              )
+            )}
           </div>
-          <div className="flex items-center justify-between text-base font-bold pt-2 border-t border-border/50">
-            <span>Total</span>
-            <span className="amount">{c.symbol}{c.total}</span>
+
+          <div className="border-t border-border/50 pt-3 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Card Issuance Fee</span>
+              <span className="amount">{symbol}{issuanceFee.toFixed(2)}</span>
+            </div>
+            {discount > 0 && (
+              <div className="flex items-center justify-between text-sm text-emerald-600">
+                <span>Referral Discount</span>
+                <span className="font-medium">-{symbol}{discount.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between text-base font-bold pt-2 border-t border-border/50">
+              <span>Total</span>
+              <span className="amount">{total === 0 ? "FREE" : `${symbol}${total.toFixed(2)}`}</span>
+            </div>
           </div>
         </div>
       </div>

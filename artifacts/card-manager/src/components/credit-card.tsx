@@ -58,10 +58,12 @@ export function CreditCard({ card, className, compact, onClick }: CreditCardProp
               {formatCurrency(card.balance, card.currency)}
             </h3>
           </div>
-          <Wifi className={cn("text-white/80 rotate-90 shrink-0", compact ? "w-5 h-5" : "w-6 h-6")} />
         </div>
 
         <div className={cn(compact ? "space-y-1" : "space-y-2 sm:space-y-4")}>
+          <div className="flex items-center gap-2">
+            <Wifi className={cn("text-white/80 rotate-90 shrink-0", compact ? "w-4 h-4" : "w-5 h-5")} />
+          </div>
           <div className="flex items-center gap-2">
             <div className={cn("rounded bg-gradient-to-br from-yellow-200 to-yellow-500 opacity-80", compact ? "w-7 h-5" : "w-8 h-6 sm:w-10 sm:h-8")} />
             {isFrozen && (
