@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { useGetCards } from "@workspace/api-client-react";
 import { CreditCard } from "@/components/credit-card";
@@ -8,38 +8,10 @@ import { motion } from "framer-motion";
 import { CardCreationWizard } from "@/components/card-creation-wizard";
 import { TopUpDialog } from "@/components/shared/top-up-dialog";
 import { FreezeCardButton } from "@/components/shared/freeze-card-button";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  rectSortingStrategy,
-} from "@dnd-kit/sortable";
+import { useCardOrder } from "@/hooks/use-card-order";
+import { DndContext, closestCenter } from "@dnd-kit/core";
+import { SortableContext, useSortable, rectSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-
-const CARD_ORDER_KEY = "wisp-card-order";
-
-function getStoredOrder(): number[] {
-  try {
-    const stored = localStorage.getItem(CARD_ORDER_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
-function setStoredOrder(ids: number[]) {
-  localStorage.setItem(CARD_ORDER_KEY, JSON.stringify(ids));
-}
 
 function SortableCardItem({ card, onTopUp, onNavigate }: {
   card: any;
@@ -104,22 +76,8 @@ export default function Cards() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [topUpCardId, setTopUpCardId] = useState<number | null>(null);
   const [topUpOpen, setTopUpOpen] = useState(false);
-  const [orderedIds, setOrderedIds] = useState<number[]>([]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  useEffect(() => {
-    if (cards.length > 0) {
-      const storedOrder = getStoredOrder();
-      const cardIds = cards.map(c => c.id);
-      const validStored = storedOrder.filter((id: number) => cardIds.includes(id));
-      const missing = cardIds.filter(id => !validStored.includes(id));
-      setOrderedIds([...validStored, ...missing]);
-    }
-  }, [cards]);
+  const { orderedIds, sensors, handleDragEnd } = useCardOrder(cards.map(c => c.id));
 
   const orderedCards = orderedIds
     .map(id => cards.find(c => c.id === id))
@@ -130,19 +88,6 @@ export default function Cards() {
   const handleTopUp = (cardId: number) => {
     setTopUpCardId(cardId);
     setTopUpOpen(true);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setOrderedIds(prev => {
-        const oldIndex = prev.indexOf(active.id as number);
-        const newIndex = prev.indexOf(over.id as number);
-        const newOrder = arrayMove(prev, oldIndex, newIndex);
-        setStoredOrder(newOrder);
-        return newOrder;
-      });
-    }
   };
 
   if (isLoading) {

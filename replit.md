@@ -114,15 +114,22 @@ React + Vite frontend. Mobile-first responsive design with Telegram Mini App sup
 - `transactions.tsx` — card list view on mobile, table on desktop
 - `settings.tsx` — comprehensive settings: profile (read-only + edit/save), security (change password), appearance (theme toggle), legal (T&C/Privacy), help (contact support)
 - `support.tsx` — support tickets
-- `profile.tsx` — DEPRECATED, /profile redirects to /settings
+- /profile route redirects to /settings
 
 **Navigation**:
 - Desktop sidebar: logo + collapse trigger in header, nav items, user dropdown footer (Settings, Support, Theme dropdown, Logout)
 - Mobile: top header (back button on sub-pages, logo, bell icon, user avatar dropdown), bottom tab bar (Dashboard, Cards, Transactions)
 - Bell icon navigates to /notifications page, shows unread dot when notifications are unread
 - Theme selection via dropdown (Light/Dark/System) in user dropdowns on both mobile and desktop
-- Dashboard: free-floating total balance, compact card rendering with drag-and-drop reorder (uses @dnd-kit), "Create Card" opens wizard directly
+- Dashboard: free-floating total balance, compact card rendering with drag-and-drop reorder (uses @dnd-kit via shared `useCardOrder` hook), "Create Card" opens wizard directly
 - Top-up presets: $50, $100, $1000, "Other" (reveals custom input) — consistent across dashboard, cards, and card-details pages
+
+**Shared Hooks** (`src/hooks/`):
+- `use-card-order.ts` — DnD card ordering logic with localStorage persistence (shared between dashboard and cards pages)
+- `use-mobile.tsx` — responsive breakpoint detection (768px)
+- `use-notifications.tsx` — React Context notification state (unread count, mark-as-read)
+- `use-telegram.tsx` — Telegram WebApp SDK integration
+- `use-toast.ts` — shadcn toast notifications
 
 **CSS**:
 - Safe area insets via `safe-area-bottom` / `safe-area-top` classes
