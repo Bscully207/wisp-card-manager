@@ -131,6 +131,13 @@ React + Vite frontend. Mobile-first responsive design with Telegram Mini App sup
 - `use-telegram.tsx` — Telegram WebApp SDK integration
 - `use-toast.ts` — shadcn toast notifications
 
+**PWA (Progressive Web App)**:
+- Web App Manifest at `public/manifest.json` — name, icons, display mode, theme color
+- Service worker at `public/sw.js` — minimal (no caching), registered in `main.tsx` for Chrome install eligibility
+- PWA icons at `public/icons/` — 192x192 and 512x512 (regular + maskable) + apple-touch-icon
+- Branded favicon.svg with Wisp "W" on blue-indigo gradient
+- Chrome shows "Install" option in address bar; installed app opens in standalone window
+
 **CSS**:
 - Safe area insets via `safe-area-bottom` / `safe-area-top` classes
 - 44px minimum tap targets on mobile

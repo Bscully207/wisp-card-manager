@@ -1,3 +1,14 @@
-<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="180" height="180" rx="36" fill="#FF3C00"/>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <g transform="translate(256,256) scale(3.2)" fill="white">
+    <path d="M-60,10 C-50,-15 -30,-35 -5,-40 C5,-42 15,-38 20,-30 C25,-22 22,-12 15,-5 C8,2 -2,5 -12,3 C-8,-5 -2,-12 6,-15 C10,-16 14,-14 16,-10 C18,-6 16,-1 12,2"/>
+    <path d="M-45,25 C-38,5 -22,-10 0,-15 C8,-17 16,-13 20,-7 C24,-1 22,7 16,12 C10,17 2,18 -5,15 C-1,9 4,3 10,0 C13,-1 16,1 17,4 C18,7 16,10 13,12"/>
+  </g>
+  <text x="256" y="380" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-weight="700" font-size="120" fill="white" letter-spacing="-2">Wisp</text>
 </svg>
