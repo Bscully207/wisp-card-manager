@@ -6,17 +6,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { useTheme } from "@/components/theme-provider";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { 
-  Loader2, ShieldCheck, UserCircle, Sun, Moon, Monitor, 
+  Loader2, ShieldCheck, UserCircle, 
   Pencil, X, FileText, LifeBuoy, ChevronRight
 } from "lucide-react";
+import { AppearanceSection } from "@/components/settings/appearance-section";
+import { LegalDialogs } from "@/components/settings/legal-dialogs";
 
 const profileSchema = z.object({
   firstName: z.string().min(2, "Required"),
@@ -138,13 +137,13 @@ export default function SettingsPage() {
         <CardContent className="px-4 md:px-6">
           {!editing ? (
             <div className="space-y-3">
-              <InfoRow label="First Name" value={user.firstName || "—"} />
-              <InfoRow label="Last Name" value={user.lastName || "—"} />
+              <InfoRow label="First Name" value={user.firstName || "\u2014"} />
+              <InfoRow label="Last Name" value={user.lastName || "\u2014"} />
               <InfoRow label="Email" value={user.email} />
-              <InfoRow label="Phone" value={user.phone || "—"} />
-              <InfoRow label="Address" value={user.address || "—"} />
-              <InfoRow label="City" value={user.city || "—"} />
-              <InfoRow label="Country" value={user.country || "—"} />
+              <InfoRow label="Phone" value={user.phone || "\u2014"} />
+              <InfoRow label="Address" value={user.address || "\u2014"} />
+              <InfoRow label="City" value={user.city || "\u2014"} />
+              <InfoRow label="Country" value={user.country || "\u2014"} />
             </div>
           ) : (
             <Form {...profileForm}>
@@ -230,45 +229,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <ResponsiveDialog
-        open={legalDialog === "terms"}
-        onOpenChange={(o) => { if (!o) setLegalDialog(null); }}
-        title="Terms & Conditions"
-        description="Last updated: January 2026"
-      >
-        <div className="prose prose-sm dark:prose-invert max-w-none max-h-[60vh] overflow-y-auto space-y-4 text-sm text-muted-foreground">
-          <p>By using our services, you agree to these Terms & Conditions. Please read them carefully before accessing or using the Wisp platform.</p>
-          <h4 className="text-foreground font-semibold">1. Account Usage</h4>
-          <p>You must be at least 18 years old to create an account. You are responsible for maintaining the confidentiality of your login credentials and for all activities under your account.</p>
-          <h4 className="text-foreground font-semibold">2. Card Services</h4>
-          <p>Virtual and physical debit cards are issued subject to verification and compliance requirements. Card balances are non-interest bearing. Top-up amounts are subject to daily and monthly limits.</p>
-          <h4 className="text-foreground font-semibold">3. Fees</h4>
-          <p>Card issuance, top-up, and transaction fees are disclosed during each operation. Fee schedules may be updated with prior notice.</p>
-          <h4 className="text-foreground font-semibold">4. Limitation of Liability</h4>
-          <p>Wisp is not liable for unauthorized transactions resulting from user negligence. We reserve the right to freeze accounts suspected of fraudulent activity.</p>
-        </div>
-      </ResponsiveDialog>
-
-      <ResponsiveDialog
-        open={legalDialog === "privacy"}
-        onOpenChange={(o) => { if (!o) setLegalDialog(null); }}
-        title="Privacy Policy"
-        description="Last updated: January 2026"
-      >
-        <div className="prose prose-sm dark:prose-invert max-w-none max-h-[60vh] overflow-y-auto space-y-4 text-sm text-muted-foreground">
-          <p>This Privacy Policy describes how Wisp collects, uses, and protects your personal information.</p>
-          <h4 className="text-foreground font-semibold">1. Information We Collect</h4>
-          <p>We collect personal data you provide during registration (name, email, phone) and transaction data generated through card usage. We may also collect device and usage information for security purposes.</p>
-          <h4 className="text-foreground font-semibold">2. How We Use Your Data</h4>
-          <p>Your data is used to provide and improve our services, process transactions, verify identity, prevent fraud, and communicate important account updates.</p>
-          <h4 className="text-foreground font-semibold">3. Data Sharing</h4>
-          <p>We do not sell your personal information. Data may be shared with payment processors and regulatory authorities as required by law.</p>
-          <h4 className="text-foreground font-semibold">4. Data Security</h4>
-          <p>We employ industry-standard encryption and security measures to protect your data. However, no method of electronic storage is 100% secure.</p>
-          <h4 className="text-foreground font-semibold">5. Your Rights</h4>
-          <p>You may request access to, correction of, or deletion of your personal data by contacting our support team.</p>
-        </div>
-      </ResponsiveDialog>
+      <LegalDialogs activeDialog={legalDialog} onClose={() => setLegalDialog(null)} />
 
       <Card className="bg-card/50 backdrop-blur border-border/50 shadow-xl">
         <CardHeader className="px-4 md:px-6">
@@ -287,49 +248,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function AppearanceSection() {
-  const { theme, setTheme } = useTheme();
-
-  const options: { value: "light" | "dark" | "system"; label: string; icon: typeof Sun }[] = [
-    { value: "light", label: "Light", icon: Sun },
-    { value: "dark", label: "Dark", icon: Moon },
-    { value: "system", label: "System", icon: Monitor },
-  ];
-
-  return (
-    <Card className="bg-card/50 backdrop-blur border-border/50 shadow-xl">
-      <CardHeader className="px-4 md:px-6">
-        <div className="flex items-center gap-3">
-          <Sun className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-          <div>
-            <CardTitle className="text-base md:text-lg">Appearance</CardTitle>
-            <CardDescription className="text-xs md:text-sm">Choose your preferred theme.</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="px-4 md:px-6">
-        <div className="grid grid-cols-3 gap-2">
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setTheme(opt.value)}
-              className={cn(
-                "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all cursor-pointer",
-                theme === opt.value
-                  ? "border-primary bg-primary/5"
-                  : "border-border/50 hover:border-border hover:bg-foreground/5"
-              )}
-            >
-              <opt.icon className={cn("w-5 h-5", theme === opt.value ? "text-primary" : "text-muted-foreground")} />
-              <span className={cn("text-sm font-medium", theme === opt.value ? "text-foreground" : "text-muted-foreground")}>{opt.label}</span>
-            </button>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
