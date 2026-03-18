@@ -37,6 +37,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { useGetMe, useLogout } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -59,22 +62,28 @@ function ThemeSubmenu() {
     { value: "dark" as const, label: "Dark", icon: Moon },
     { value: "system" as const, label: "System", icon: Monitor },
   ];
+  const CurrentIcon = theme === "dark" ? Moon : theme === "light" ? Sun : Monitor;
 
   return (
-    <div className="px-1 py-1.5">
-      <p className="text-xs font-medium text-muted-foreground px-2 mb-1.5">Theme</p>
-      {options.map((opt) => (
-        <DropdownMenuItem
-          key={opt.value}
-          onClick={() => setTheme(opt.value)}
-          className={cn("cursor-pointer gap-2", theme === opt.value && "bg-primary/10 text-primary")}
-        >
-          <opt.icon className="w-4 h-4" />
-          {opt.label}
-          {theme === opt.value && <Check className="w-3.5 h-3.5 ml-auto" />}
-        </DropdownMenuItem>
-      ))}
-    </div>
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger className="cursor-pointer gap-2">
+        <CurrentIcon className="w-4 h-4" />
+        Theme
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent>
+        {options.map((opt) => (
+          <DropdownMenuItem
+            key={opt.value}
+            onClick={() => setTheme(opt.value)}
+            className={cn("cursor-pointer gap-2", theme === opt.value && "bg-primary/10 text-primary")}
+          >
+            <opt.icon className="w-4 h-4" />
+            {opt.label}
+            {theme === opt.value && <Check className="w-3.5 h-3.5 ml-auto" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
   );
 }
 
