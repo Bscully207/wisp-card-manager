@@ -3,39 +3,26 @@ import { useParams, useLocation } from "wouter";
 import { 
   useGetCard, 
   useGetCardTransactions, 
-  useTopUpCard, 
-  useFreezeCard, 
   useDeleteCard,
-  getGetCardQueryKey,
   getGetCardsQueryKey,
-  getGetCardTransactionsQueryKey
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CreditCard } from "@/components/credit-card";
-import { formatCurrency, cn, getCurrencySymbol } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { formatCurrency, cn } from "@/lib/utils";
 import { 
-  ArrowUpRight, ArrowDownRight, Snowflake, Trash2, PlusCircle, 
-  ShieldAlert, Eye, EyeOff, ReceiptText, Wallet, Mail, Save, 
-  CreditCard as CreditCardIcon, Settings as SettingsIcon, CheckCircle2, XCircle
+  PlusCircle, Trash2, Eye, EyeOff, ReceiptText, 
+  Mail, Save, CreditCard as CreditCardIcon, 
+  Settings as SettingsIcon, CheckCircle2, XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-
-const topUpSchema = z.object({
-  amount: z.coerce.number().min(0.01, "Amount must be at least 0.01"),
-  description: z.string().optional(),
-});
-
-const PRESET_AMOUNTS = [50, 100, 1000];
+import { TopUpDialog } from "@/components/shared/top-up-dialog";
+import { TransactionItem } from "@/components/shared/transaction-item";
+import { FreezeCardButton } from "@/components/shared/freeze-card-button";
 
 type TabType = "topup" | "details" | "settings";
 
@@ -59,37 +46,10 @@ export default function CardDetails() {
   const [showCvv, setShowCvv] = useState(false);
   const [cardName, setCardName] = useState("");
   const [cardEmail, setCardEmail] = useState("");
-  const [showCustomTopUp, setShowCustomTopUp] = useState(false);
 
   useEffect(() => {
     if (card) setCardName(card.label || "");
   }, [card?.id]);
-
-  const form = useForm<z.infer<typeof topUpSchema>>({
-    resolver: zodResolver(topUpSchema),
-    defaultValues: { amount: 0, description: "Card Top Up" },
-  });
-
-  const topUpMutation = useTopUpCard({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetCardQueryKey(cardId) });
-        queryClient.invalidateQueries({ queryKey: getGetCardTransactionsQueryKey(cardId) });
-        toast({ title: "Top-up successful!" });
-        setTopUpOpen(false);
-        form.reset();
-      }
-    }
-  });
-
-  const freezeMutation = useFreezeCard({
-    mutation: {
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: getGetCardQueryKey(cardId) });
-        toast({ title: data.status === 'frozen' ? "Card frozen" : "Card unfrozen" });
-      }
-    }
-  });
 
   const deleteMutation = useDeleteCard({
     mutation: {
@@ -100,11 +60,6 @@ export default function CardDetails() {
       }
     }
   });
-
-  const handlePresetTopUp = (amount: number) => {
-    form.setValue("amount", amount);
-    setShowCustomTopUp(false);
-  };
 
   if (cardLoading || txLoading) {
     return <div className="animate-spin w-8 h-8 border-2 border-primary rounded-full border-t-transparent mx-auto mt-20"></div>;
@@ -132,8 +87,6 @@ export default function CardDetails() {
             key={tab.key}
             onClick={() => {
               if (tab.key === "topup") {
-                setShowCustomTopUp(false);
-                form.reset({ amount: 0, description: "Card Top Up" });
                 setTopUpOpen(true);
               } else {
                 setActiveTab(tab.key);
@@ -275,25 +228,7 @@ export default function CardDetails() {
             </div>
 
             <div className="space-y-3">
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start rounded-xl h-14 text-left",
-                  isFrozen && "border-blue-400/50 bg-blue-500/10"
-                )}
-                onClick={() => freezeMutation.mutate({ cardId, data: { frozen: !isFrozen } })}
-                disabled={freezeMutation.isPending}
-              >
-                {isFrozen ? (
-                  <ShieldAlert className="w-5 h-5 mr-3 text-blue-400" />
-                ) : (
-                  <Snowflake className="w-5 h-5 mr-3 text-orange-400" />
-                )}
-                <div>
-                  <p className="font-medium">{isFrozen ? "Unfreeze Card" : "Freeze Card"}</p>
-                  <p className="text-xs text-muted-foreground">{isFrozen ? "Re-enable transactions on this card" : "Temporarily disable all transactions"}</p>
-                </div>
-              </Button>
+              <FreezeCardButton cardId={cardId} isFrozen={isFrozen} variant="full" />
 
               <Button
                 variant="outline"
@@ -347,42 +282,9 @@ export default function CardDetails() {
           </h3>
           {transactions.length > 0 ? (
             <div className="space-y-3">
-              {transactions.map((tx) => {
-                const isPositive = tx.type === "topup" || tx.type === "refund";
-                return (
-                  <motion.div 
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    key={tx.id} 
-                    className="flex items-center justify-between p-3 md:p-4 rounded-xl bg-foreground/5 border border-foreground/5 hover:bg-foreground/10 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 md:gap-4 min-w-0">
-                      <div className={cn(
-                        "w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-inner shrink-0",
-                        isPositive ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"
-                      )}>
-                        {isPositive ? <ArrowUpRight className="w-5 h-5 md:w-6 md:h-6" /> : <ArrowDownRight className="w-5 h-5 md:w-6 md:h-6" />}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm md:text-lg capitalize truncate">{tx.type} <span className="text-muted-foreground text-xs md:text-sm font-normal lowercase ml-1 hidden sm:inline">{tx.description && `- ${tx.description}`}</span></p>
-                        <p className="text-[10px] md:text-sm text-muted-foreground">{format(new Date(tx.createdAt), "MMM d, yyyy • h:mm a")}</p>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0 ml-2">
-                      <div className={cn("font-bold text-base md:text-xl font-display amount", isPositive ? "text-emerald-400" : "text-foreground")}>
-                        {isPositive ? "+" : "-"}{formatCurrency(tx.amount, card.currency)}
-                      </div>
-                      <span className={cn(
-                        "text-[9px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full inline-block mt-1 uppercase font-semibold",
-                        tx.status === 'completed' ? "bg-emerald-500/20 text-emerald-300" : 
-                        tx.status === 'pending' ? "bg-yellow-500/20 text-yellow-300" : "bg-red-500/20 text-red-300"
-                      )}>
-                        {tx.status}
-                      </span>
-                    </div>
-                  </motion.div>
-                );
-              })}
+              {transactions.map((tx) => (
+                <TransactionItem key={tx.id} tx={tx} currency={card.currency} variant="detailed" />
+              ))}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center">
@@ -394,58 +296,13 @@ export default function CardDetails() {
         </CardContent>
       </Card>
 
-      <ResponsiveDialog
+      <TopUpDialog
         open={topUpOpen}
         onOpenChange={setTopUpOpen}
-        title="Top Up Card"
-        description={`Add funds to ${card.label || 'your card'}.`}
-      >
-        <div className="grid grid-cols-4 gap-2 pt-2">
-          {PRESET_AMOUNTS.map((amt) => (
-            <Button
-              key={amt}
-              type="button"
-              variant={!showCustomTopUp && form.watch("amount") === amt ? "default" : "outline"}
-              size="sm"
-              className="rounded-xl text-sm font-semibold"
-              onClick={() => handlePresetTopUp(amt)}
-            >
-              {getCurrencySymbol(card.currency)}{amt}
-            </Button>
-          ))}
-          <Button
-            type="button"
-            variant={showCustomTopUp ? "default" : "outline"}
-            size="sm"
-            className="rounded-xl text-sm font-semibold"
-            onClick={() => { setShowCustomTopUp(true); form.setValue("amount", 0); }}
-          >
-            Other
-          </Button>
-        </div>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit((v) => topUpMutation.mutate({ cardId, data: v }))} className="space-y-4">
-            {showCustomTopUp && (
-              <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Custom Amount ({card.currency})</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" className="bg-muted/50 text-lg" placeholder="Enter amount" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            <Button type="submit" className="w-full rounded-xl" disabled={topUpMutation.isPending}>
-              {topUpMutation.isPending ? "Processing..." : "Confirm Top Up"}
-            </Button>
-          </form>
-        </Form>
-      </ResponsiveDialog>
+        cardId={cardId}
+        cardLabel={card.label}
+        currency={card.currency}
+      />
 
       <ResponsiveDialog
         open={deleteOpen}
