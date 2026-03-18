@@ -19,7 +19,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Password hashing**: bcrypt
 - **Frontend**: React + Vite + Tailwind + shadcn/ui + framer-motion
 
-## Application: NexusPay — Debit Card Manager
+## Application: Wisp — Debit Card Manager
 
 A fintech-style platform for managing top-up debit cards. Features:
 - User registration and login (email/password, session-based auth)
@@ -36,7 +36,7 @@ A fintech-style platform for managing top-up debit cards. Features:
 artifacts-monorepo/
 ├── artifacts/
 │   ├── api-server/         # Express API server
-│   └── card-manager/       # React + Vite frontend (NexusPay)
+│   └── card-manager/       # React + Vite frontend (Wisp)
 ├── lib/                    # Shared libraries
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
