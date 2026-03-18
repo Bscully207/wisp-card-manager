@@ -1,6 +1,4 @@
 import { Router, type IRouter } from "express";
-import { db, cardsTable, transactionsTable, usersTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
 import {
   GetCardsResponse,
   GetCardParams,
@@ -18,41 +16,25 @@ import {
   GetCardTransactionsResponse,
 } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/requireAuth.js";
+import {
+  getUserCards,
+  getCardByIdForUser,
+  createCard,
+  topUpCard,
+  freezeCard,
+  deleteCard,
+  getCardTransactions,
+  toCardResponse,
+} from "../services/card.service.js";
 
 const router: IRouter = Router();
 
-function generateCardNumber(): string {
-  const segments = [];
-  for (let i = 0; i < 4; i++) {
-    segments.push(Math.floor(1000 + Math.random() * 9000).toString());
-  }
-  return segments.join(" ");
-}
-
-function generateCvv(): string {
-  return Math.floor(100 + Math.random() * 900).toString();
-}
-
-function toCardResponse(card: typeof cardsTable.$inferSelect) {
-  return {
-    id: card.id,
-    userId: card.userId,
-    cardNumber: card.cardNumber,
-    cardholderName: card.cardholderName,
-    expiryMonth: card.expiryMonth,
-    expiryYear: card.expiryYear,
-    cvv: card.cvv,
-    balance: card.balance,
-    currency: card.currency,
-    status: card.status as "active" | "frozen" | "expired" | "cancelled",
-    label: card.label ?? null,
-    color: card.color ?? null,
-    createdAt: card.createdAt,
-  };
+function parseCardId(raw: string | string[]): number {
+  return parseInt(Array.isArray(raw) ? raw[0] : raw, 10);
 }
 
 router.get("/cards", requireAuth, async (req, res): Promise<void> => {
-  const cards = await db.select().from(cardsTable).where(eq(cardsTable.userId, req.session.userId!));
+  const cards = await getUserCards(req.session.userId!);
   res.json(GetCardsResponse.parse(cards.map(toCardResponse)));
 });
 
@@ -63,50 +45,29 @@ router.post("/cards", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId!));
-  if (!user) {
+  const card = await createCard({
+    userId: req.session.userId!,
+    currency: parsed.data.currency || "EUR",
+    label: parsed.data.label,
+    color: parsed.data.color,
+  });
+
+  if (!card) {
     res.status(401).json({ error: "Unauthorized", message: "User not found" });
     return;
   }
-
-  const now = new Date();
-  const expiryMonth = now.getMonth() + 1;
-  const expiryYear = now.getFullYear() + 4;
-
-  const colors = ["blue", "purple", "green", "orange", "pink", "teal"];
-  const defaultColor = colors[Math.floor(Math.random() * colors.length)];
-
-  const [card] = await db.insert(cardsTable).values({
-    userId: req.session.userId!,
-    cardNumber: generateCardNumber(),
-    cardholderName: user.firstName && user.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : user.email.split("@")[0].toUpperCase(),
-    expiryMonth,
-    expiryYear,
-    cvv: generateCvv(),
-    balance: 0,
-    currency: parsed.data.currency || "EUR",
-    status: "active",
-    label: parsed.data.label ?? null,
-    color: parsed.data.color ?? defaultColor,
-  }).returning();
 
   res.status(201).json(GetCardResponse.parse(toCardResponse(card)));
 });
 
 router.get("/cards/:cardId", requireAuth, async (req, res): Promise<void> => {
-  const raw = Array.isArray(req.params.cardId) ? req.params.cardId[0] : req.params.cardId;
-  const params = GetCardParams.safeParse({ cardId: parseInt(raw, 10) });
+  const params = GetCardParams.safeParse({ cardId: parseCardId(req.params.cardId) });
   if (!params.success) {
     res.status(400).json({ error: "Invalid card ID" });
     return;
   }
 
-  const [card] = await db.select().from(cardsTable).where(
-    and(eq(cardsTable.id, params.data.cardId), eq(cardsTable.userId, req.session.userId!))
-  );
-
+  const card = await getCardByIdForUser(params.data.cardId, req.session.userId!);
   if (!card) {
     res.status(404).json({ error: "Not found", message: "Card not found" });
     return;
@@ -116,17 +77,13 @@ router.get("/cards/:cardId", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.delete("/cards/:cardId", requireAuth, async (req, res): Promise<void> => {
-  const raw = Array.isArray(req.params.cardId) ? req.params.cardId[0] : req.params.cardId;
-  const params = DeleteCardParams.safeParse({ cardId: parseInt(raw, 10) });
+  const params = DeleteCardParams.safeParse({ cardId: parseCardId(req.params.cardId) });
   if (!params.success) {
     res.status(400).json({ error: "Invalid card ID" });
     return;
   }
 
-  const [card] = await db.delete(cardsTable).where(
-    and(eq(cardsTable.id, params.data.cardId), eq(cardsTable.userId, req.session.userId!))
-  ).returning();
-
+  const card = await deleteCard(params.data.cardId, req.session.userId!);
   if (!card) {
     res.status(404).json({ error: "Not found", message: "Card not found" });
     return;
@@ -136,8 +93,7 @@ router.delete("/cards/:cardId", requireAuth, async (req, res): Promise<void> => 
 });
 
 router.post("/cards/:cardId/topup", requireAuth, async (req, res): Promise<void> => {
-  const raw = Array.isArray(req.params.cardId) ? req.params.cardId[0] : req.params.cardId;
-  const params = TopUpCardParams.safeParse({ cardId: parseInt(raw, 10) });
+  const params = TopUpCardParams.safeParse({ cardId: parseCardId(req.params.cardId) });
   if (!params.success) {
     res.status(400).json({ error: "Invalid card ID" });
     return;
@@ -149,42 +105,27 @@ router.post("/cards/:cardId/topup", requireAuth, async (req, res): Promise<void>
     return;
   }
 
-  const [card] = await db.select().from(cardsTable).where(
-    and(eq(cardsTable.id, params.data.cardId), eq(cardsTable.userId, req.session.userId!))
+  const result = await topUpCard(
+    params.data.cardId,
+    req.session.userId!,
+    body.data.amount,
+    body.data.description
   );
 
-  if (!card) {
-    res.status(404).json({ error: "Not found", message: "Card not found" });
+  if ("error" in result) {
+    if (result.error === "not_found") {
+      res.status(404).json({ error: "Not found", message: "Card not found" });
+    } else {
+      res.status(400).json({ error: "Bad request", message: "Cannot top up a frozen card" });
+    }
     return;
   }
 
-  if (card.status === "frozen") {
-    res.status(400).json({ error: "Bad request", message: "Cannot top up a frozen card" });
-    return;
-  }
-
-  const balanceBefore = card.balance;
-  const balanceAfter = balanceBefore + body.data.amount;
-
-  const [updatedCard] = await db.update(cardsTable).set({ balance: balanceAfter }).where(eq(cardsTable.id, card.id)).returning();
-
-  await db.insert(transactionsTable).values({
-    cardId: card.id,
-    userId: req.session.userId!,
-    type: "topup",
-    amount: body.data.amount,
-    balanceBefore,
-    balanceAfter,
-    description: body.data.description ?? `Top up of ${body.data.amount} ${card.currency}`,
-    status: "completed",
-  });
-
-  res.json(TopUpCardResponse.parse(toCardResponse(updatedCard)));
+  res.json(TopUpCardResponse.parse(toCardResponse(result.card)));
 });
 
 router.post("/cards/:cardId/freeze", requireAuth, async (req, res): Promise<void> => {
-  const raw = Array.isArray(req.params.cardId) ? req.params.cardId[0] : req.params.cardId;
-  const params = FreezeCardParams.safeParse({ cardId: parseInt(raw, 10) });
+  const params = FreezeCardParams.safeParse({ cardId: parseCardId(req.params.cardId) });
   if (!params.success) {
     res.status(400).json({ error: "Invalid card ID" });
     return;
@@ -196,39 +137,27 @@ router.post("/cards/:cardId/freeze", requireAuth, async (req, res): Promise<void
     return;
   }
 
-  const [card] = await db.select().from(cardsTable).where(
-    and(eq(cardsTable.id, params.data.cardId), eq(cardsTable.userId, req.session.userId!))
-  );
-
-  if (!card) {
+  const updatedCard = await freezeCard(params.data.cardId, req.session.userId!, body.data.frozen);
+  if (!updatedCard) {
     res.status(404).json({ error: "Not found", message: "Card not found" });
     return;
   }
-
-  const newStatus = body.data.frozen ? "frozen" : "active";
-  const [updatedCard] = await db.update(cardsTable).set({ status: newStatus }).where(eq(cardsTable.id, card.id)).returning();
 
   res.json(FreezeCardResponse.parse(toCardResponse(updatedCard)));
 });
 
 router.get("/cards/:cardId/transactions", requireAuth, async (req, res): Promise<void> => {
-  const raw = Array.isArray(req.params.cardId) ? req.params.cardId[0] : req.params.cardId;
-  const params = GetCardTransactionsParams.safeParse({ cardId: parseInt(raw, 10) });
+  const params = GetCardTransactionsParams.safeParse({ cardId: parseCardId(req.params.cardId) });
   if (!params.success) {
     res.status(400).json({ error: "Invalid card ID" });
     return;
   }
 
-  const [card] = await db.select().from(cardsTable).where(
-    and(eq(cardsTable.id, params.data.cardId), eq(cardsTable.userId, req.session.userId!))
-  );
-
-  if (!card) {
+  const txs = await getCardTransactions(params.data.cardId, req.session.userId!);
+  if (!txs) {
     res.status(404).json({ error: "Not found", message: "Card not found" });
     return;
   }
-
-  const txs = await db.select().from(transactionsTable).where(eq(transactionsTable.cardId, card.id));
 
   res.json(GetCardTransactionsResponse.parse(txs.map(t => ({
     id: t.id,

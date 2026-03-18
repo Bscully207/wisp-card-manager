@@ -3,9 +3,16 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
 
+export const CARD_TYPES = ["virtual", "physical"] as const;
+export type CardType = (typeof CARD_TYPES)[number];
+
+export const CARD_STATUSES = ["active", "frozen", "expired", "cancelled"] as const;
+export type CardStatus = (typeof CARD_STATUSES)[number];
+
 export const cardsTable = pgTable("cards", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  type: varchar("type", { length: 20 }).notNull().default("virtual"),
   cardNumber: varchar("card_number", { length: 19 }).notNull().unique(),
   cardholderName: varchar("cardholder_name", { length: 100 }).notNull(),
   expiryMonth: integer("expiry_month").notNull(),

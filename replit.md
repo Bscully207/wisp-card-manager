@@ -52,7 +52,7 @@ artifacts-monorepo/
 ## Database Schema
 
 - `users` — user accounts (email, hashed password, profile info)
-- `cards` — debit cards per user (number, balance, status, color)
+- `cards` — debit cards per user (number, balance, status, color, type: virtual/physical)
 - `transactions` — ledger of topup/payment/refund events
 - `support_tickets` — user support tickets with status tracking
 - `sessions` — express-session persistence (created automatically)
@@ -79,9 +79,10 @@ Express 5 API server. Routes are split by domain in `src/routes/`.
 
 - Auth: `src/routes/auth.ts` — register, login, logout, /me
 - Users: `src/routes/users.ts` — profile update, change password
-- Cards: `src/routes/cards.ts` — CRUD, top-up, freeze/unfreeze
+- Cards: `src/routes/cards.ts` — thin controller delegating to card service
 - Transactions: `src/routes/transactions.ts` — all transactions for user
 - Support: `src/routes/support.ts` — ticket management
+- Services: `src/services/card.service.ts` — card business logic (create with collision retry, transactional top-up, freeze/unfreeze, delete, transaction queries)
 - Session middleware: `src/lib/session.ts`
 - Auth middleware: `src/middlewares/requireAuth.ts`
 

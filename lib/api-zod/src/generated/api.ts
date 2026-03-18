@@ -116,6 +116,7 @@ export const ChangePasswordResponse = zod.object({
 export const GetCardsResponseItem = zod.object({
   id: zod.number(),
   userId: zod.number(),
+  type: zod.enum(["virtual", "physical"]).default("virtual"),
   cardNumber: zod.string(),
   cardholderName: zod.string(),
   expiryMonth: zod.number(),
@@ -151,6 +152,7 @@ export const GetCardParams = zod.object({
 export const GetCardResponse = zod.object({
   id: zod.number(),
   userId: zod.number(),
+  type: zod.enum(["virtual", "physical"]).default("virtual"),
   cardNumber: zod.string(),
   cardholderName: zod.string(),
   expiryMonth: zod.number(),
@@ -192,6 +194,7 @@ export const TopUpCardBody = zod.object({
 export const TopUpCardResponse = zod.object({
   id: zod.number(),
   userId: zod.number(),
+  type: zod.enum(["virtual", "physical"]).default("virtual"),
   cardNumber: zod.string(),
   cardholderName: zod.string(),
   expiryMonth: zod.number(),
@@ -219,6 +222,7 @@ export const FreezeCardBody = zod.object({
 export const FreezeCardResponse = zod.object({
   id: zod.number(),
   userId: zod.number(),
+  type: zod.enum(["virtual", "physical"]).default("virtual"),
   cardNumber: zod.string(),
   cardholderName: zod.string(),
   expiryMonth: zod.number(),
