@@ -67,11 +67,12 @@ export default function Cards() {
                   <Button
                     size="sm"
                     variant="secondary"
-                    className="flex-1 rounded-xl text-xs h-9"
+                    className="flex-1 rounded-xl text-xs h-9 min-w-0"
                     disabled={isFrozen}
                     onClick={(e) => { e.stopPropagation(); handleTopUp(card.id); }}
                   >
-                    <PlusCircle className="w-3.5 h-3.5 mr-1.5" /> Top Up
+                    <PlusCircle className="w-3.5 h-3.5 shrink-0 mr-1.5" />
+                    <span className="truncate">Top Up</span>
                   </Button>
                   <FreezeCardButton cardId={card.id} isFrozen={isFrozen} className="h-9" />
                   <Button

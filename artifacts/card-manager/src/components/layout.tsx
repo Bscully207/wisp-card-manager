@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   Settings,
   ChevronUp,
-  Bell
+  Bell,
+  Check
 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { 
@@ -41,6 +42,7 @@ import { useGetMe, useLogout } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetMeQueryKey } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
+import { useNotifications } from "@/hooks/use-notifications";
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -50,27 +52,36 @@ const navItems = [
 
 export const ROOT_PATHS = ["/dashboard", "/cards", "/transactions"];
 
-function ThemeMenuItem() {
+function ThemeSubmenu() {
   const { theme, setTheme } = useTheme();
-  const cycle = () => {
-    if (theme === "light") setTheme("dark");
-    else if (theme === "dark") setTheme("system");
-    else setTheme("light");
-  };
-  const Icon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
-  const label = theme === "light" ? "Light" : theme === "dark" ? "Dark" : "System";
+  const options = [
+    { value: "light" as const, label: "Light", icon: Sun },
+    { value: "dark" as const, label: "Dark", icon: Moon },
+    { value: "system" as const, label: "System", icon: Monitor },
+  ];
 
   return (
-    <DropdownMenuItem onClick={cycle} className="cursor-pointer">
-      <Icon className="w-4 h-4 mr-2" />
-      Theme: {label}
-    </DropdownMenuItem>
+    <div className="px-1 py-1.5">
+      <p className="text-xs font-medium text-muted-foreground px-2 mb-1.5">Theme</p>
+      {options.map((opt) => (
+        <DropdownMenuItem
+          key={opt.value}
+          onClick={() => setTheme(opt.value)}
+          className={cn("cursor-pointer gap-2", theme === opt.value && "bg-primary/10 text-primary")}
+        >
+          <opt.icon className="w-4 h-4" />
+          {opt.label}
+          {theme === opt.value && <Check className="w-3.5 h-3.5 ml-auto" />}
+        </DropdownMenuItem>
+      ))}
+    </div>
   );
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const { unreadCount } = useNotifications();
   
   const { data: user, isLoading, isError } = useGetMe({
     query: { retry: false }
@@ -166,7 +177,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     Support
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <ThemeMenuItem />
+                  <ThemeSubmenu />
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => logoutMutation.mutate({})}
@@ -205,13 +216,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex-1" />
             <div className="hidden md:flex items-center gap-2">
-              <button className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors">
+              <button
+                onClick={() => setLocation("/notifications")}
+                className="relative w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
+              >
                 <Bell className="w-[18px] h-[18px]" />
+                {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary ring-2 ring-background" />}
               </button>
             </div>
             <div className="md:hidden flex items-center gap-1.5">
-              <button className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors">
+              <button
+                onClick={() => setLocation("/notifications")}
+                className="relative w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
+              >
                 <Bell className="w-[18px] h-[18px]" />
+                {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary ring-2 ring-background" />}
               </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -229,7 +248,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     Support
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <ThemeMenuItem />
+                  <ThemeSubmenu />
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => logoutMutation.mutate({})}

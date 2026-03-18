@@ -107,7 +107,8 @@ React + Vite frontend. Mobile-first responsive design with Telegram Mini App sup
 
 **Pages** under `src/pages/`:
 - `login.tsx`, `register.tsx` — auth pages (full-width on mobile, side image on desktop)
-- `dashboard.tsx` — card overview + total balance + quick actions
+- `dashboard.tsx` — card overview + total balance + quick actions + drag-and-drop card reorder + inline card creation wizard
+- `notifications.tsx` — notifications page with unread/all tabs (mock data)
 - `cards.tsx` — card list + create card + top-up
 - `card-details.tsx` — single card with 4-col action tiles (mobile) or 2-col (desktop)
 - `transactions.tsx` — card list view on mobile, table on desktop
@@ -116,11 +117,11 @@ React + Vite frontend. Mobile-first responsive design with Telegram Mini App sup
 - `profile.tsx` — DEPRECATED, /profile redirects to /settings
 
 **Navigation**:
-- Desktop sidebar: logo + collapse trigger in header, nav items, user dropdown footer (Settings, Support, Theme cycle, Logout)
+- Desktop sidebar: logo + collapse trigger in header, nav items, user dropdown footer (Settings, Support, Theme dropdown, Logout)
 - Mobile: top header (back button on sub-pages, logo, bell icon, user avatar dropdown), bottom tab bar (Dashboard, Cards, Transactions)
-- Bell icon in mobile header is a UI placeholder (no notifications backend yet)
-- No standalone theme button; theme cycling integrated into user dropdowns on both mobile and desktop
-- Dashboard: free-floating total balance (no Card wrapper), "Create Card" pill button next to balance, compact mobile density
+- Bell icon navigates to /notifications page, shows unread dot when notifications are unread
+- Theme selection via dropdown (Light/Dark/System) in user dropdowns on both mobile and desktop
+- Dashboard: free-floating total balance, compact card rendering with drag-and-drop reorder (uses @dnd-kit), "Create Card" opens wizard directly
 - Top-up presets: $50, $100, $1000, "Other" (reveals custom input) — consistent across dashboard, cards, and card-details pages
 
 **CSS**:

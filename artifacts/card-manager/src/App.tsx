@@ -7,6 +7,7 @@ import { ThemeProvider } from "./components/theme-provider";
 import NotFound from "@/pages/not-found";
 import { Layout, ROOT_PATHS } from "@/components/layout";
 import { useTelegram } from "@/hooks/use-telegram";
+import { NotificationProvider } from "@/hooks/use-notifications";
 
 import Login from "@/pages/login";
 import Register from "@/pages/register";
@@ -16,6 +17,7 @@ import CardDetails from "@/pages/card-details";
 import Transactions from "@/pages/transactions";
 import Support from "@/pages/support";
 import SettingsPage from "@/pages/settings";
+import Notifications from "@/pages/notifications";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +67,7 @@ function AppRouter() {
         <Route path="/cards/:id">{() => <WrappedPage><CardDetails /></WrappedPage>}</Route>
         <Route path="/cards">{() => <WrappedPage><Cards /></WrappedPage>}</Route>
         <Route path="/transactions">{() => <WrappedPage><Transactions /></WrappedPage>}</Route>
+        <Route path="/notifications">{() => <WrappedPage><Notifications /></WrappedPage>}</Route>
         <Route path="/profile">{() => <Redirect to="/settings" />}</Route>
         <Route path="/support">{() => <WrappedPage><Support /></WrappedPage>}</Route>
         <Route path="/settings">{() => <WrappedPage><SettingsPage /></WrappedPage>}</Route>
@@ -78,12 +81,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <AppRouter />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
+        <NotificationProvider>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <AppRouter />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </NotificationProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
