@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   CreditCard, Smartphone, Package, ChevronRight, ChevronLeft, 
-  Check, Loader2, PartyPopper, Mail, Phone, Tag
+  Check, Loader2, PartyPopper, Mail, Phone, Tag, User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ interface WizardData {
   cardType: "virtual" | "physical" | null;
   currency: string;
   label: string;
+  nameOnCard: string;
   email: string;
   phone: string;
   termsAccepted: boolean[];
@@ -50,6 +51,7 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
     cardType: null,
     currency: "USD",
     label: "",
+    nameOnCard: "",
     email: "",
     phone: "",
     termsAccepted: [false, false, false, false],
@@ -75,6 +77,7 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
       cardType: null,
       currency: "USD",
       label: "",
+      nameOnCard: "",
       email: user?.email || "",
       phone: "",
       termsAccepted: [false, false, false, false],
@@ -85,7 +88,11 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
     if (!v) {
       resetWizard();
     } else {
-      setData(prev => ({ ...prev, email: user?.email || "" }));
+      setData(prev => ({
+        ...prev,
+        email: user?.email || "",
+        nameOnCard: prev.nameOnCard || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : ""),
+      }));
     }
     onOpenChange(v);
   };
@@ -95,7 +102,7 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
   const canProceed = () => {
     switch (step) {
       case 0: return data.cardType === "virtual";
-      case 1: return data.label.trim().length > 0 && isValidEmail(data.email);
+      case 1: return data.label.trim().length > 0 && data.nameOnCard.trim().length > 0 && isValidEmail(data.email);
       case 2: return data.termsAccepted.every(Boolean);
       case 3: return !createMutation.isPending;
       default: return true;
@@ -184,7 +191,8 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
             )}
             {step === 4 && (
               <StepSuccess 
-                card={createdCard} 
+                card={createdCard}
+                nameOnCard={data.nameOnCard}
                 onViewCard={() => {
                   handleOpenChange(false);
                   if (createdCard) setLocation(`/cards/${createdCard.id}`);
@@ -290,7 +298,19 @@ function StepDetails({ data, onChange }: { data: WizardData; onChange: (updates:
 
         <div className="space-y-1.5">
           <label className="text-sm font-medium flex items-center gap-1.5">
-            <Tag className="w-3.5 h-3.5" /> Card Name
+            <User className="w-3.5 h-3.5" /> Name on the Card
+          </label>
+          <Input 
+            value={data.nameOnCard}
+            onChange={(e) => onChange({ nameOnCard: e.target.value })}
+            placeholder="e.g. John Doe"
+            className="bg-muted/50"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium flex items-center gap-1.5">
+            <Tag className="w-3.5 h-3.5" /> Card Nickname
           </label>
           <Input 
             value={data.label}
@@ -358,7 +378,7 @@ function StepTerms({ accepted, onToggle }: { accepted: boolean[]; onToggle: (i: 
         ))}
       </div>
 
-      <p className="text-xs text-muted-foreground text-center">
+      <p className="text-xs text-muted-foreground text-center pb-4">
         The full Privacy Policy and Terms of Use can be found on our website.
       </p>
     </div>
@@ -367,9 +387,9 @@ function StepTerms({ accepted, onToggle }: { accepted: boolean[]; onToggle: (i: 
 
 function getCurrencyInfo(currency: string) {
   switch (currency) {
-    case "EUR": return { symbol: "€", issuance: "25.00", platform: "1.00", total: "26.00" };
-    case "GBP": return { symbol: "£", issuance: "25.00", platform: "1.00", total: "26.00" };
-    default: return { symbol: "$", issuance: "25.00", platform: "1.00", total: "26.00" };
+    case "EUR": return { symbol: "€", issuance: "25.00", total: "25.00" };
+    case "GBP": return { symbol: "£", issuance: "25.00", total: "25.00" };
+    default: return { symbol: "$", issuance: "25.00", total: "25.00" };
   }
 }
 
@@ -386,7 +406,11 @@ function StepPayment({ data, isPending }: { data: WizardData; isPending: boolean
           <span className="font-medium capitalize">{data.cardType}</span>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Card Name</span>
+          <span className="text-muted-foreground">Name on the Card</span>
+          <span className="font-medium">{data.nameOnCard || "—"}</span>
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Card Nickname</span>
           <span className="font-medium">{data.label || "—"}</span>
         </div>
         <div className="flex items-center justify-between text-sm">
@@ -397,10 +421,6 @@ function StepPayment({ data, isPending }: { data: WizardData; isPending: boolean
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Card Issuance Fee</span>
             <span className="amount">{c.symbol}{c.issuance}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Platform Fee</span>
-            <span className="amount">{c.symbol}{c.platform}</span>
           </div>
           <div className="flex items-center justify-between text-base font-bold pt-2 border-t border-border/50">
             <span>Total</span>
@@ -419,7 +439,7 @@ function StepPayment({ data, isPending }: { data: WizardData; isPending: boolean
   );
 }
 
-function StepSuccess({ card, onViewCard }: { card: Card | null; onViewCard: () => void }) {
+function StepSuccess({ card, nameOnCard, onViewCard }: { card: Card | null; nameOnCard: string; onViewCard: () => void }) {
   return (
     <motion.div 
       initial={{ scale: 0.9, opacity: 0 }}
@@ -450,7 +470,7 @@ function StepSuccess({ card, onViewCard }: { card: Card | null; onViewCard: () =
           <p className="font-mono text-sm mt-3 tracking-widest text-white/80">
             <span className="amount">•••• •••• •••• {card.cardNumber.slice(-4)}</span>
           </p>
-          <p className="text-xs text-white/60 mt-2">{card.cardholderName}</p>
+          <p className="text-xs text-white/60 mt-2">{nameOnCard || card.cardholderName}</p>
         </div>
       )}
 

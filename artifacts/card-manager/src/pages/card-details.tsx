@@ -102,8 +102,7 @@ export default function CardDetails() {
             )}
           >
             {tab.icon}
-            <span className="hidden sm:inline">{tab.label}</span>
-            <span className="sm:hidden text-xs">{tab.label.split(" ").pop()}</span>
+            <span className="text-xs sm:text-sm">{tab.label}</span>
           </button>
         ))}
       </div>

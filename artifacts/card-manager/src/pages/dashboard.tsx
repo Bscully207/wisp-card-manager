@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useGetCards, useGetAllTransactions } from "@workspace/api-client-react";
+import { useGetCards, useGetAllTransactions, useGetMe } from "@workspace/api-client-react";
 import { CreditCard } from "@/components/credit-card";
 import { formatCurrency } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -65,7 +65,7 @@ function SortableCard({ card, onTopUp, onNavigate }: {
         <button
           {...attributes}
           {...listeners}
-          className="absolute top-2 left-2 z-20 w-7 h-7 rounded-lg bg-black/30 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white cursor-grab active:cursor-grabbing touch-none"
+          className="absolute top-2 right-2 z-20 w-7 h-7 rounded-lg bg-black/30 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white cursor-grab active:cursor-grabbing touch-none"
           title="Drag to reorder"
         >
           <GripVertical className="w-4 h-4" />
@@ -103,6 +103,7 @@ function SortableCard({ card, onTopUp, onNavigate }: {
 
 export default function Dashboard() {
   const [_, setLocation] = useLocation();
+  const { data: user } = useGetMe();
   const { data: cards = [], isLoading: cardsLoading } = useGetCards();
   const { data: transactions = [], isLoading: txLoading } = useGetAllTransactions();
   const [topUpCardId, setTopUpCardId] = useState<number | null>(null);
@@ -159,14 +160,17 @@ export default function Dashboard() {
     );
   }
 
+  const greeting = user?.firstName ? `Hello, ${user.firstName}` : "Hello";
+
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-8 md:space-y-10">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-1"
+        className="space-y-2 pt-2"
       >
-        <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-medium">Total balance</p>
+        <h1 className="font-display text-xl md:text-2xl font-semibold tracking-tight">{greeting}</h1>
+        <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-medium">Your total balance</p>
         <h2 className="text-4xl sm:text-5xl font-display font-bold tracking-tight amount">
           {formatCurrency(totalBalance, "EUR")}
         </h2>
