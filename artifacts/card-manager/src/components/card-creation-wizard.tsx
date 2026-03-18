@@ -193,6 +193,7 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
               <StepSuccess 
                 card={createdCard}
                 nameOnCard={data.nameOnCard}
+                nickname={data.label}
                 onViewCard={() => {
                   handleOpenChange(false);
                   if (createdCard) setLocation(`/cards/${createdCard.id}`);
@@ -439,7 +440,7 @@ function StepPayment({ data, isPending }: { data: WizardData; isPending: boolean
   );
 }
 
-function StepSuccess({ card, nameOnCard, onViewCard }: { card: Card | null; nameOnCard: string; onViewCard: () => void }) {
+function StepSuccess({ card, nameOnCard, nickname, onViewCard }: { card: Card | null; nameOnCard: string; nickname: string; onViewCard: () => void }) {
   return (
     <motion.div 
       initial={{ scale: 0.9, opacity: 0 }}
@@ -465,7 +466,7 @@ function StepSuccess({ card, nameOnCard, onViewCard }: { card: Card | null; name
 
       {card && (
         <div className="w-full max-w-xs rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-900 p-4 text-white text-left shadow-xl">
-          <p className="text-white/70 text-xs uppercase tracking-wider mb-1">{card.label || "Debit Card"}</p>
+          <p className="text-white/70 text-xs uppercase tracking-wider mb-1">{card.label || nickname || "Debit Card"}</p>
           <p className="font-display text-lg font-bold">{card.currency} Account</p>
           <p className="font-mono text-sm mt-3 tracking-widest text-white/80">
             <span className="amount">•••• •••• •••• {card.cardNumber.slice(-4)}</span>
