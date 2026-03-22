@@ -20,6 +20,7 @@ import type {
   AuthResponse,
   Card,
   CardDetailsWithTransactions,
+  CardAccessUrlResponse,
   ChangePasswordRequest,
   CreateCardRequest,
   CreateSupportTicketRequest,
@@ -1355,6 +1356,89 @@ export function useGetCardDetailsWithTransactions<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Create a secure access URL for viewing full card details
+ */
+export const getCreateCardAccessUrlUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/access-url`;
+};
+
+export const createCardAccessUrl = async (
+  cardId: number,
+  options?: RequestInit,
+): Promise<CardAccessUrlResponse> => {
+  return customFetch<CardAccessUrlResponse>(getCreateCardAccessUrlUrl(cardId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getCreateCardAccessUrlMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCardAccessUrl>>,
+    TError,
+    { cardId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+ Lucas}): UseMutationOptions<
+  Awaited<ReturnType<typeof createCardAccessUrl>>,
+  TError,
+  { cardId: number },
+  TContext
+ Lucas> => {
+  const mutationKey = ["createCardAccessUrl"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createCardAccessUrl>>,
+    { cardId: number }
+  > = (props) => {
+    const { cardId } = props ?? {};
+
+    return createCardAccessUrl(cardId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+ Lucas};
+
+export type CreateCardAccessUrlMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createCardAccessUrl>>
+ Lucas>;
+export type CreateCardAccessUrlMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create a secure access URL for viewing full card details
+ */
+export const useCreateCardAccessUrl = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCardAccessUrl>>,
+    TError,
+    { cardId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+ Lucas}): UseMutationResult<
+  Awaited<ReturnType<typeof createCardAccessUrl>>,
+  TError,
+  { cardId: number },
+  TContext
+ Lucas> => {
+  return useMutation(getCreateCardAccessUrlMutationOptions(options));
+ Lucas};
 
 /**
  * @summary Get all transactions for the current user

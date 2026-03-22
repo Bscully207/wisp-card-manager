@@ -315,6 +315,18 @@ export const GetCardDetailsWithTransactionsResponse = zod.object({
 });
 
 /**
+ * @summary Create a secure access URL for viewing full card details
+ */
+export const CreateCardAccessUrlParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const CreateCardAccessUrlResponse = zod.object({
+  url: zod.string(),
+  expiresAt: zod.string(),
+});
+
+/**
  * @summary Get all transactions for the current user
  */
 export const GetAllTransactionsResponseItem = zod.object({

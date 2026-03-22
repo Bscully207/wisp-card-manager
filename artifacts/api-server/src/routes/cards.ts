@@ -19,6 +19,8 @@ import {
   GetCardTransactionsResponse,
   GetCardDetailsWithTransactionsParams,
   GetCardDetailsWithTransactionsResponse,
+  CreateCardAccessUrlParams,
+  CreateCardAccessUrlResponse,
 } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/requireAuth.js";
 import {
@@ -233,6 +235,27 @@ router.get("/cards/:cardId/transactions", requireAuth, async (req, res): Promise
     status: t.status as "pending" | "completed" | "failed",
     createdAt: t.createdAt,
   }))));
+});
+
+router.post("/cards/:cardId/access-url", requireAuth, async (req, res): Promise<void> => {
+  const params = CreateCardAccessUrlParams.safeParse({ cardId: parseCardId(req.params.cardId) });
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid card ID" });
+    return;
+  }
+
+  const card = await getCardByIdForUser(params.data.cardId, req.session.userId!);
+  if (!card) {
+    res.status(404).json({ error: "Not found", message: "Card not found" });
+    return;
+  }
+
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+
+  res.json(CreateCardAccessUrlResponse.parse({
+    url: `https://secure.example.com/card-details/${card.id}?token=stub-token`,
+    expiresAt,
+  }));
 });
 
 export default router;

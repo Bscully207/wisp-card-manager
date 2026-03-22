@@ -25,6 +25,7 @@ import { TopUpDialog } from "@/components/shared/top-up-dialog";
 import { TransactionItem } from "@/components/shared/transaction-item";
 import { FreezeCardButton } from "@/components/shared/freeze-card-button";
 import { ChangePinDialog } from "@/components/shared/change-pin-dialog";
+import { SecureCardViewer } from "@/components/secure-card-viewer";
 
 type TabType = "topup" | "details" | "settings";
 
@@ -234,6 +235,10 @@ export default function CardDetails() {
                   <span className="text-muted-foreground">Physical Card – Not Supported</span>
                 </div>
               </div>
+            </div>
+
+            <div className="border-t border-border/50 pt-4">
+              <SecureCardViewer cardId={cardId} cardLabel={card.label} />
             </div>
           </CardContent>
         </Card>

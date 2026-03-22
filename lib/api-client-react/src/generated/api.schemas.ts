@@ -194,3 +194,8 @@ export interface CreateSupportTicketRequest {
   message: string;
   category: CreateSupportTicketRequestCategory;
 }
+
+export interface CardAccessUrlResponse {
+  url: string;
+  expiresAt: string;
+}
