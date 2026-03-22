@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ExportDialog } from "@/components/shared/export-dialog";
 
 type FilterTab = "all" | "payments" | "topups";
 
@@ -15,6 +16,7 @@ export default function Transactions() {
   const { data: cards = [], isLoading: cardsLoading } = useGetCards();
   const isMobile = useIsMobile();
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
+  const [exportOpen, setExportOpen] = useState(false);
 
   if (txLoading || cardsLoading) {
     return <div className="animate-spin w-8 h-8 border-2 border-primary rounded-full border-t-transparent mx-auto mt-20"></div>;
@@ -48,7 +50,7 @@ export default function Transactions() {
           <Button variant="outline" size="sm" className="bg-card">
             <Filter className="w-4 h-4 mr-1.5" /> Filter
           </Button>
-          <Button variant="outline" size="sm" className="bg-card">
+          <Button variant="outline" size="sm" className="bg-card" onClick={() => setExportOpen(true)}>
             <Download className="w-4 h-4 mr-1.5" /> Export
           </Button>
         </div>
@@ -196,6 +198,11 @@ export default function Transactions() {
           </CardContent>
         </Card>
       )}
+
+      <ExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+      />
     </div>
   );
 }

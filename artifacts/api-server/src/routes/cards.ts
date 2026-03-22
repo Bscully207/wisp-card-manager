@@ -44,6 +44,14 @@ import {
 
 const router: IRouter = Router();
 
+function csvSafe(value: string): string {
+  let escaped = value.replace(/"/g, '""');
+  if (/^[=+\-@\t\r]/.test(escaped)) {
+    escaped = "'" + escaped;
+  }
+  return escaped;
+}
+
 function parseCardId(raw: string | string[]): number {
   return parseInt(Array.isArray(raw) ? raw[0] : raw, 10);
 }
@@ -251,51 +259,64 @@ router.get("/cards/:cardId/transactions", requireAuth, async (req, res): Promise
   }))));
 });
 
-router.get("/cards/:cardId/balance-history/export", requireAuth, async (req, res): Promise<void> => {
-  const cardId = parseCardId(req.params.cardId);
-  if (isNaN(cardId)) {
+router.get("/cards/:cardId/transactions/export", requireAuth, async (req, res): Promise<void> => {
+  const params = GetCardTransactionsParams.safeParse({ cardId: parseCardId(req.params.cardId) });
+  if (!params.success) {
     res.status(400).json({ error: "Invalid card ID" });
     return;
   }
 
-  const card = await getCardByIdForUser(cardId, req.session.userId!);
-  if (!card) {
+  const txs = await getCardTransactions(params.data.cardId, req.session.userId!);
+  if (!txs) {
     res.status(404).json({ error: "Not found", message: "Card not found" });
     return;
   }
 
-  const balanceHistoryTypes = ["topup", "fee", "refund"];
-  const txs = await getCardTransactions(cardId, req.session.userId!);
-  const rows = (txs ?? [])
-    .filter(t => balanceHistoryTypes.includes(t.type))
-    .map(t => ({
-      id: t.id,
-      type: t.type,
-      amount: t.amount,
-      balanceBefore: t.balanceBefore,
-      balanceAfter: t.balanceAfter,
-      description: t.description ?? "",
-      status: t.status,
-      createdAt: t.createdAt,
-    }));
+  const startDate = req.query.startDate ? new Date(req.query.startDate as string) : null;
+  const endDate = req.query.endDate ? new Date(req.query.endDate as string) : null;
 
-  function sanitizeCsvCell(value: string): string {
-    let sanitized = value.replace(/"/g, '""');
-    if (/^[=+\-@\t\r]/.test(sanitized)) {
-      sanitized = "'" + sanitized;
-    }
-    sanitized = sanitized.replace(/[\r\n]+/g, " ");
-    return `"${sanitized}"`;
+  if (startDate && isNaN(startDate.getTime())) {
+    res.status(400).json({ error: "Invalid startDate" });
+    return;
+  }
+  if (endDate && isNaN(endDate.getTime())) {
+    res.status(400).json({ error: "Invalid endDate" });
+    return;
+  }
+  if (startDate && endDate && startDate > endDate) {
+    res.status(400).json({ error: "startDate must be before endDate" });
+    return;
   }
 
-  const csvHeader = "ID,Type,Amount,Currency,Balance Before,Balance After,Description,Status,Date";
-  const csvRows = rows.map(r => {
-    return `${r.id},${r.type},${r.amount},${card.currency},${r.balanceBefore},${r.balanceAfter},${sanitizeCsvCell(String(r.description))},${r.status},${r.createdAt}`;
-  });
-  const csv = [csvHeader, ...csvRows].join("\n");
+  let filtered = txs;
+  if (startDate) {
+    filtered = filtered.filter(t => new Date(t.createdAt) >= startDate);
+  }
+  if (endDate) {
+    const endOfDay = new Date(endDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    filtered = filtered.filter(t => new Date(t.createdAt) <= endOfDay);
+  }
 
-  const filename = `balance-history-card-${cardId}-${new Date().toISOString().slice(0, 10)}.csv`;
-  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  const csvHeader = "ID,Card ID,Type,Amount,Balance Before,Balance After,Description,Status,Date\n";
+  const csvRows = filtered.map(t =>
+    [
+      t.id,
+      t.cardId,
+      t.type,
+      t.amount,
+      t.balanceBefore,
+      t.balanceAfter,
+      `"${csvSafe(t.description ?? "")}"`,
+      t.status,
+      new Date(t.createdAt).toISOString(),
+    ].join(",")
+  ).join("\n");
+
+  const csv = csvHeader + csvRows;
+  const filename = `transactions_card_${params.data.cardId}_${new Date().toISOString().split("T")[0]}.csv`;
+
+  res.setHeader("Content-Type", "text/csv");
   res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
   res.send(csv);
 });

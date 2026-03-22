@@ -1665,7 +1665,12 @@ export const getCreateCardAccessUrlMutationOptions = <
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
-}) => {
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createCardAccessUrl>>,
+  TError,
+  { cardId: number },
+  TContext
+> => {
   const mutationKey = ["createCardAccessUrl"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&

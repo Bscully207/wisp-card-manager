@@ -40,6 +40,7 @@ import { ChangePinDialog } from "@/components/shared/change-pin-dialog";
 import { SecureCardViewer } from "@/components/secure-card-viewer";
 import { useTelegram } from "@/hooks/use-telegram";
 import { useGetCardTelegram, useLinkTelegram, useUnlinkTelegram, getGetCardTelegramQueryKey } from "@/hooks/use-telegram-link";
+import { ExportDialog } from "@/components/shared/export-dialog";
 
 const DIAL_CODES = [
   { code: "+1", label: "US/CA +1" },
@@ -110,6 +111,7 @@ export default function CardDetails() {
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [changePinOpen, setChangePinOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [showCvv, setShowCvv] = useState(false);
   const [cardName, setCardName] = useState("");
   const [cardEmail, setCardEmail] = useState("");
@@ -185,29 +187,6 @@ export default function CardDetails() {
   if (isError || !card) {
     return <div className="text-center mt-20">Card not found.</div>;
   }
-
-  const handleExportBalanceHistory = async () => {
-    try {
-      const baseUrl = import.meta.env.BASE_URL || "/";
-      const apiBase = baseUrl.replace(/\/$/, "");
-      const response = await fetch(`${apiBase}/api/cards/${cardId}/balance-history/export`, {
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Export failed");
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `balance-history-card-${cardId}-${new Date().toISOString().slice(0, 10)}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast({ title: "Export complete", description: "Balance history CSV downloaded." });
-    } catch {
-      toast({ title: "Export failed", description: "Could not download balance history.", variant: "destructive" });
-    }
-  };
 
   const isFrozen = card.status === "frozen";
 
@@ -502,9 +481,11 @@ export default function CardDetails() {
                 <span>Balance History</span>
               </button>
             </div>
-            <Button variant="outline" size="sm" className="bg-card shrink-0" onClick={handleExportBalanceHistory}>
-              <Download className="w-4 h-4 mr-1.5" /> Export
-            </Button>
+            {transactions.length > 0 && (
+              <Button variant="outline" size="sm" className="bg-card shrink-0" onClick={() => setExportOpen(true)}>
+                <Download className="w-4 h-4 mr-1.5" /> Export
+              </Button>
+            )}
           </div>
 
           {historyTab === "transactions" && (
@@ -544,6 +525,13 @@ export default function CardDetails() {
           )}
         </CardContent>
       </Card>
+
+      <ExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        cardId={cardId}
+        cardLabel={card.label ?? undefined}
+      />
 
       <ChangePinDialog
         open={changePinOpen}
