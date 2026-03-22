@@ -52,6 +52,7 @@ import {
   updateCard3ds,
   toCardResponse,
 } from "../services/card.service.js";
+import { createJob, updateJobStatus, completeJobWithResult, failJob } from "../services/job.service.js";
 
 const router: IRouter = Router();
 
@@ -79,20 +80,34 @@ router.post("/cards", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const card = await createCard({
-    userId: req.session.userId!,
-    currency: parsed.data.currency || "EUR",
-    label: parsed.data.label,
-    color: parsed.data.color,
-    type: parsed.data.type || "virtual",
-  });
+  const job = await createJob({ userId: req.session.userId!, type: "card_creation" });
 
-  if (!card) {
-    res.status(401).json({ error: "Unauthorized", message: "User not found" });
-    return;
+  try {
+    await updateJobStatus(job.id, "processing");
+
+    const card = await createCard({
+      userId: req.session.userId!,
+      currency: parsed.data.currency || "EUR",
+      label: parsed.data.label,
+      color: parsed.data.color,
+      type: parsed.data.type || "virtual",
+    });
+
+    if (!card) {
+      await failJob(job.id, "User not found");
+      res.status(401).json({ error: "Unauthorized", message: "User not found" });
+      return;
+    }
+
+    const cardResponse = toCardResponse(card);
+    await completeJobWithResult(job.id, cardResponse);
+
+    res.status(201).json({ jobId: job.id, ...GetCardResponse.parse(cardResponse) });
+  } catch (err) {
+    console.error("Card creation error:", err);
+    await failJob(job.id, err instanceof Error ? err.message : "Card creation failed");
+    res.status(500).json({ error: "Card creation failed" });
   }
-
-  res.status(201).json(GetCardResponse.parse(toCardResponse(card)));
 });
 
 router.get("/cards/:cardId", requireAuth, async (req, res): Promise<void> => {

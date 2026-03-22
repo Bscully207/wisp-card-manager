@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { useCreateCard, useCreateShippingRequest, useGetMe, getGetCardsQueryKey, getGetShippingRequestsQueryKey, type Card } from "@workspace/api-client-react";
+import { useCreateCard, useCreateShippingRequest, useGetMe, getGetCardsQueryKey, getGetShippingRequestsQueryKey, type Card, type CardCreationResponse } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useJobPolling } from "@/hooks/use-job-polling";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   CreditCard, Smartphone, Package, ChevronRight, ChevronLeft, 
-  Check, Loader2, PartyPopper, Mail, Phone, Tag, User, MapPin, KeyRound
+  Check, Loader2, PartyPopper, Mail, Phone, Tag, User, MapPin, KeyRound, AlertCircle, RotateCcw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,9 +61,9 @@ function validateReferralCode(code: string): { valid: boolean; discount: number;
 
 function getSteps(cardType: "virtual" | "physical" | null) {
   if (cardType === "physical") {
-    return ["Card Type", "Details", "Shipping", "Terms", "Payment", "Success"];
+    return ["Card Type", "Details", "Shipping", "Terms", "Payment", "Processing", "Success"];
   }
-  return ["Card Type", "Details", "Terms", "Payment", "Success"];
+  return ["Card Type", "Details", "Terms", "Payment", "Processing", "Success"];
 }
 
 const TERMS = [
@@ -94,6 +95,7 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
   const [step, setStep] = useState(0);
   const [createdCard, setCreatedCard] = useState<Card | null>(null);
   const [shippingSubmitted, setShippingSubmitted] = useState(false);
+  const [activeJobId, setActiveJobId] = useState<number | null>(null);
   const [data, setData] = useState<WizardData>({
     cardType: null,
     currency: "USD",
@@ -108,10 +110,11 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
 
   const steps = getSteps(data.cardType);
   const totalSteps = steps.length;
-  const successStepIndex = totalSteps - 1;
-  const paymentStepIndex = totalSteps - 2;
-  const termsStepIndex = totalSteps - 3;
-  const shippingStepIndex = data.cardType === "physical" ? 2 : -1;
+  const successStepIndex = steps.indexOf("Success");
+  const processingStepIndex = steps.indexOf("Processing");
+  const paymentStepIndex = steps.indexOf("Payment");
+  const termsStepIndex = steps.indexOf("Terms");
+  const shippingStepIndex = steps.indexOf("Shipping");
 
   const [shippingFailed, setShippingFailed] = useState(false);
 
@@ -128,17 +131,25 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
     },
   });
 
-  const createMutation = useCreateCard({
-    mutation: {
-      onSuccess: (card) => {
-        queryClient.invalidateQueries({ queryKey: getGetCardsQueryKey() });
-        setCreatedCard(card);
-        setStep(successStepIndex);
+  const { status: jobStatus, isFailed: jobFailed, isCompleted: jobCompleted, job: jobData, error: pollingError, retry: retryPolling } = useJobPolling({
+    jobId: activeJobId,
+    interval: 1500,
+  });
 
+  const jobHandledIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!jobData || jobHandledIdRef.current === jobData.id) return;
+
+    if (jobCompleted) {
+      jobHandledIdRef.current = jobData.id;
+      const cardResult = jobData.result as Card | null;
+      if (cardResult) {
+        setCreatedCard(cardResult);
         if (data.cardType === "physical" && isShippingValid()) {
           shippingMutation.mutate({
             data: {
-              cardId: card.id,
+              cardId: cardResult.id,
               recipientName: data.shippingAddress.recipientName.trim(),
               address: data.shippingAddress.address.trim(),
               city: data.shippingAddress.city.trim(),
@@ -146,6 +157,37 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
               zipCode: data.shippingAddress.zipCode.trim(),
             },
           });
+        }
+      }
+      setStep(successStepIndex);
+    } else if (jobFailed) {
+      jobHandledIdRef.current = jobData.id;
+      toast({ title: "Card creation failed", description: jobData.error || "An unexpected error occurred", variant: "destructive" });
+    }
+  }, [jobCompleted, jobFailed]);
+
+  const createMutation = useCreateCard({
+    mutation: {
+      onSuccess: (response: Card & Partial<CardCreationResponse>) => {
+        const jobId = response?.jobId;
+        if (jobId) {
+          setActiveJobId(jobId);
+          setStep(processingStepIndex);
+        } else {
+          setCreatedCard(response);
+          if (data.cardType === "physical" && isShippingValid()) {
+            shippingMutation.mutate({
+              data: {
+                cardId: response.id,
+                recipientName: data.shippingAddress.recipientName.trim(),
+                address: data.shippingAddress.address.trim(),
+                city: data.shippingAddress.city.trim(),
+                country: data.shippingAddress.country.trim(),
+                zipCode: data.shippingAddress.zipCode.trim(),
+              },
+            });
+          }
+          setStep(successStepIndex);
         }
       },
       onError: (err: Error) => {
@@ -159,6 +201,8 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
     setCreatedCard(null);
     setShippingSubmitted(false);
     setShippingFailed(false);
+    setActiveJobId(null);
+    jobHandledIdRef.current = null;
     setData({
       cardType: null,
       currency: "USD",
@@ -174,6 +218,9 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
 
   const handleOpenChange = (v: boolean) => {
     if (!v) {
+      if (createdCard) {
+        queryClient.invalidateQueries({ queryKey: getGetCardsQueryKey() });
+      }
       resetWizard();
     } else {
       setData(prev => ({
@@ -219,11 +266,11 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
       });
       return;
     }
-    if (step < successStepIndex) setStep(step + 1);
+    if (step < paymentStepIndex) setStep(step + 1);
   };
 
   const handleBack = () => {
-    if (step > 0 && step < successStepIndex) setStep(step - 1);
+    if (step > 0 && step < processingStepIndex) setStep(step - 1);
   };
 
   const currentStepName = steps[step];
@@ -232,7 +279,7 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
     <ResponsiveDialog
       open={open}
       onOpenChange={handleOpenChange}
-      title={step < successStepIndex ? "Create New Card" : step === successStepIndex ? "Card Created" : ""}
+      title={currentStepName === "Processing" ? "Processing" : step < successStepIndex ? "Create New Card" : step === successStepIndex ? "Card Created" : ""}
       description={step <= successStepIndex ? `Step ${step + 1} of ${totalSteps}` : undefined}
       className="sm:max-w-lg bg-card border-border/50 shadow-2xl"
     >
@@ -298,6 +345,19 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
                 onReferralChange={(code) => setData(prev => ({ ...prev, referralCode: code }))}
               />
             )}
+            {currentStepName === "Processing" && (
+              <StepProcessing
+                jobStatus={jobStatus}
+                jobFailed={jobFailed}
+                jobError={jobData?.error ?? null}
+                pollingError={pollingError}
+                onRetry={() => {
+                  setActiveJobId(null);
+                  setStep(paymentStepIndex);
+                }}
+                onRetryPolling={retryPolling}
+              />
+            )}
             {currentStepName === "Success" && (
               <StepSuccess 
                 card={createdCard}
@@ -315,7 +375,7 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
           </motion.div>
         </AnimatePresence>
 
-        {step < successStepIndex && (
+        {step <= paymentStepIndex && (
           <div className="flex items-center gap-3 pt-2">
             {step > 0 && (
               <Button variant="outline" onClick={handleBack} className="rounded-xl">
@@ -677,6 +737,70 @@ function StepPayment({ data, isPending, onReferralChange }: { data: WizardData; 
           <span className="text-sm">Creating your card...</span>
         </div>
       )}
+    </div>
+  );
+}
+
+function StepProcessing({ jobStatus, jobFailed, jobError, pollingError, onRetry, onRetryPolling }: { jobStatus: string | null; jobFailed: boolean; jobError: string | null; pollingError: string | null; onRetry: () => void; onRetryPolling: () => void }) {
+  if (jobFailed) {
+    return (
+      <div className="flex flex-col items-center text-center py-8 space-y-5">
+        <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center">
+          <AlertCircle className="w-8 h-8 text-destructive" />
+        </div>
+        <div>
+          <h3 className="font-display text-lg font-semibold">Card Creation Failed</h3>
+          <p className="text-muted-foreground text-sm mt-1">
+            {jobError || "An unexpected error occurred while creating your card."}
+          </p>
+        </div>
+        <Button variant="outline" onClick={onRetry} className="rounded-xl">
+          <RotateCcw className="w-4 h-4 mr-2" /> Try Again
+        </Button>
+      </div>
+    );
+  }
+
+  if (pollingError) {
+    return (
+      <div className="flex flex-col items-center text-center py-8 space-y-5">
+        <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center">
+          <AlertCircle className="w-8 h-8 text-yellow-500" />
+        </div>
+        <div>
+          <h3 className="font-display text-lg font-semibold">Connection Issue</h3>
+          <p className="text-muted-foreground text-sm mt-1">
+            Unable to check card creation status. Your card may still be processing.
+          </p>
+        </div>
+        <Button variant="outline" onClick={onRetryPolling} className="rounded-xl">
+          <RotateCcw className="w-4 h-4 mr-2" /> Check Again
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center text-center py-8 space-y-5">
+      <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+      <div>
+        <h3 className="font-display text-lg font-semibold">Creating Your Card</h3>
+        <p className="text-muted-foreground text-sm mt-1">
+          {jobStatus === "processing" ? "Your card is being set up..." : "Please wait while we process your request..."}
+        </p>
+      </div>
+      <div className="w-full max-w-xs">
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-primary rounded-full"
+            initial={{ width: "10%" }}
+            animate={{ width: "90%" }}
+            transition={{ duration: 8, ease: "easeOut" }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

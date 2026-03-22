@@ -8,6 +8,7 @@ import notificationsRouter from "./notifications";
 import shippingRouter from "./shipping";
 import supportRouter from "./support";
 import telegramRouter from "./telegram";
+import jobsRouter from "./jobs";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(notificationsRouter);
 router.use(shippingRouter);
 router.use(supportRouter);
 router.use(telegramRouter);
+router.use(jobsRouter);
 
 export default router;
