@@ -4,6 +4,7 @@ import {
   useGetCard, 
   useGetCardTransactions, 
   useGetCardDetailsWithTransactions,
+  useGetCardBalanceHistory,
   useDeleteCard,
   getGetCardsQueryKey,
 } from "@workspace/api-client-react";
@@ -13,7 +14,8 @@ import { formatCurrency, cn } from "@/lib/utils";
 import { 
   PlusCircle, Trash2, Eye, EyeOff, ReceiptText, 
   Mail, Save, CreditCard as CreditCardIcon, 
-  Settings as SettingsIcon, CheckCircle2, XCircle, KeyRound
+  Settings as SettingsIcon, CheckCircle2, XCircle, KeyRound,
+  Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +30,7 @@ import { ChangePinDialog } from "@/components/shared/change-pin-dialog";
 import { SecureCardViewer } from "@/components/secure-card-viewer";
 
 type TabType = "topup" | "details" | "settings";
+type HistoryTab = "transactions" | "balance";
 
 export default function CardDetails() {
   const params = useParams<{ id: string }>();
@@ -61,7 +64,12 @@ export default function CardDetails() {
     ? cardFallback.isError
     : false;
 
+  const { data: balanceHistory = [], isLoading: bhLoading } = useGetCardBalanceHistory(cardId, {
+    query: { enabled: !!cardId }
+  });
+
   const [activeTab, setActiveTab] = useState<TabType>("details");
+  const [historyTab, setHistoryTab] = useState<HistoryTab>("transactions");
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [changePinOpen, setChangePinOpen] = useState(false);
@@ -83,7 +91,7 @@ export default function CardDetails() {
     }
   });
 
-  if (cardLoading || txLoading) {
+  if (cardLoading || txLoading || bhLoading) {
     return <div className="animate-spin w-8 h-8 border-2 border-primary rounded-full border-t-transparent mx-auto mt-20"></div>;
   }
 
@@ -92,6 +100,8 @@ export default function CardDetails() {
   }
 
   const isFrozen = card.status === "frozen";
+
+  const spendingTransactions = transactions.filter(tx => tx.type === "payment" || tx.type === "fee");
 
   const tabs: { key: TabType; label: string; icon: React.ReactNode }[] = [
     { key: "topup", label: "Top Up", icon: <PlusCircle className="w-4 h-4" /> },
@@ -314,21 +324,69 @@ export default function CardDetails() {
 
       <Card className="border-border/50 bg-card/50 backdrop-blur shadow-xl">
         <CardContent className="p-4 md:p-6">
-          <h3 className="font-display text-base md:text-lg font-semibold mb-4 flex items-center gap-2">
-            <ReceiptText className="w-4 h-4 text-muted-foreground" /> Transaction History
-          </h3>
-          {transactions.length > 0 ? (
-            <div className="space-y-3">
-              {transactions.map((tx) => (
-                <TransactionItem key={tx.id} tx={tx} currency={card.currency} variant="detailed" />
-              ))}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex bg-muted/50 rounded-lg p-0.5 flex-1">
+              <button
+                onClick={() => setHistoryTab("transactions")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-sm font-medium transition-all",
+                  historyTab === "transactions"
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <ReceiptText className="w-3.5 h-3.5" />
+                <span>Transactions</span>
+              </button>
+              <button
+                onClick={() => setHistoryTab("balance")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-sm font-medium transition-all",
+                  historyTab === "balance"
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Wallet className="w-3.5 h-3.5" />
+                <span>Balance History</span>
+              </button>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center">
-              <ReceiptText className="w-12 h-12 text-muted-foreground mb-4 opacity-30" />
-              <h3 className="text-lg font-medium">No transactions yet</h3>
-              <p className="text-muted-foreground text-sm">Top up your card to start making transactions.</p>
-            </div>
+          </div>
+
+          {historyTab === "transactions" && (
+            <>
+              {spendingTransactions.length > 0 ? (
+                <div className="space-y-3">
+                  {spendingTransactions.map((tx) => (
+                    <TransactionItem key={tx.id} tx={tx} currency={card.currency} variant="detailed" />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center">
+                  <ReceiptText className="w-12 h-12 text-muted-foreground mb-4 opacity-30" />
+                  <h3 className="text-lg font-medium">No transactions yet</h3>
+                  <p className="text-muted-foreground text-sm">No spending transactions recorded for this card.</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {historyTab === "balance" && (
+            <>
+              {balanceHistory.length > 0 ? (
+                <div className="space-y-3">
+                  {balanceHistory.map((entry: BalanceHistoryEntryDisplay) => (
+                    <BalanceHistoryItem key={entry.id} entry={entry} currency={card.currency} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center">
+                  <Wallet className="w-12 h-12 text-muted-foreground mb-4 opacity-30" />
+                  <h3 className="text-lg font-medium">No balance history</h3>
+                  <p className="text-muted-foreground text-sm">Top up your card to see balance changes here.</p>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -371,6 +429,66 @@ function InfoRow({ label, value, mono, bold }: { label: string; value: React.Rea
     <div className="flex items-center justify-between py-2 border-b border-border/30">
       <span className="text-sm text-muted-foreground">{label}</span>
       <span className={cn("text-sm text-right", mono && "font-mono", bold && "font-bold text-base")}>{value}</span>
+    </div>
+  );
+}
+
+interface BalanceHistoryEntryDisplay {
+  id: number;
+  type: string;
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  description?: string | null;
+  status: string;
+  createdAt: string;
+}
+
+function BalanceHistoryItem({ entry, currency }: { entry: BalanceHistoryEntryDisplay; currency?: string }) {
+  const typeLabels: Record<string, string> = {
+    topup: "Top-up",
+    fee: "Fee",
+    refund: "Refund",
+  };
+
+  const isPositive = entry.type === "topup" || entry.type === "refund";
+
+  return (
+    <div className="flex items-center justify-between p-3 md:p-4 rounded-xl bg-foreground/5 border border-foreground/5 hover:bg-foreground/10 transition-colors">
+      <div className="flex items-center gap-3 md:gap-4 min-w-0">
+        <div className={cn(
+          "w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-inner shrink-0",
+          isPositive ? "bg-emerald-500/20 text-emerald-400" : "bg-orange-500/20 text-orange-400"
+        )}>
+          <Wallet className="w-5 h-5 md:w-6 md:h-6" />
+        </div>
+        <div className="min-w-0">
+          <p className="font-medium text-sm md:text-lg truncate">
+            {typeLabels[entry.type] || entry.type}
+            <span className="text-muted-foreground text-xs md:text-sm font-normal lowercase ml-1 hidden sm:inline">
+              {entry.description && `- ${entry.description}`}
+            </span>
+          </p>
+          <p className="text-[10px] md:text-sm text-muted-foreground">
+            {format(new Date(entry.createdAt), "MMM d, yyyy • h:mm a")}
+            <span className="ml-2 font-mono amount">
+              Balance: {formatCurrency(entry.balanceAfter, currency)}
+            </span>
+          </p>
+        </div>
+      </div>
+      <div className="text-right shrink-0 ml-2">
+        <div className={cn("font-bold text-base md:text-xl font-display amount", isPositive ? "text-emerald-400" : "text-orange-400")}>
+          {isPositive ? "+" : "-"}{formatCurrency(entry.amount, currency)}
+        </div>
+        <span className={cn(
+          "text-[9px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full inline-block mt-1 uppercase font-semibold",
+          entry.status === "completed" ? "bg-emerald-500/20 text-emerald-300" :
+          entry.status === "pending" ? "bg-yellow-500/20 text-yellow-300" : "bg-red-500/20 text-red-300"
+        )}>
+          {entry.status}
+        </span>
+      </div>
     </div>
   );
 }

@@ -146,6 +146,28 @@ export interface CardDetailsWithTransactions {
   transactions: Transaction[];
 }
 
+export type BalanceHistoryType =
+  (typeof BalanceHistoryType)[keyof typeof BalanceHistoryType];
+
+export const BalanceHistoryType = {
+  topup: "topup",
+  fee: "fee",
+  refund: "refund",
+} as const;
+
+export interface BalanceHistoryEntry {
+  id: number;
+  cardId: number;
+  userId: number;
+  type: BalanceHistoryType;
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  description?: string | null;
+  status: TransactionStatus;
+  createdAt: string;
+}
+
 export type SupportTicketCategory =
   (typeof SupportTicketCategory)[keyof typeof SupportTicketCategory];
 

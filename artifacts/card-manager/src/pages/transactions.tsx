@@ -1,16 +1,20 @@
+import { useState } from "react";
 import { useGetAllTransactions, useGetCards } from "@workspace/api-client-react";
 import { formatCurrency, cn, formatCardNumber } from "@/lib/utils";
-import { ArrowUpRight, ArrowDownRight, Filter, Download } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowUpRight, ArrowDownRight, Filter, Download, Wallet } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+type FilterTab = "all" | "payments" | "topups";
+
 export default function Transactions() {
   const { data: transactions = [], isLoading: txLoading } = useGetAllTransactions();
   const { data: cards = [], isLoading: cardsLoading } = useGetCards();
   const isMobile = useIsMobile();
+  const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
 
   if (txLoading || cardsLoading) {
     return <div className="animate-spin w-8 h-8 border-2 border-primary rounded-full border-t-transparent mx-auto mt-20"></div>;
@@ -19,6 +23,19 @@ export default function Transactions() {
   const getCardDetails = (cardId: number) => {
     return cards.find(c => c.id === cardId);
   };
+
+  const filteredTransactions = transactions.filter(tx => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "payments") return tx.type === "payment" || tx.type === "fee";
+    if (activeFilter === "topups") return tx.type === "topup" || tx.type === "refund";
+    return true;
+  });
+
+  const filterTabs: { key: FilterTab; label: string; count: number }[] = [
+    { key: "all", label: "All", count: transactions.length },
+    { key: "payments", label: "Payments", count: transactions.filter(tx => tx.type === "payment" || tx.type === "fee").length },
+    { key: "topups", label: "Top-ups", count: transactions.filter(tx => tx.type === "topup" || tx.type === "refund").length },
+  ];
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -37,9 +54,34 @@ export default function Transactions() {
         </div>
       </div>
 
+      <div className="flex bg-muted/50 rounded-lg p-0.5">
+        {filterTabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveFilter(tab.key)}
+            className={cn(
+              "flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-1.5",
+              activeFilter === tab.key
+                ? "bg-background shadow-sm text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {tab.label}
+            <span className={cn(
+              "text-[10px] px-1.5 py-0.5 rounded-full",
+              activeFilter === tab.key
+                ? "bg-primary/10 text-primary"
+                : "bg-muted text-muted-foreground"
+            )}>
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
       {isMobile ? (
         <div className="space-y-3">
-          {transactions.length > 0 ? transactions.map((tx) => {
+          {filteredTransactions.length > 0 ? filteredTransactions.map((tx) => {
             const card = getCardDetails(tx.cardId);
             const isPositive = tx.type === "topup" || tx.type === "refund";
             return (
@@ -77,7 +119,7 @@ export default function Transactions() {
             );
           }) : (
             <div className="text-center py-16 text-muted-foreground bg-card/20 rounded-2xl border border-dashed border-border/50">
-              No transactions found.
+              {activeFilter === "all" ? "No transactions found." : `No ${activeFilter === "payments" ? "payment" : "top-up"} transactions found.`}
             </div>
           )}
         </div>
@@ -92,11 +134,12 @@ export default function Transactions() {
                   <TableHead>Card</TableHead>
                   <TableHead>Date & Time</TableHead>
                   <TableHead>Status</TableHead>
+                  {activeFilter === "topups" && <TableHead className="text-right">Balance After</TableHead>}
                   <TableHead className="text-right">Amount</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactions.length > 0 ? transactions.map((tx) => {
+                {filteredTransactions.length > 0 ? filteredTransactions.map((tx) => {
                   const card = getCardDetails(tx.cardId);
                   const isPositive = tx.type === "topup" || tx.type === "refund";
                   return (
@@ -131,6 +174,11 @@ export default function Transactions() {
                           {tx.status}
                         </span>
                       </TableCell>
+                      {activeFilter === "topups" && (
+                        <TableCell className="text-right font-mono text-sm amount">
+                          {formatCurrency(tx.balanceAfter, card?.currency)}
+                        </TableCell>
+                      )}
                       <TableCell className={cn("text-right font-bold font-display text-base amount", isPositive ? "text-emerald-400" : "text-foreground")}>
                         {isPositive ? "+" : "-"}{formatCurrency(tx.amount, card?.currency)}
                       </TableCell>
@@ -138,8 +186,8 @@ export default function Transactions() {
                   );
                 }) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                      No transactions found.
+                    <TableCell colSpan={activeFilter === "topups" ? 7 : 6} className="h-32 text-center text-muted-foreground">
+                      {activeFilter === "all" ? "No transactions found." : `No ${activeFilter === "payments" ? "payment" : "top-up"} transactions found.`}
                     </TableCell>
                   </TableRow>
                 )}

@@ -18,6 +18,7 @@ import type {
 
 import type {
   AuthResponse,
+  BalanceHistoryEntry,
   Card,
   CardDetailsWithTransactions,
   CardAccessUrlResponse,
@@ -1283,10 +1284,13 @@ export const getCardDetailsWithTransactions = async (
   cardId: number,
   options?: RequestInit,
 ): Promise<CardDetailsWithTransactions> => {
-  return customFetch<CardDetailsWithTransactions>(getGetCardDetailsWithTransactionsUrl(cardId), {
-    ...options,
-    method: "GET",
-  });
+  return customFetch<CardDetailsWithTransactions>(
+    getGetCardDetailsWithTransactionsUrl(cardId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export const getGetCardDetailsWithTransactionsQueryKey = (cardId: number) => {
@@ -1348,7 +1352,97 @@ export function useGetCardDetailsWithTransactions<
     request?: SecondParameter<typeof customFetch>;
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetCardDetailsWithTransactionsQueryOptions(cardId, options);
+  const queryOptions = getGetCardDetailsWithTransactionsQueryOptions(
+    cardId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get balance history for a specific card
+ */
+export const getGetCardBalanceHistoryUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/balance-history`;
+};
+
+export const getCardBalanceHistory = async (
+  cardId: number,
+  options?: RequestInit,
+): Promise<BalanceHistoryEntry[]> => {
+  return customFetch<BalanceHistoryEntry[]>(
+    getGetCardBalanceHistoryUrl(cardId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetCardBalanceHistoryQueryKey = (cardId: number) => {
+  return [`/api/cards/${cardId}/balance-history`] as const;
+};
+
+export const getGetCardBalanceHistoryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCardBalanceHistory>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  cardId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCardBalanceHistory>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetCardBalanceHistoryQueryKey(cardId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCardBalanceHistory>>
+  > = ({ signal }) => getCardBalanceHistory(cardId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!cardId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCardBalanceHistory>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCardBalanceHistoryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCardBalanceHistory>>
+>;
+export type GetCardBalanceHistoryQueryError = ErrorType<ErrorResponse>;
+
+export function useGetCardBalanceHistory<
+  TData = Awaited<ReturnType<typeof getCardBalanceHistory>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  cardId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCardBalanceHistory>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCardBalanceHistoryQueryOptions(cardId, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

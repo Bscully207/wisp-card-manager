@@ -327,6 +327,29 @@ export const CreateCardAccessUrlResponse = zod.object({
 });
 
 /**
+ * @summary Get balance history for a specific card
+ */
+export const GetCardBalanceHistoryParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const GetCardBalanceHistoryResponseItem = zod.object({
+  id: zod.number(),
+  cardId: zod.number(),
+  userId: zod.number(),
+  type: zod.enum(["topup", "fee", "refund"]),
+  amount: zod.number(),
+  balanceBefore: zod.number(),
+  balanceAfter: zod.number(),
+  description: zod.string().nullish(),
+  status: zod.enum(["pending", "completed", "failed"]),
+  createdAt: zod.date(),
+});
+export const GetCardBalanceHistoryResponse = zod.array(
+  GetCardBalanceHistoryResponseItem,
+);
+
+/**
  * @summary Get all transactions for the current user
  */
 export const GetAllTransactionsResponseItem = zod.object({

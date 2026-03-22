@@ -1,6 +1,6 @@
 import { db, pool, cardsTable, transactionsTable, usersTable } from "@workspace/db";
 import type { CardType, CardStatus } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 
 const CARD_COLORS = ["blue", "purple", "green", "orange", "pink", "teal"];
@@ -160,9 +160,27 @@ export async function deleteCard(cardId: number, userId: number) {
   return card ?? null;
 }
 
-export async function getCardTransactions(cardId: number, userId: number) {
+export async function getCardTransactions(cardId: number, userId: number, typeFilter?: string) {
   const card = await getCardByIdForUser(cardId, userId);
   if (!card) return null;
 
-  return db.select().from(transactionsTable).where(eq(transactionsTable.cardId, card.id));
+  const conditions = [eq(transactionsTable.cardId, card.id)];
+  if (typeFilter) {
+    conditions.push(eq(transactionsTable.type, typeFilter));
+  }
+
+  return db.select().from(transactionsTable).where(and(...conditions));
+}
+
+export async function getCardBalanceHistory(cardId: number, userId: number) {
+  const card = await getCardByIdForUser(cardId, userId);
+  if (!card) return null;
+
+  const balanceTypes = ["topup", "fee", "refund"];
+  return db.select().from(transactionsTable).where(
+    and(
+      eq(transactionsTable.cardId, card.id),
+      inArray(transactionsTable.type, balanceTypes)
+    )
+  );
 }

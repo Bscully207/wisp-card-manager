@@ -21,6 +21,8 @@ import {
   GetCardDetailsWithTransactionsResponse,
   CreateCardAccessUrlParams,
   CreateCardAccessUrlResponse,
+  GetCardBalanceHistoryParams,
+  GetCardBalanceHistoryResponse,
 } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/requireAuth.js";
 import {
@@ -32,6 +34,7 @@ import {
   updateCardPin,
   deleteCard,
   getCardTransactions,
+  getCardBalanceHistory,
   toCardResponse,
 } from "../services/card.service.js";
 
@@ -217,7 +220,14 @@ router.get("/cards/:cardId/transactions", requireAuth, async (req, res): Promise
     return;
   }
 
-  const txs = await getCardTransactions(params.data.cardId, req.session.userId!);
+  const validTypes = ["topup", "payment", "refund", "fee"];
+  const rawType = typeof req.query.type === "string" ? req.query.type : undefined;
+  const typeFilter = rawType && validTypes.includes(rawType) ? rawType : undefined;
+  if (rawType && !typeFilter) {
+    res.status(400).json({ error: "Invalid type filter", message: `type must be one of: ${validTypes.join(", ")}` });
+    return;
+  }
+  const txs = await getCardTransactions(params.data.cardId, req.session.userId!, typeFilter);
   if (!txs) {
     res.status(404).json({ error: "Not found", message: "Card not found" });
     return;
@@ -256,6 +266,33 @@ router.post("/cards/:cardId/access-url", requireAuth, async (req, res): Promise<
     url: `https://secure.example.com/card-details/${card.id}?token=stub-token`,
     expiresAt,
   }));
+});
+
+router.get("/cards/:cardId/balance-history", requireAuth, async (req, res): Promise<void> => {
+  const params = GetCardBalanceHistoryParams.safeParse({ cardId: parseCardId(req.params.cardId) });
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid card ID" });
+    return;
+  }
+
+  const entries = await getCardBalanceHistory(params.data.cardId, req.session.userId!);
+  if (!entries) {
+    res.status(404).json({ error: "Not found", message: "Card not found" });
+    return;
+  }
+
+  res.json(GetCardBalanceHistoryResponse.parse(entries.map(t => ({
+    id: t.id,
+    cardId: t.cardId,
+    userId: t.userId,
+    type: t.type as "topup" | "fee" | "refund",
+    amount: t.amount,
+    balanceBefore: t.balanceBefore,
+    balanceAfter: t.balanceAfter,
+    description: t.description ?? null,
+    status: t.status as "pending" | "completed" | "failed",
+    createdAt: t.createdAt,
+  }))));
 });
 
 export default router;
