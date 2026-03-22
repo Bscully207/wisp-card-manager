@@ -15,6 +15,7 @@ import {
   Pencil, X, FileText, LifeBuoy, ChevronRight, Send
 } from "lucide-react";
 import { AppearanceSection } from "@/components/settings/appearance-section";
+import { NotificationPreferences } from "@/components/settings/notification-preferences";
 import { LegalDialogs } from "@/components/settings/legal-dialogs";
 import { useTelegram } from "@/hooks/use-telegram";
 import { useGetCardTelegram } from "@/hooks/use-telegram-link";
@@ -216,6 +217,7 @@ export default function SettingsPage() {
       <AppearanceSection />
 
       <TelegramAccountSection />
+      <NotificationPreferences />
 
       <Card className="bg-card/50 backdrop-blur border-border/50 shadow-xl">
         <CardHeader className="px-4 md:px-6">

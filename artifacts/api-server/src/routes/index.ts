@@ -4,6 +4,7 @@ import authRouter from "./auth";
 import usersRouter from "./users";
 import cardsRouter from "./cards";
 import transactionsRouter from "./transactions";
+import notificationsRouter from "./notifications";
 import supportRouter from "./support";
 import telegramRouter from "./telegram";
 
@@ -14,6 +15,7 @@ router.use(authRouter);
 router.use(usersRouter);
 router.use(cardsRouter);
 router.use(transactionsRouter);
+router.use(notificationsRouter);
 router.use(supportRouter);
 router.use(telegramRouter);
 

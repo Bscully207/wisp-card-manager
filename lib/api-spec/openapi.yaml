@@ -17,6 +17,8 @@ tags:
     description: Card management
   - name: transactions
     description: Transaction history
+  - name: notifications
+    description: Notification management
   - name: support
     description: Support tickets
 
@@ -320,6 +322,87 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /cards/{cardId}/pin:
+    put:
+      operationId: updateCardPin
+      tags: [cards]
+      summary: Update card PIN
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCardPinRequest"
+      responses:
+        "200":
+          description: PIN updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "404":
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /cards/{cardId}/access-url:
+    post:
+      operationId: createCardAccessUrl
+      tags: [cards]
+      summary: Create a secure access URL for viewing full card details
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Access URL created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CardAccessUrlResponse"
+        "404":
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /cards/{cardId}/details-with-transactions:
+    get:
+      operationId: getCardDetailsWithTransactions
+      tags: [cards]
+      summary: Get card details with transactions
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Card details with transactions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CardDetailsWithTransactions"
+        "404":
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /cards/{cardId}/transactions:
     get:
       operationId: getCardTransactions
@@ -361,6 +444,113 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Transaction"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /notifications:
+    get:
+      operationId: getNotifications
+      tags: [notifications]
+      summary: Get all notifications for the current user
+      responses:
+        "200":
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /notifications/mark-all-read:
+    put:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: All notifications marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /notifications/{notificationId}/read:
+    put:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a single notification as read
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        "404":
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /notifications/settings:
+    get:
+      operationId: getNotificationSettings
+      tags: [notifications]
+      summary: Get notification preferences
+      responses:
+        "200":
+          description: Notification settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationSettings"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateNotificationSettings
+      tags: [notifications]
+      summary: Update notification preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNotificationSettingsRequest"
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationSettings"
         "401":
           description: Not authenticated
           content:
@@ -710,3 +900,121 @@ components:
         - subject
         - message
         - category
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        type:
+          type: string
+          enum: [topup, freeze, card, info, security]
+        title:
+          type: string
+        message:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - type
+        - title
+        - message
+        - isRead
+        - createdAt
+
+    NotificationSettings:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        transactionAlerts:
+          type: boolean
+        topupAlerts:
+          type: boolean
+        securityAlerts:
+          type: boolean
+        marketingAlerts:
+          type: boolean
+      required:
+        - id
+        - userId
+        - transactionAlerts
+        - topupAlerts
+        - securityAlerts
+        - marketingAlerts
+
+    UpdateCardPinRequest:
+      type: object
+      properties:
+        pin:
+          type: string
+          minLength: 4
+          maxLength: 4
+      required:
+        - pin
+
+    CardDetailsWithTransactions:
+      type: object
+      properties:
+        card:
+          $ref: "#/components/schemas/Card"
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+      required:
+        - card
+        - transactions
+
+    UpdateNotificationSettingsRequest:
+      type: object
+      properties:
+        transactionAlerts:
+          type: boolean
+        topupAlerts:
+          type: boolean
+        securityAlerts:
+          type: boolean
+        marketingAlerts:
+          type: boolean
+
+    UpdateCardPinRequest:
+      type: object
+      required:
+        - pin
+      properties:
+        pin:
+          type: string
+
+    CardAccessUrlResponse:
+      type: object
+      required:
+        - url
+        - expiresAt
+      properties:
+        url:
+          type: string
+        expiresAt:
+          type: string
+
+    CardDetailsWithTransactions:
+      type: object
+      required:
+        - card
+        - transactions
+      properties:
+        card:
+          $ref: "#/components/schemas/Card"
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"

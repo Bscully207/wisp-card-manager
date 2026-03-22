@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Bell, BellOff, Check, CreditCard, ArrowUpCircle, ShieldAlert, Info } from "lucide-react";
+import { Bell, BellOff, Check, CreditCard, ArrowUpCircle, ShieldAlert, Info, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNotifications, type Notification } from "@/hooks/use-notifications";
 
@@ -11,6 +11,7 @@ const NOTIF_ICONS: Record<NotificationType, typeof Bell> = {
   freeze: ShieldAlert,
   card: CreditCard,
   info: Info,
+  security: Shield,
 };
 
 const NOTIF_COLORS: Record<NotificationType, string> = {
@@ -18,14 +19,23 @@ const NOTIF_COLORS: Record<NotificationType, string> = {
   freeze: "text-blue-500 bg-blue-500/10",
   card: "text-primary bg-primary/10",
   info: "text-orange-500 bg-orange-500/10",
+  security: "text-red-500 bg-red-500/10",
 };
 
 export default function Notifications() {
   const [tab, setTab] = useState<"unread" | "all">("unread");
-  const { notifications, unreadCount, markAsRead, markAllRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllRead, isLoading } = useNotifications();
 
   const unread = notifications.filter(n => !n.read);
   const displayed = tab === "unread" ? unread : notifications;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin w-8 h-8 border-2 border-primary rounded-full border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -82,12 +92,11 @@ export default function Notifications() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                onClick={() => !notif.read && markAsRead(notif.id)}
                 className={cn(
-                  "flex items-start gap-3 p-4 rounded-xl border transition-colors",
+                  "flex items-start gap-3 p-4 rounded-xl border transition-colors group",
                   notif.read
-                    ? "border-border/30 bg-card/30"
-                    : "border-border/50 bg-card/60 cursor-pointer hover:bg-card/80"
+                    ? "border-border/30 bg-card/30 opacity-60"
+                    : "border-border/50 bg-card/60"
                 )}
               >
                 <div className={cn("w-9 h-9 rounded-full flex items-center justify-center shrink-0", colorClass)}>
@@ -96,7 +105,24 @@ export default function Notifications() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <p className={cn("text-sm font-medium", !notif.read && "font-semibold")}>{notif.title}</p>
-                    {!notif.read && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {!notif.read && (
+                        <>
+                          <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(notif.id);
+                            }}
+                            className="text-xs text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100 flex items-center gap-1"
+                            title="Mark as read"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Read</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">{notif.message}</p>
                   <p className="text-[11px] text-muted-foreground/60 mt-1">{notif.time}</p>

@@ -8,6 +8,8 @@
 
 export * from "./authResponse";
 export * from "./card";
+export * from "./cardAccessUrlResponse";
+export * from "./cardDetailsWithTransactions";
 export * from "./cardStatus";
 export * from "./changePasswordRequest";
 export * from "./createCardRequest";
@@ -18,6 +20,9 @@ export * from "./freezeCardRequest";
 export * from "./healthStatus";
 export * from "./loginRequest";
 export * from "./messageResponse";
+export * from "./notification";
+export * from "./notificationSettings";
+export * from "./notificationType";
 export * from "./registerRequest";
 export * from "./supportTicket";
 export * from "./supportTicketCategory";
@@ -27,6 +32,7 @@ export * from "./transaction";
 export * from "./transactionStatus";
 export * from "./transactionType";
 export * from "./updateCardPinRequest";
+export * from "./updateNotificationSettingsRequest";
 export * from "./updateProfileRequest";
 export * from "./telegramLink";
 export * from "./user";

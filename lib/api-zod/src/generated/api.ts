@@ -116,7 +116,6 @@ export const ChangePasswordResponse = zod.object({
 export const GetCardsResponseItem = zod.object({
   id: zod.number(),
   userId: zod.number(),
-  type: zod.enum(["virtual", "physical"]).default("virtual"),
   cardNumber: zod.string(),
   cardholderName: zod.string(),
   expiryMonth: zod.number(),
@@ -152,7 +151,6 @@ export const GetCardParams = zod.object({
 export const GetCardResponse = zod.object({
   id: zod.number(),
   userId: zod.number(),
-  type: zod.enum(["virtual", "physical"]).default("virtual"),
   cardNumber: zod.string(),
   cardholderName: zod.string(),
   expiryMonth: zod.number(),
@@ -194,7 +192,33 @@ export const TopUpCardBody = zod.object({
 export const TopUpCardResponse = zod.object({
   id: zod.number(),
   userId: zod.number(),
-  type: zod.enum(["virtual", "physical"]).default("virtual"),
+  cardNumber: zod.string(),
+  cardholderName: zod.string(),
+  expiryMonth: zod.number(),
+  expiryYear: zod.number(),
+  cvv: zod.string(),
+  balance: zod.number(),
+  currency: zod.string(),
+  status: zod.enum(["active", "frozen", "expired", "cancelled"]),
+  label: zod.string().nullish(),
+  color: zod.string().nullish(),
+  createdAt: zod.date(),
+});
+
+/**
+ * @summary Freeze or unfreeze a card
+ */
+export const FreezeCardParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const FreezeCardBody = zod.object({
+  frozen: zod.boolean(),
+});
+
+export const FreezeCardResponse = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
   cardNumber: zod.string(),
   cardholderName: zod.string(),
   expiryMonth: zod.number(),
@@ -216,7 +240,7 @@ export const UpdateCardPinParams = zod.object({
 });
 
 export const UpdateCardPinBody = zod.object({
-  pin: zod.string().regex(/^\d{6}$/, "PIN must be exactly 6 digits"),
+  pin: zod.string(),
 });
 
 export const UpdateCardPinResponse = zod.object({
@@ -224,58 +248,19 @@ export const UpdateCardPinResponse = zod.object({
 });
 
 /**
- * @summary Freeze or unfreeze a card
+ * @summary Create a secure access URL for viewing full card details
  */
-export const FreezeCardParams = zod.object({
+export const CreateCardAccessUrlParams = zod.object({
   cardId: zod.coerce.number(),
 });
 
-export const FreezeCardBody = zod.object({
-  frozen: zod.boolean(),
-});
-
-export const FreezeCardResponse = zod.object({
-  id: zod.number(),
-  userId: zod.number(),
-  type: zod.enum(["virtual", "physical"]).default("virtual"),
-  cardNumber: zod.string(),
-  cardholderName: zod.string(),
-  expiryMonth: zod.number(),
-  expiryYear: zod.number(),
-  cvv: zod.string(),
-  balance: zod.number(),
-  currency: zod.string(),
-  status: zod.enum(["active", "frozen", "expired", "cancelled"]),
-  label: zod.string().nullish(),
-  color: zod.string().nullish(),
-  createdAt: zod.date(),
+export const CreateCardAccessUrlResponse = zod.object({
+  url: zod.string(),
+  expiresAt: zod.string(),
 });
 
 /**
- * @summary Get transactions for a specific card
- */
-export const GetCardTransactionsParams = zod.object({
-  cardId: zod.coerce.number(),
-});
-
-export const GetCardTransactionsResponseItem = zod.object({
-  id: zod.number(),
-  cardId: zod.number(),
-  userId: zod.number(),
-  type: zod.enum(["topup", "payment", "refund", "fee"]),
-  amount: zod.number(),
-  balanceBefore: zod.number(),
-  balanceAfter: zod.number(),
-  description: zod.string().nullish(),
-  status: zod.enum(["pending", "completed", "failed"]),
-  createdAt: zod.date(),
-});
-export const GetCardTransactionsResponse = zod.array(
-  GetCardTransactionsResponseItem,
-);
-
-/**
- * @summary Get card details with transactions (combined endpoint)
+ * @summary Get card details with transactions
  */
 export const GetCardDetailsWithTransactionsParams = zod.object({
   cardId: zod.coerce.number(),
@@ -285,7 +270,6 @@ export const GetCardDetailsWithTransactionsResponse = zod.object({
   card: zod.object({
     id: zod.number(),
     userId: zod.number(),
-    type: zod.enum(["virtual", "physical"]).default("virtual"),
     cardNumber: zod.string(),
     cardholderName: zod.string(),
     expiryMonth: zod.number(),
@@ -315,16 +299,27 @@ export const GetCardDetailsWithTransactionsResponse = zod.object({
 });
 
 /**
- * @summary Create a secure access URL for viewing full card details
+ * @summary Get transactions for a specific card
  */
-export const CreateCardAccessUrlParams = zod.object({
+export const GetCardTransactionsParams = zod.object({
   cardId: zod.coerce.number(),
 });
 
-export const CreateCardAccessUrlResponse = zod.object({
-  url: zod.string(),
-  expiresAt: zod.string(),
+export const GetCardTransactionsResponseItem = zod.object({
+  id: zod.number(),
+  cardId: zod.number(),
+  userId: zod.number(),
+  type: zod.enum(["topup", "payment", "refund", "fee"]),
+  amount: zod.number(),
+  balanceBefore: zod.number(),
+  balanceAfter: zod.number(),
+  description: zod.string().nullish(),
+  status: zod.enum(["pending", "completed", "failed"]),
+  createdAt: zod.date(),
 });
+export const GetCardTransactionsResponse = zod.array(
+  GetCardTransactionsResponseItem,
+);
 
 /**
  * @summary Get balance history for a specific card
@@ -367,6 +362,75 @@ export const GetAllTransactionsResponseItem = zod.object({
 export const GetAllTransactionsResponse = zod.array(
   GetAllTransactionsResponseItem,
 );
+
+/**
+ * @summary Get all notifications for the current user
+ */
+export const GetNotificationsResponseItem = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  type: zod.enum(["topup", "freeze", "card", "info", "security"]),
+  title: zod.string(),
+  message: zod.string(),
+  isRead: zod.boolean(),
+  createdAt: zod.date(),
+});
+export const GetNotificationsResponse = zod.array(GetNotificationsResponseItem);
+
+/**
+ * @summary Mark all notifications as read
+ */
+export const MarkAllNotificationsReadResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary Mark a single notification as read
+ */
+export const MarkNotificationReadParams = zod.object({
+  notificationId: zod.coerce.number(),
+});
+
+export const MarkNotificationReadResponse = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  type: zod.enum(["topup", "freeze", "card", "info", "security"]),
+  title: zod.string(),
+  message: zod.string(),
+  isRead: zod.boolean(),
+  createdAt: zod.date(),
+});
+
+/**
+ * @summary Get notification preferences
+ */
+export const GetNotificationSettingsResponse = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  transactionAlerts: zod.boolean(),
+  topupAlerts: zod.boolean(),
+  securityAlerts: zod.boolean(),
+  marketingAlerts: zod.boolean(),
+});
+
+/**
+ * @summary Update notification preferences
+ */
+export const UpdateNotificationSettingsBody = zod.object({
+  transactionAlerts: zod.boolean().optional(),
+  topupAlerts: zod.boolean().optional(),
+  securityAlerts: zod.boolean().optional(),
+  marketingAlerts: zod.boolean().optional(),
+});
+
+export const UpdateNotificationSettingsResponse = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  transactionAlerts: zod.boolean(),
+  topupAlerts: zod.boolean(),
+  securityAlerts: zod.boolean(),
+  marketingAlerts: zod.boolean(),
+});
 
 /**
  * @summary Get all support tickets for the current user

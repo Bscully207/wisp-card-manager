@@ -101,10 +101,6 @@ export interface TopUpRequest {
   description?: string;
 }
 
-export interface UpdateCardPinRequest {
-  pin: string;
-}
-
 export interface FreezeCardRequest {
   frozen: boolean;
 }
@@ -215,6 +211,47 @@ export interface CreateSupportTicketRequest {
   subject: string;
   message: string;
   category: CreateSupportTicketRequestCategory;
+}
+
+export type NotificationType =
+  (typeof NotificationType)[keyof typeof NotificationType];
+
+export const NotificationType = {
+  topup: "topup",
+  freeze: "freeze",
+  card: "card",
+  info: "info",
+  security: "security",
+} as const;
+
+export interface Notification {
+  id: number;
+  userId: number;
+  type: NotificationType;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationSettings {
+  id: number;
+  userId: number;
+  transactionAlerts: boolean;
+  topupAlerts: boolean;
+  securityAlerts: boolean;
+  marketingAlerts: boolean;
+}
+
+export interface UpdateNotificationSettingsRequest {
+  transactionAlerts?: boolean;
+  topupAlerts?: boolean;
+  securityAlerts?: boolean;
+  marketingAlerts?: boolean;
+}
+
+export interface UpdateCardPinRequest {
+  pin: string;
 }
 
 export interface CardAccessUrlResponse {
