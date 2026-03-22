@@ -23,6 +23,9 @@ export const cardsTable = pgTable("cards", {
   status: varchar("status", { length: 20 }).notNull().default("active"),
   label: varchar("label", { length: 100 }),
   color: varchar("color", { length: 50 }),
+  contactEmail: varchar("contact_email", { length: 255 }),
+  contactPhone: varchar("contact_phone", { length: 30 }),
+  contactPhoneDialCode: varchar("contact_phone_dial_code", { length: 10 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

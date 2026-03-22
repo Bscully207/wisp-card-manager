@@ -184,3 +184,35 @@ export async function getCardBalanceHistory(cardId: number, userId: number) {
     )
   );
 }
+
+export async function updateCardContacts(
+  cardId: number,
+  userId: number,
+  contactEmail: string,
+  contactPhone: string,
+  contactPhoneDialCode: string,
+  applyToAll: boolean,
+) {
+  const card = await getCardByIdForUser(cardId, userId);
+  if (!card) return null;
+
+  const contactData = {
+    contactEmail,
+    contactPhone,
+    contactPhoneDialCode,
+  };
+
+  if (applyToAll) {
+    const result = await db.update(cardsTable)
+      .set(contactData)
+      .where(eq(cardsTable.userId, userId))
+      .returning();
+    return { updatedCount: result.length };
+  }
+
+  await db.update(cardsTable)
+    .set(contactData)
+    .where(eq(cardsTable.id, cardId))
+    .returning();
+  return { updatedCount: 1 };
+}

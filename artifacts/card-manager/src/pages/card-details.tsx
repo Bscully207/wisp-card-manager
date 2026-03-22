@@ -6,6 +6,7 @@ import {
   useGetCardDetailsWithTransactions,
   useGetCardBalanceHistory,
   useDeleteCard,
+  useUpdateCardContacts,
   getGetCardsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,7 +14,7 @@ import { CreditCard } from "@/components/credit-card";
 import { formatCurrency, cn } from "@/lib/utils";
 import { 
   PlusCircle, Trash2, Eye, EyeOff, ReceiptText, 
-  Mail, Save, CreditCard as CreditCardIcon, 
+  Mail, Phone, Save, CreditCard as CreditCardIcon, 
   Settings as SettingsIcon, CheckCircle2, XCircle, KeyRound,
   Wallet
 } from "lucide-react";
@@ -21,6 +22,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { TopUpDialog } from "@/components/shared/top-up-dialog";
@@ -28,6 +38,31 @@ import { TransactionItem } from "@/components/shared/transaction-item";
 import { FreezeCardButton } from "@/components/shared/freeze-card-button";
 import { ChangePinDialog } from "@/components/shared/change-pin-dialog";
 import { SecureCardViewer } from "@/components/secure-card-viewer";
+
+const DIAL_CODES = [
+  { code: "+1", label: "US/CA +1" },
+  { code: "+44", label: "UK +44" },
+  { code: "+33", label: "FR +33" },
+  { code: "+49", label: "DE +49" },
+  { code: "+34", label: "ES +34" },
+  { code: "+39", label: "IT +39" },
+  { code: "+31", label: "NL +31" },
+  { code: "+32", label: "BE +32" },
+  { code: "+41", label: "CH +41" },
+  { code: "+43", label: "AT +43" },
+  { code: "+351", label: "PT +351" },
+  { code: "+353", label: "IE +353" },
+  { code: "+46", label: "SE +46" },
+  { code: "+47", label: "NO +47" },
+  { code: "+45", label: "DK +45" },
+  { code: "+358", label: "FI +358" },
+  { code: "+48", label: "PL +48" },
+  { code: "+61", label: "AU +61" },
+  { code: "+81", label: "JP +81" },
+  { code: "+86", label: "CN +86" },
+  { code: "+91", label: "IN +91" },
+  { code: "+55", label: "BR +55" },
+];
 
 type TabType = "topup" | "details" | "settings";
 type HistoryTab = "transactions" | "balance";
@@ -76,10 +111,60 @@ export default function CardDetails() {
   const [showCvv, setShowCvv] = useState(false);
   const [cardName, setCardName] = useState("");
   const [cardEmail, setCardEmail] = useState("");
+  const [phoneDialCode, setPhoneDialCode] = useState("+1");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [applyToAll, setApplyToAll] = useState(false);
+  const [confirmApplyAllOpen, setConfirmApplyAllOpen] = useState(false);
 
   useEffect(() => {
     if (card) setCardName(card.label || "");
   }, [card?.id]);
+
+  const contactsMutation = useUpdateCardContacts({
+    mutation: {
+      onSuccess: (data) => {
+        toast({ title: "Saved", description: data.message });
+        setCardEmail("");
+        setPhoneNumber("");
+        setApplyToAll(false);
+      },
+      onError: () => {
+        toast({ title: "Error", description: "Failed to update contact details.", variant: "destructive" });
+      },
+    },
+  });
+
+  const isContactFormValid = cardEmail.trim() !== "" && phoneNumber.trim() !== "";
+
+  const handleContactSubmit = () => {
+    if (!isContactFormValid) return;
+    if (applyToAll) {
+      setConfirmApplyAllOpen(true);
+      return;
+    }
+    contactsMutation.mutate({
+      cardId,
+      data: {
+        email: cardEmail.trim(),
+        phoneDialCode,
+        phoneNumber: phoneNumber.trim(),
+        applyToAll: false,
+      },
+    });
+  };
+
+  const handleConfirmApplyAll = () => {
+    setConfirmApplyAllOpen(false);
+    contactsMutation.mutate({
+      cardId,
+      data: {
+        email: cardEmail.trim(),
+        phoneDialCode,
+        phoneNumber: phoneNumber.trim(),
+        applyToAll: true,
+      },
+    });
+  };
 
   const deleteMutation = useDeleteCard({
     mutation: {
@@ -290,12 +375,15 @@ export default function CardDetails() {
               </Button>
             </div>
 
-            <div className="border-t border-border/50 pt-4 space-y-3">
-              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Update Card Email</h4>
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
+            <div className="border-t border-border/50 pt-4 space-y-4">
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Contact Information</h4>
+
+              <div className="space-y-2">
+                <Label htmlFor="contact-email" className="text-sm text-muted-foreground">Email</Label>
+                <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
+                    id="contact-email"
                     type="email"
                     value={cardEmail}
                     onChange={(e) => setCardEmail(e.target.value)}
@@ -303,20 +391,56 @@ export default function CardDetails() {
                     className="bg-muted/50 pl-10"
                   />
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="shrink-0 rounded-lg"
-                  onClick={() => {
-                    if (cardEmail.trim()) {
-                      toast({ title: "Saved", description: "Card email updated successfully." });
-                      setCardEmail("");
-                    }
-                  }}
-                >
-                  <Save className="w-3.5 h-3.5 mr-1" /> Save
-                </Button>
               </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Phone Number</Label>
+                <div className="flex items-center gap-2">
+                  <Select value={phoneDialCode} onValueChange={setPhoneDialCode}>
+                    <SelectTrigger className="w-[120px] bg-muted/50 shrink-0">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DIAL_CODES.map((dc) => (
+                        <SelectItem key={dc.code} value={dc.code}>
+                          {dc.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="relative flex-1">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="123 456 7890"
+                      className="bg-muted/50 pl-10"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <Checkbox
+                  id="apply-to-all"
+                  checked={applyToAll}
+                  onCheckedChange={(checked) => setApplyToAll(checked === true)}
+                />
+                <Label htmlFor="apply-to-all" className="text-sm cursor-pointer">
+                  Apply to all my cards
+                </Label>
+              </div>
+
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full rounded-lg"
+                disabled={!isContactFormValid || contactsMutation.isPending}
+                onClick={handleContactSubmit}
+              >
+                {contactsMutation.isPending ? "Saving..." : <><Save className="w-3.5 h-3.5 mr-1" /> Save Contact Details</>}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -405,6 +529,21 @@ export default function CardDetails() {
         cardLabel={card.label}
         currency={card.currency}
       />
+
+      <ResponsiveDialog
+        open={confirmApplyAllOpen}
+        onOpenChange={setConfirmApplyAllOpen}
+        title="Apply to All Cards"
+        description="This will update the contact information for every card in your account. Are you sure you want to continue?"
+        className="sm:max-w-sm bg-card border-border/50 shadow-2xl"
+      >
+        <div className="flex flex-col sm:flex-row justify-end gap-3 mt-4">
+          <Button variant="ghost" onClick={() => setConfirmApplyAllOpen(false)} className="w-full sm:w-auto">Cancel</Button>
+          <Button onClick={handleConfirmApplyAll} disabled={contactsMutation.isPending} className="w-full sm:w-auto">
+            {contactsMutation.isPending ? "Updating..." : "Yes, update all cards"}
+          </Button>
+        </div>
+      </ResponsiveDialog>
 
       <ResponsiveDialog
         open={deleteOpen}

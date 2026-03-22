@@ -23,6 +23,9 @@ import {
   CreateCardAccessUrlResponse,
   GetCardBalanceHistoryParams,
   GetCardBalanceHistoryResponse,
+  UpdateCardContactsParams,
+  UpdateCardContactsBody,
+  UpdateCardContactsResponse,
 } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/requireAuth.js";
 import {
@@ -35,6 +38,7 @@ import {
   deleteCard,
   getCardTransactions,
   getCardBalanceHistory,
+  updateCardContacts,
   toCardResponse,
 } from "../services/card.service.js";
 
@@ -293,6 +297,41 @@ router.get("/cards/:cardId/balance-history", requireAuth, async (req, res): Prom
     status: t.status as "pending" | "completed" | "failed",
     createdAt: t.createdAt,
   }))));
+});
+
+router.put("/cards/:cardId/contacts", requireAuth, async (req, res): Promise<void> => {
+  const params = UpdateCardContactsParams.safeParse({ cardId: parseCardId(req.params.cardId) });
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid card ID" });
+    return;
+  }
+
+  const body = UpdateCardContactsBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: "Validation error", message: body.error.message });
+    return;
+  }
+
+  const result = await updateCardContacts(
+    params.data.cardId,
+    req.session.userId!,
+    body.data.email,
+    body.data.phoneNumber,
+    body.data.phoneDialCode,
+    body.data.applyToAll,
+  );
+
+  if (!result) {
+    res.status(404).json({ error: "Not found", message: "Card not found" });
+    return;
+  }
+
+  res.json(UpdateCardContactsResponse.parse({
+    message: body.data.applyToAll
+      ? `Contact details updated for ${result.updatedCount} card(s)`
+      : "Contact details updated successfully",
+    updatedCount: result.updatedCount,
+  }));
 });
 
 export default router;

@@ -34,6 +34,8 @@ import type {
   SupportTicket,
   TopUpRequest,
   Transaction,
+  UpdateCardContactsRequest,
+  UpdateCardContactsResponse,
   UpdateCardPinRequest,
   UpdateProfileRequest,
   User,
@@ -1769,4 +1771,91 @@ export const useCreateSupportTicket = <
   TContext
 > => {
   return useMutation(getCreateSupportTicketMutationOptions(options));
+};
+
+/**
+ * @summary Update card contact details
+ */
+export const getUpdateCardContactsUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/contacts`;
+};
+
+export const updateCardContacts = async (
+  cardId: number,
+  updateCardContactsRequest: UpdateCardContactsRequest,
+  options?: RequestInit,
+): Promise<UpdateCardContactsResponse> => {
+  return customFetch<UpdateCardContactsResponse>(getUpdateCardContactsUrl(cardId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateCardContactsRequest),
+  });
+};
+
+export const getUpdateCardContactsMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCardContacts>>,
+    TError,
+    { cardId: number; data: BodyType<UpdateCardContactsRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateCardContacts>>,
+  TError,
+  { cardId: number; data: BodyType<UpdateCardContactsRequest> },
+  TContext
+> => {
+  const mutationKey = ["updateCardContacts"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateCardContacts>>,
+    { cardId: number; data: BodyType<UpdateCardContactsRequest> }
+  > = (props) => {
+    const { cardId, data } = props ?? {};
+
+    return updateCardContacts(cardId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateCardContactsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateCardContacts>>
+>;
+export type UpdateCardContactsMutationBody = BodyType<UpdateCardContactsRequest>;
+export type UpdateCardContactsMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update card contact details
+ */
+export const useUpdateCardContacts = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCardContacts>>,
+    TError,
+    { cardId: number; data: BodyType<UpdateCardContactsRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateCardContacts>>,
+  TError,
+  { cardId: number; data: BodyType<UpdateCardContactsRequest> },
+  TContext
+> => {
+  return useMutation(getUpdateCardContactsMutationOptions(options));
 };

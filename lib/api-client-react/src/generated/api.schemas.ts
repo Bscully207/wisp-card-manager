@@ -221,3 +221,15 @@ export interface CardAccessUrlResponse {
   url: string;
   expiresAt: string;
 }
+
+export interface UpdateCardContactsRequest {
+  email: string;
+  phoneDialCode: string;
+  phoneNumber: string;
+  applyToAll?: boolean;
+}
+
+export interface UpdateCardContactsResponse {
+  message: string;
+  updatedCount: number;
+}

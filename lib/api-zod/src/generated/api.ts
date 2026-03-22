@@ -393,3 +393,22 @@ export const CreateSupportTicketBody = zod.object({
   message: zod.string(),
   category: zod.enum(["billing", "card", "account", "technical", "other"]),
 });
+
+/**
+ * @summary Update card contact details
+ */
+export const UpdateCardContactsParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const UpdateCardContactsBody = zod.object({
+  email: zod.string().email(),
+  phoneDialCode: zod.string(),
+  phoneNumber: zod.string(),
+  applyToAll: zod.boolean().default(false),
+});
+
+export const UpdateCardContactsResponse = zod.object({
+  message: zod.string(),
+  updatedCount: zod.number(),
+});
