@@ -16,7 +16,7 @@ import {
   PlusCircle, Trash2, Eye, EyeOff, ReceiptText, 
   Mail, Phone, Save, CreditCard as CreditCardIcon, 
   Settings as SettingsIcon, CheckCircle2, XCircle, KeyRound,
-  Wallet
+  Wallet, Link, Unlink, Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,6 +38,8 @@ import { TransactionItem } from "@/components/shared/transaction-item";
 import { FreezeCardButton } from "@/components/shared/freeze-card-button";
 import { ChangePinDialog } from "@/components/shared/change-pin-dialog";
 import { SecureCardViewer } from "@/components/secure-card-viewer";
+import { useTelegram } from "@/hooks/use-telegram";
+import { useGetCardTelegram, useLinkTelegram, useUnlinkTelegram, getGetCardTelegramQueryKey } from "@/hooks/use-telegram-link";
 
 const DIAL_CODES = [
   { code: "+1", label: "US/CA +1" },
@@ -442,6 +444,8 @@ export default function CardDetails() {
                 {contactsMutation.isPending ? "Saving..." : <><Save className="w-3.5 h-3.5 mr-1" /> Save Contact Details</>}
               </Button>
             </div>
+
+            <TelegramSection cardId={cardId} />
           </CardContent>
         </Card>
       )}
@@ -559,6 +563,136 @@ export default function CardDetails() {
           </Button>
         </div>
       </ResponsiveDialog>
+    </div>
+  );
+}
+
+function TelegramSection({ cardId }: { cardId: number }) {
+  const { isTelegram, telegramUser } = useTelegram();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { data: telegramData, isLoading } = useGetCardTelegram(cardId, {
+    query: { enabled: !!cardId }
+  });
+  const linkMutation = useLinkTelegram({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetCardTelegramQueryKey(cardId) });
+        toast({ title: "Linked", description: "Telegram account linked to this card." });
+      },
+      onError: () => {
+        toast({ title: "Error", description: "Failed to link Telegram account.", variant: "destructive" });
+      },
+    },
+  });
+  const unlinkMutation = useUnlinkTelegram({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetCardTelegramQueryKey(cardId) });
+        toast({ title: "Unlinked", description: "Telegram account unlinked from this card." });
+      },
+      onError: () => {
+        toast({ title: "Error", description: "Failed to unlink Telegram account.", variant: "destructive" });
+      },
+    },
+  });
+
+  if (!isTelegram) return null;
+
+  const isLinked = telegramData?.linked ?? false;
+  const linkedInfo = telegramData?.telegramLink;
+
+  const handleLink = () => {
+    if (!telegramUser) {
+      toast({ title: "Error", description: "Could not detect your Telegram account.", variant: "destructive" });
+      return;
+    }
+    linkMutation.mutate({
+      cardId,
+      data: {
+        telegramId: String(telegramUser.id),
+        telegramUsername: telegramUser.username,
+        telegramFirstName: telegramUser.first_name,
+      },
+    });
+  };
+
+  const handleUnlink = () => {
+    unlinkMutation.mutate({ cardId });
+  };
+
+  return (
+    <div className="border-t border-border/50 pt-4 space-y-3">
+      <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+        <Send className="w-3.5 h-3.5" />
+        Telegram Account
+      </h4>
+
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="animate-spin w-4 h-4 border-2 border-primary rounded-full border-t-transparent" />
+          Loading...
+        </div>
+      ) : isLinked && linkedInfo ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border/30">
+            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <Send className="w-5 h-5 text-blue-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">
+                {linkedInfo.telegramFirstName || "Telegram User"}
+              </p>
+              {linkedInfo.telegramUsername && (
+                <p className="text-xs text-muted-foreground truncate">@{linkedInfo.telegramUsername}</p>
+              )}
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold uppercase bg-emerald-500/20 text-emerald-400">
+              Linked
+            </span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full rounded-xl border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50 text-red-400"
+            onClick={handleUnlink}
+            disabled={unlinkMutation.isPending}
+          >
+            <Unlink className="w-3.5 h-3.5 mr-2" />
+            {unlinkMutation.isPending ? "Unlinking..." : "Unlink Telegram Account"}
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Link your Telegram account to this card for notifications and management.
+          </p>
+          {telegramUser && (
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border/30">
+              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <Send className="w-5 h-5 text-blue-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{telegramUser.first_name}</p>
+                {telegramUser.username && (
+                  <p className="text-xs text-muted-foreground truncate">@{telegramUser.username}</p>
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground">Your account</span>
+            </div>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full rounded-xl border-blue-500/30 hover:bg-blue-500/10 hover:border-blue-500/50 text-blue-400"
+            onClick={handleLink}
+            disabled={linkMutation.isPending || !telegramUser}
+          >
+            <Link className="w-3.5 h-3.5 mr-2" />
+            {linkMutation.isPending ? "Linking..." : "Link Telegram Account"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

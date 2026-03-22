@@ -412,3 +412,55 @@ export const UpdateCardContactsResponse = zod.object({
   message: zod.string(),
   updatedCount: zod.number(),
 });
+
+/**
+ * @summary Get telegram link for a card
+ */
+export const GetCardTelegramParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const TelegramLinkItem = zod.object({
+  id: zod.number(),
+  cardId: zod.number(),
+  userId: zod.number(),
+  telegramId: zod.string(),
+  telegramUsername: zod.string().nullish(),
+  telegramFirstName: zod.string().nullish(),
+  createdAt: zod.date(),
+});
+
+export const GetCardTelegramResponse = zod.object({
+  linked: zod.boolean(),
+  telegramLink: TelegramLinkItem.nullish(),
+});
+
+/**
+ * @summary Link telegram to a card
+ */
+export const LinkTelegramParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const LinkTelegramBody = zod.object({
+  telegramId: zod.string(),
+  telegramUsername: zod.string().optional(),
+  telegramFirstName: zod.string().optional(),
+});
+
+export const LinkTelegramResponse = zod.object({
+  linked: zod.boolean(),
+  telegramLink: TelegramLinkItem.nullish(),
+});
+
+/**
+ * @summary Unlink telegram from a card
+ */
+export const UnlinkTelegramParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const UnlinkTelegramResponse = zod.object({
+  linked: zod.boolean(),
+  telegramLink: TelegramLinkItem.nullish(),
+});

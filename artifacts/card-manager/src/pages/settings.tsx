@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useGetMe, useUpdateProfile, useChangePassword, getGetMeQueryKey } from "@workspace/api-client-react";
+import { useGetMe, useGetCards, useUpdateProfile, useChangePassword, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,10 +12,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
   Loader2, ShieldCheck, UserCircle, 
-  Pencil, X, FileText, LifeBuoy, ChevronRight
+  Pencil, X, FileText, LifeBuoy, ChevronRight, Send
 } from "lucide-react";
 import { AppearanceSection } from "@/components/settings/appearance-section";
 import { LegalDialogs } from "@/components/settings/legal-dialogs";
+import { useTelegram } from "@/hooks/use-telegram";
+import { useGetCardTelegram } from "@/hooks/use-telegram-link";
 
 const profileSchema = z.object({
   firstName: z.string().min(2, "Required"),
@@ -213,6 +215,8 @@ export default function SettingsPage() {
 
       <AppearanceSection />
 
+      <TelegramAccountSection />
+
       <Card className="bg-card/50 backdrop-blur border-border/50 shadow-xl">
         <CardHeader className="px-4 md:px-6">
           <div className="flex items-center gap-3">
@@ -256,6 +260,73 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between py-2.5 border-b border-border/30 last:border-0">
       <span className="text-sm text-muted-foreground">{label}</span>
       <span className="text-sm font-medium text-right">{value}</span>
+    </div>
+  );
+}
+
+function TelegramAccountSection() {
+  const { isTelegram, telegramUser } = useTelegram();
+  const { data: cards = [] } = useGetCards();
+
+  if (!isTelegram) return null;
+
+  return (
+    <Card className="bg-card/50 backdrop-blur border-border/50 shadow-xl">
+      <CardHeader className="px-4 md:px-6">
+        <div className="flex items-center gap-3">
+          <Send className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+          <div>
+            <CardTitle className="text-base md:text-lg">Telegram Account</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Your linked Telegram identity and card connections.</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="px-4 md:px-6 space-y-4">
+        {telegramUser ? (
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border/30">
+            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <Send className="w-5 h-5 text-blue-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{telegramUser.first_name}{telegramUser.last_name ? ` ${telegramUser.last_name}` : ""}</p>
+              {telegramUser.username && (
+                <p className="text-xs text-muted-foreground truncate">@{telegramUser.username}</p>
+              )}
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold uppercase bg-emerald-500/20 text-emerald-400">
+              Connected
+            </span>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Telegram identity not available.</p>
+        )}
+
+        {cards.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Card Links</p>
+            {cards.map((card) => (
+              <TelegramCardLinkStatus key={card.id} cardId={card.id} cardLabel={card.label || `Card •••• ${card.cardNumber.slice(-4)}`} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function TelegramCardLinkStatus({ cardId, cardLabel }: { cardId: number; cardLabel: string }) {
+  const { data: telegramData } = useGetCardTelegram(cardId, {
+    query: { enabled: !!cardId }
+  });
+
+  const isLinked = telegramData?.linked ?? false;
+
+  return (
+    <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30">
+      <span className="text-sm truncate">{cardLabel}</span>
+      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold uppercase ${isLinked ? "bg-emerald-500/20 text-emerald-400" : "bg-muted text-muted-foreground"}`}>
+        {isLinked ? "Linked" : "Not linked"}
+      </span>
     </div>
   );
 }

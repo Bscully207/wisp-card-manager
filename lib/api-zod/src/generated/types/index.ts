@@ -28,4 +28,5 @@ export * from "./transactionStatus";
 export * from "./transactionType";
 export * from "./updateCardPinRequest";
 export * from "./updateProfileRequest";
+export * from "./telegramLink";
 export * from "./user";

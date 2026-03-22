@@ -28,10 +28,12 @@ import type {
   ErrorResponse,
   FreezeCardRequest,
   HealthStatus,
+  LinkTelegramRequest,
   LoginRequest,
   MessageResponse,
   RegisterRequest,
   SupportTicket,
+  TelegramLinkResponse,
   TopUpRequest,
   Transaction,
   UpdateCardContactsRequest,
@@ -1481,12 +1483,7 @@ export const getCreateCardAccessUrlMutationOptions = <
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
- Lucas}): UseMutationOptions<
-  Awaited<ReturnType<typeof createCardAccessUrl>>,
-  TError,
-  { cardId: number },
-  TContext
- Lucas> => {
+}) => {
   const mutationKey = ["createCardAccessUrl"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
@@ -1506,11 +1503,11 @@ export const getCreateCardAccessUrlMutationOptions = <
   };
 
   return { mutationFn, ...mutationOptions };
- Lucas};
+};
 
 export type CreateCardAccessUrlMutationResult = NonNullable<
   Awaited<ReturnType<typeof createCardAccessUrl>>
- Lucas>;
+>;
 export type CreateCardAccessUrlMutationError = ErrorType<ErrorResponse>;
 
 /**
@@ -1527,14 +1524,14 @@ export const useCreateCardAccessUrl = <
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
- Lucas}): UseMutationResult<
+}): UseMutationResult<
   Awaited<ReturnType<typeof createCardAccessUrl>>,
   TError,
   { cardId: number },
   TContext
- Lucas> => {
+> => {
   return useMutation(getCreateCardAccessUrlMutationOptions(options));
- Lucas};
+};
 
 /**
  * @summary Get all transactions for the current user
@@ -1858,4 +1855,240 @@ export const useUpdateCardContacts = <
   TContext
 > => {
   return useMutation(getUpdateCardContactsMutationOptions(options));
+};
+
+/**
+ * @summary Get telegram link for a card
+ */
+export const getGetCardTelegramUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/telegram`;
+};
+
+export const getCardTelegram = async (
+  cardId: number,
+  options?: RequestInit,
+): Promise<TelegramLinkResponse> => {
+  return customFetch<TelegramLinkResponse>(getGetCardTelegramUrl(cardId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCardTelegramQueryKey = (cardId: number) => {
+  return [`/api/cards/${cardId}/telegram`] as const;
+};
+
+export const getGetCardTelegramQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCardTelegram>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  cardId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCardTelegram>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetCardTelegramQueryKey(cardId);
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCardTelegram>>
+  > = ({ signal }) => getCardTelegram(cardId, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCardTelegram>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCardTelegramQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCardTelegram>>
+>;
+export type GetCardTelegramQueryError = ErrorType<ErrorResponse>;
+
+export function useGetCardTelegram<
+  TData = Awaited<ReturnType<typeof getCardTelegram>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  cardId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCardTelegram>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCardTelegramQueryOptions(cardId, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Link telegram to a card
+ */
+export const getLinkTelegramUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/telegram/link`;
+};
+
+export const linkTelegram = async (
+  cardId: number,
+  linkTelegramRequest: LinkTelegramRequest,
+  options?: RequestInit,
+): Promise<TelegramLinkResponse> => {
+  return customFetch<TelegramLinkResponse>(getLinkTelegramUrl(cardId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(linkTelegramRequest),
+  });
+};
+
+export const getLinkTelegramMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof linkTelegram>>,
+    TError,
+    { cardId: number; data: BodyType<LinkTelegramRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof linkTelegram>>,
+  TError,
+  { cardId: number; data: BodyType<LinkTelegramRequest> },
+  TContext
+> => {
+  const mutationKey = ["linkTelegram"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof linkTelegram>>,
+    { cardId: number; data: BodyType<LinkTelegramRequest> }
+  > = (props) => {
+    const { cardId, data } = props ?? {};
+    return linkTelegram(cardId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LinkTelegramMutationResult = NonNullable<
+  Awaited<ReturnType<typeof linkTelegram>>
+>;
+export type LinkTelegramMutationBody = BodyType<LinkTelegramRequest>;
+export type LinkTelegramMutationError = ErrorType<ErrorResponse>;
+
+export const useLinkTelegram = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof linkTelegram>>,
+    TError,
+    { cardId: number; data: BodyType<LinkTelegramRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof linkTelegram>>,
+  TError,
+  { cardId: number; data: BodyType<LinkTelegramRequest> },
+  TContext
+> => {
+  return useMutation(getLinkTelegramMutationOptions(options));
+};
+
+/**
+ * @summary Unlink telegram from a card
+ */
+export const getUnlinkTelegramUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/telegram/unlink`;
+};
+
+export const unlinkTelegram = async (
+  cardId: number,
+  options?: RequestInit,
+): Promise<TelegramLinkResponse> => {
+  return customFetch<TelegramLinkResponse>(getUnlinkTelegramUrl(cardId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getUnlinkTelegramMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unlinkTelegram>>,
+    TError,
+    { cardId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof unlinkTelegram>>,
+  TError,
+  { cardId: number },
+  TContext
+> => {
+  const mutationKey = ["unlinkTelegram"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof unlinkTelegram>>,
+    { cardId: number }
+  > = (props) => {
+    const { cardId } = props ?? {};
+    return unlinkTelegram(cardId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UnlinkTelegramMutationResult = NonNullable<
+  Awaited<ReturnType<typeof unlinkTelegram>>
+>;
+export type UnlinkTelegramMutationError = ErrorType<ErrorResponse>;
+
+export const useUnlinkTelegram = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unlinkTelegram>>,
+    TError,
+    { cardId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof unlinkTelegram>>,
+  TError,
+  { cardId: number },
+  TContext
+> => {
+  return useMutation(getUnlinkTelegramMutationOptions(options));
 };

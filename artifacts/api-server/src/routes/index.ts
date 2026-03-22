@@ -5,6 +5,7 @@ import usersRouter from "./users";
 import cardsRouter from "./cards";
 import transactionsRouter from "./transactions";
 import supportRouter from "./support";
+import telegramRouter from "./telegram";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(usersRouter);
 router.use(cardsRouter);
 router.use(transactionsRouter);
 router.use(supportRouter);
+router.use(telegramRouter);
 
 export default router;

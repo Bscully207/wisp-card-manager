@@ -133,6 +133,14 @@ function applyTelegramTheme(tp: NonNullable<NonNullable<Window["Telegram"]>["Web
   }
 }
 
+export interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  language_code?: string;
+}
+
 export function useTelegram() {
   const [isReady, setIsReady] = useState(false);
   const webApp = window.Telegram?.WebApp;
@@ -156,10 +164,13 @@ export function useTelegram() {
     };
   }, []);
 
+  const telegramUser: TelegramUser | null = webApp?.initDataUnsafe?.user ?? null;
+
   return {
     webApp,
     isReady,
     isTelegram: !!webApp,
     platform: webApp?.platform || "unknown",
+    telegramUser,
   };
 }
