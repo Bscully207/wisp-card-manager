@@ -27,8 +27,17 @@ export function ResponsiveDialog({
   className,
 }: ResponsiveDialogProps) {
   const isMobile = useIsMobile();
+  const [lockedMobile, setLockedMobile] = React.useState(isMobile);
 
-  if (isMobile) {
+  React.useEffect(() => {
+    if (open) {
+      setLockedMobile(isMobile);
+    }
+  }, [open]);
+
+  const useMobile = open ? lockedMobile : isMobile;
+
+  if (useMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent className="h-[100dvh] max-h-[100dvh] rounded-none px-4 pb-8 safe-area-bottom">
