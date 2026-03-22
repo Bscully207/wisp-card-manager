@@ -27,15 +27,18 @@ export function ResponsiveDialog({
   className,
 }: ResponsiveDialogProps) {
   const isMobile = useIsMobile();
-  const [lockedMobile, setLockedMobile] = React.useState(isMobile);
+  const lockedRef = React.useRef(isMobile);
+  const wasOpenRef = React.useRef(open);
 
-  React.useEffect(() => {
-    if (open) {
-      setLockedMobile(isMobile);
-    }
-  }, [open]);
+  if (open && !wasOpenRef.current) {
+    lockedRef.current = isMobile;
+  }
+  if (!open) {
+    lockedRef.current = isMobile;
+  }
+  wasOpenRef.current = open;
 
-  const useMobile = open ? lockedMobile : isMobile;
+  const useMobile = open ? lockedRef.current : isMobile;
 
   if (useMobile) {
     return (
