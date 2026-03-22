@@ -251,6 +251,55 @@ router.get("/cards/:cardId/transactions", requireAuth, async (req, res): Promise
   }))));
 });
 
+router.get("/cards/:cardId/balance-history/export", requireAuth, async (req, res): Promise<void> => {
+  const cardId = parseCardId(req.params.cardId);
+  if (isNaN(cardId)) {
+    res.status(400).json({ error: "Invalid card ID" });
+    return;
+  }
+
+  const card = await getCardByIdForUser(cardId, req.session.userId!);
+  if (!card) {
+    res.status(404).json({ error: "Not found", message: "Card not found" });
+    return;
+  }
+
+  const balanceHistoryTypes = ["topup", "fee", "refund"];
+  const txs = await getCardTransactions(cardId, req.session.userId!);
+  const rows = (txs ?? [])
+    .filter(t => balanceHistoryTypes.includes(t.type))
+    .map(t => ({
+      id: t.id,
+      type: t.type,
+      amount: t.amount,
+      balanceBefore: t.balanceBefore,
+      balanceAfter: t.balanceAfter,
+      description: t.description ?? "",
+      status: t.status,
+      createdAt: t.createdAt,
+    }));
+
+  function sanitizeCsvCell(value: string): string {
+    let sanitized = value.replace(/"/g, '""');
+    if (/^[=+\-@\t\r]/.test(sanitized)) {
+      sanitized = "'" + sanitized;
+    }
+    sanitized = sanitized.replace(/[\r\n]+/g, " ");
+    return `"${sanitized}"`;
+  }
+
+  const csvHeader = "ID,Type,Amount,Currency,Balance Before,Balance After,Description,Status,Date";
+  const csvRows = rows.map(r => {
+    return `${r.id},${r.type},${r.amount},${card.currency},${r.balanceBefore},${r.balanceAfter},${sanitizeCsvCell(String(r.description))},${r.status},${r.createdAt}`;
+  });
+  const csv = [csvHeader, ...csvRows].join("\n");
+
+  const filename = `balance-history-card-${cardId}-${new Date().toISOString().slice(0, 10)}.csv`;
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.send(csv);
+});
+
 router.post("/cards/:cardId/access-url", requireAuth, async (req, res): Promise<void> => {
   const params = CreateCardAccessUrlParams.safeParse({ cardId: parseCardId(req.params.cardId) });
   if (!params.success) {

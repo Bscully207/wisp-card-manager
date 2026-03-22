@@ -16,7 +16,7 @@ import {
   PlusCircle, Trash2, Eye, EyeOff, ReceiptText, 
   Mail, Phone, Save, CreditCard as CreditCardIcon, 
   Settings as SettingsIcon, CheckCircle2, XCircle, KeyRound,
-  Wallet, Link, Unlink, Send
+  Wallet, Link, Unlink, Send, Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -185,6 +185,29 @@ export default function CardDetails() {
   if (isError || !card) {
     return <div className="text-center mt-20">Card not found.</div>;
   }
+
+  const handleExportBalanceHistory = async () => {
+    try {
+      const baseUrl = import.meta.env.BASE_URL || "/";
+      const apiBase = baseUrl.replace(/\/$/, "");
+      const response = await fetch(`${apiBase}/api/cards/${cardId}/balance-history/export`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Export failed");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `balance-history-card-${cardId}-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: "Export complete", description: "Balance history CSV downloaded." });
+    } catch {
+      toast({ title: "Export failed", description: "Could not download balance history.", variant: "destructive" });
+    }
+  };
 
   const isFrozen = card.status === "frozen";
 
@@ -479,6 +502,9 @@ export default function CardDetails() {
                 <span>Balance History</span>
               </button>
             </div>
+            <Button variant="outline" size="sm" className="bg-card shrink-0" onClick={handleExportBalanceHistory}>
+              <Download className="w-4 h-4 mr-1.5" /> Export
+            </Button>
           </div>
 
           {historyTab === "transactions" && (
