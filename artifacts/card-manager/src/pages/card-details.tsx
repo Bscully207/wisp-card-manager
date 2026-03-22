@@ -3,6 +3,7 @@ import { useParams, useLocation } from "wouter";
 import { 
   useGetCard, 
   useGetCardTransactions, 
+  useGetCardDetailsWithTransactions,
   useDeleteCard,
   getGetCardsQueryKey,
 } from "@workspace/api-client-react";
@@ -33,12 +34,30 @@ export default function CardDetails() {
   const queryClient = useQueryClient();
   const cardId = parseInt(params?.id || "0", 10);
 
-  const { data: card, isLoading: cardLoading, isError } = useGetCard(cardId, {
+  const combinedQuery = useGetCardDetailsWithTransactions(cardId, {
     query: { enabled: !!cardId }
   });
-  const { data: transactions = [], isLoading: txLoading } = useGetCardTransactions(cardId, {
-    query: { enabled: !!cardId }
+
+  const cardFallback = useGetCard(cardId, {
+    query: { enabled: !!cardId && combinedQuery.isError }
   });
+  const txFallback = useGetCardTransactions(cardId, {
+    query: { enabled: !!cardId && combinedQuery.isError }
+  });
+
+  const card = combinedQuery.isError ? cardFallback.data : combinedQuery.data?.card;
+  const transactions = combinedQuery.isError
+    ? (txFallback.data ?? [])
+    : (combinedQuery.data?.transactions ?? []);
+  const cardLoading = combinedQuery.isError
+    ? cardFallback.isLoading
+    : combinedQuery.isLoading;
+  const txLoading = combinedQuery.isError
+    ? txFallback.isLoading
+    : combinedQuery.isLoading;
+  const isError = combinedQuery.isError
+    ? cardFallback.isError
+    : false;
 
   const [activeTab, setActiveTab] = useState<TabType>("details");
   const [topUpOpen, setTopUpOpen] = useState(false);

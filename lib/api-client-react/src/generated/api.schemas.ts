@@ -137,6 +137,11 @@ export interface Transaction {
   createdAt: string;
 }
 
+export interface CardDetailsWithTransactions {
+  card: Card;
+  transactions: Transaction[];
+}
+
 export type SupportTicketCategory =
   (typeof SupportTicketCategory)[keyof typeof SupportTicketCategory];
 

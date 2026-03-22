@@ -260,6 +260,46 @@ export const GetCardTransactionsResponse = zod.array(
 );
 
 /**
+ * @summary Get card details with transactions (combined endpoint)
+ */
+export const GetCardDetailsWithTransactionsParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const GetCardDetailsWithTransactionsResponse = zod.object({
+  card: zod.object({
+    id: zod.number(),
+    userId: zod.number(),
+    type: zod.enum(["virtual", "physical"]).default("virtual"),
+    cardNumber: zod.string(),
+    cardholderName: zod.string(),
+    expiryMonth: zod.number(),
+    expiryYear: zod.number(),
+    cvv: zod.string(),
+    balance: zod.number(),
+    currency: zod.string(),
+    status: zod.enum(["active", "frozen", "expired", "cancelled"]),
+    label: zod.string().nullish(),
+    color: zod.string().nullish(),
+    createdAt: zod.date(),
+  }),
+  transactions: zod.array(
+    zod.object({
+      id: zod.number(),
+      cardId: zod.number(),
+      userId: zod.number(),
+      type: zod.enum(["topup", "payment", "refund", "fee"]),
+      amount: zod.number(),
+      balanceBefore: zod.number(),
+      balanceAfter: zod.number(),
+      description: zod.string().nullish(),
+      status: zod.enum(["pending", "completed", "failed"]),
+      createdAt: zod.date(),
+    }),
+  ),
+});
+
+/**
  * @summary Get all transactions for the current user
  */
 export const GetAllTransactionsResponseItem = zod.object({

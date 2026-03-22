@@ -14,6 +14,8 @@ import {
   FreezeCardResponse,
   GetCardTransactionsParams,
   GetCardTransactionsResponse,
+  GetCardDetailsWithTransactionsParams,
+  GetCardDetailsWithTransactionsResponse,
 } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/requireAuth.js";
 import {
@@ -144,6 +146,40 @@ router.post("/cards/:cardId/freeze", requireAuth, async (req, res): Promise<void
   }
 
   res.json(FreezeCardResponse.parse(toCardResponse(updatedCard)));
+});
+
+router.get("/cards/:cardId/details-with-transactions", requireAuth, async (req, res): Promise<void> => {
+  const params = GetCardDetailsWithTransactionsParams.safeParse({ cardId: parseCardId(req.params.cardId) });
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid card ID" });
+    return;
+  }
+
+  const card = await getCardByIdForUser(params.data.cardId, req.session.userId!);
+  if (!card) {
+    res.status(404).json({ error: "Not found", message: "Card not found" });
+    return;
+  }
+
+  const txs = await getCardTransactions(params.data.cardId, req.session.userId!);
+
+  const transactions = (txs ?? []).map(t => ({
+    id: t.id,
+    cardId: t.cardId,
+    userId: t.userId,
+    type: t.type as "topup" | "payment" | "refund" | "fee",
+    amount: t.amount,
+    balanceBefore: t.balanceBefore,
+    balanceAfter: t.balanceAfter,
+    description: t.description ?? null,
+    status: t.status as "pending" | "completed" | "failed",
+    createdAt: t.createdAt,
+  }));
+
+  res.json(GetCardDetailsWithTransactionsResponse.parse({
+    card: toCardResponse(card),
+    transactions,
+  }));
 });
 
 router.get("/cards/:cardId/transactions", requireAuth, async (req, res): Promise<void> => {

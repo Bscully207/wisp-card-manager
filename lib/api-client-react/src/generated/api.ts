@@ -19,6 +19,7 @@ import type {
 import type {
   AuthResponse,
   Card,
+  CardDetailsWithTransactions,
   ChangePasswordRequest,
   CreateCardRequest,
   CreateSupportTicketRequest,
@@ -1174,6 +1175,91 @@ export function useGetCardTransactions<
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetCardTransactionsQueryOptions(cardId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get card details with transactions (combined endpoint)
+ */
+export const getGetCardDetailsWithTransactionsUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/details-with-transactions`;
+};
+
+export const getCardDetailsWithTransactions = async (
+  cardId: number,
+  options?: RequestInit,
+): Promise<CardDetailsWithTransactions> => {
+  return customFetch<CardDetailsWithTransactions>(getGetCardDetailsWithTransactionsUrl(cardId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCardDetailsWithTransactionsQueryKey = (cardId: number) => {
+  return [`/api/cards/${cardId}/details-with-transactions`] as const;
+};
+
+export const getGetCardDetailsWithTransactionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCardDetailsWithTransactions>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  cardId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCardDetailsWithTransactions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetCardDetailsWithTransactionsQueryKey(cardId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCardDetailsWithTransactions>>
+  > = ({ signal }) =>
+    getCardDetailsWithTransactions(cardId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!cardId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCardDetailsWithTransactions>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCardDetailsWithTransactionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCardDetailsWithTransactions>>
+>;
+export type GetCardDetailsWithTransactionsQueryError = ErrorType<ErrorResponse>;
+
+export function useGetCardDetailsWithTransactions<
+  TData = Awaited<ReturnType<typeof getCardDetailsWithTransactions>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  cardId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCardDetailsWithTransactions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCardDetailsWithTransactionsQueryOptions(cardId, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
