@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, varchar, integer, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, varchar, integer, doublePrecision, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -28,6 +28,7 @@ export const cardsTable = pgTable("cards", {
   contactPhoneDialCode: varchar("contact_phone_dial_code", { length: 10 }),
   activationCode: varchar("activation_code", { length: 20 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  threeDsEnabled: boolean("three_ds_enabled").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 

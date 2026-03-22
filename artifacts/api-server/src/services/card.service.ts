@@ -186,6 +186,24 @@ export async function deleteCard(cardId: number, userId: number) {
   return card ?? null;
 }
 
+export async function getCard3ds(cardId: number, userId: number) {
+  const card = await getCardByIdForUser(cardId, userId);
+  if (!card) return null;
+  return { cardId: card.id, threeDsEnabled: card.threeDsEnabled };
+}
+
+export async function updateCard3ds(cardId: number, userId: number, enabled: boolean) {
+  const card = await getCardByIdForUser(cardId, userId);
+  if (!card) return null;
+
+  const [updatedCard] = await db.update(cardsTable)
+    .set({ threeDsEnabled: enabled })
+    .where(eq(cardsTable.id, card.id))
+    .returning();
+
+  return { cardId: updatedCard.id, threeDsEnabled: updatedCard.threeDsEnabled };
+}
+
 export async function getCardTransactions(cardId: number, userId: number, typeFilter?: string) {
   const card = await getCardByIdForUser(cardId, userId);
   if (!card) return null;

@@ -338,6 +338,15 @@ export interface CardAccessUrlResponse {
   expiresAt: string;
 }
 
+export interface ThreeDsStatus {
+  cardId: number;
+  threeDsEnabled: boolean;
+}
+
+export interface UpdateThreeDsRequest {
+  enabled: boolean;
+}
+
 export type GetShippingRequestsParams = {
   status?: GetShippingRequestsStatus;
   page?: number;

@@ -29,6 +29,11 @@ import {
   ActivatePhysicalCardParams,
   ActivatePhysicalCardBody,
   ActivatePhysicalCardResponse,
+  GetCard3dsParams,
+  GetCard3dsResponse,
+  UpdateCard3dsParams,
+  UpdateCard3dsBody,
+  UpdateCard3dsResponse,
 } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/requireAuth.js";
 import {
@@ -43,6 +48,8 @@ import {
   getCardBalanceHistory,
   updateCardContacts,
   activatePhysicalCard,
+  getCard3ds,
+  updateCard3ds,
   toCardResponse,
 } from "../services/card.service.js";
 
@@ -228,6 +235,44 @@ router.get("/cards/:cardId/details-with-transactions", requireAuth, async (req, 
     card: toCardResponse(card),
     transactions,
   }));
+});
+
+router.get("/cards/:cardId/3ds", requireAuth, async (req, res): Promise<void> => {
+  const params = GetCard3dsParams.safeParse({ cardId: parseCardId(req.params.cardId) });
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid card ID" });
+    return;
+  }
+
+  const result = await getCard3ds(params.data.cardId, req.session.userId!);
+  if (!result) {
+    res.status(404).json({ error: "Not found", message: "Card not found" });
+    return;
+  }
+
+  res.json(GetCard3dsResponse.parse(result));
+});
+
+router.put("/cards/:cardId/3ds", requireAuth, async (req, res): Promise<void> => {
+  const params = UpdateCard3dsParams.safeParse({ cardId: parseCardId(req.params.cardId) });
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid card ID" });
+    return;
+  }
+
+  const body = UpdateCard3dsBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: "Validation error", message: body.error.message });
+    return;
+  }
+
+  const result = await updateCard3ds(params.data.cardId, req.session.userId!, body.data.enabled);
+  if (!result) {
+    res.status(404).json({ error: "Not found", message: "Card not found" });
+    return;
+  }
+
+  res.json(UpdateCard3dsResponse.parse(result));
 });
 
 router.get("/cards/:cardId/transactions", requireAuth, async (req, res): Promise<void> => {

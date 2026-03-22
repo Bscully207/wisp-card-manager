@@ -40,6 +40,7 @@ import type {
   ShippingRequest,
   SupportTicket,
   TelegramLinkResponse,
+  ThreeDsStatus,
   TopUpRequest,
   Transaction,
   UpdateCardContactsRequest,
@@ -47,6 +48,7 @@ import type {
   UpdateContactsResult,
   UpdateNotificationSettingsRequest,
   UpdateProfileRequest,
+  UpdateThreeDsRequest,
   User,
 } from "./api.schemas";
 
@@ -1106,6 +1108,180 @@ export const useFreezeCard = <
   TContext
 > => {
   return useMutation(getFreezeCardMutationOptions(options));
+};
+
+/**
+ * @summary Get 3D Secure status for a card
+ */
+export const getGetCard3dsUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/3ds`;
+};
+
+export const getCard3ds = async (
+  cardId: number,
+  options?: RequestInit,
+): Promise<ThreeDsStatus> => {
+  return customFetch<ThreeDsStatus>(getGetCard3dsUrl(cardId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCard3dsQueryKey = (cardId: number) => {
+  return [`/api/cards/${cardId}/3ds`] as const;
+};
+
+export const getGetCard3dsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCard3ds>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  cardId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCard3ds>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCard3dsQueryKey(cardId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCard3ds>>> = ({
+    signal,
+  }) => getCard3ds(cardId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!cardId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCard3ds>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCard3dsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCard3ds>>
+>;
+export type GetCard3dsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get 3D Secure status for a card
+ */
+
+export function useGetCard3ds<
+  TData = Awaited<ReturnType<typeof getCard3ds>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  cardId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCard3ds>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCard3dsQueryOptions(cardId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update 3D Secure settings for a card
+ */
+export const getUpdateCard3dsUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/3ds`;
+};
+
+export const updateCard3ds = async (
+  cardId: number,
+  updateThreeDsRequest: UpdateThreeDsRequest,
+  options?: RequestInit,
+): Promise<ThreeDsStatus> => {
+  return customFetch<ThreeDsStatus>(getUpdateCard3dsUrl(cardId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateThreeDsRequest),
+  });
+};
+
+export const getUpdateCard3dsMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCard3ds>>,
+    TError,
+    { cardId: number; data: BodyType<UpdateThreeDsRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateCard3ds>>,
+  TError,
+  { cardId: number; data: BodyType<UpdateThreeDsRequest> },
+  TContext
+> => {
+  const mutationKey = ["updateCard3ds"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateCard3ds>>,
+    { cardId: number; data: BodyType<UpdateThreeDsRequest> }
+  > = (props) => {
+    const { cardId, data } = props ?? {};
+
+    return updateCard3ds(cardId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateCard3dsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateCard3ds>>
+>;
+export type UpdateCard3dsMutationBody = BodyType<UpdateThreeDsRequest>;
+export type UpdateCard3dsMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update 3D Secure settings for a card
+ */
+export const useUpdateCard3ds = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCard3ds>>,
+    TError,
+    { cardId: number; data: BodyType<UpdateThreeDsRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateCard3ds>>,
+  TError,
+  { cardId: number; data: BodyType<UpdateThreeDsRequest> },
+  TContext
+> => {
+  return useMutation(getUpdateCard3dsMutationOptions(options));
 };
 
 /**

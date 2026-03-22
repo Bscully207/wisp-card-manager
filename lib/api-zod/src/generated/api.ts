@@ -273,6 +273,34 @@ export const FreezeCardResponse = zod.object({
 });
 
 /**
+ * @summary Get 3D Secure status for a card
+ */
+export const GetCard3dsParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const GetCard3dsResponse = zod.object({
+  cardId: zod.number(),
+  threeDsEnabled: zod.boolean(),
+});
+
+/**
+ * @summary Update 3D Secure settings for a card
+ */
+export const UpdateCard3dsParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const UpdateCard3dsBody = zod.object({
+  enabled: zod.boolean(),
+});
+
+export const UpdateCard3dsResponse = zod.object({
+  cardId: zod.number(),
+  threeDsEnabled: zod.boolean(),
+});
+
+/**
  * @summary Update card PIN
  */
 export const UpdateCardPinParams = zod.object({
@@ -305,7 +333,7 @@ export const CreateCardAccessUrlParams = zod.object({
 
 export const CreateCardAccessUrlResponse = zod.object({
   url: zod.string(),
-  expiresAt: zod.date(),
+  expiresAt: zod.string(),
 });
 
 /**

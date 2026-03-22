@@ -6,7 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface CardAccessUrlResponse {
-  url: string;
-  expiresAt: string;
+export interface UpdateThreeDsRequest {
+  enabled: boolean;
 }

@@ -7,6 +7,9 @@ import {
   useGetCardBalanceHistory,
   useDeleteCard,
   useUpdateCardContacts,
+  useGetCard3ds,
+  useUpdateCard3ds,
+  getGetCard3dsQueryKey,
   getGetCardsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,7 +19,7 @@ import {
   PlusCircle, Trash2, Eye, EyeOff, ReceiptText, 
   Mail, Phone, Save, CreditCard as CreditCardIcon, 
   Settings as SettingsIcon, CheckCircle2, XCircle, KeyRound,
-  Wallet, Link, Unlink, Send, Download, Package
+  Wallet, Link, Unlink, Send, Download, Package, ShieldCheck, Smartphone, MessageSquare, Asterisk
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,6 +36,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { Switch } from "@/components/ui/switch";
 import { TopUpDialog } from "@/components/shared/top-up-dialog";
 import { TransactionItem } from "@/components/shared/transaction-item";
 import { FreezeCardButton } from "@/components/shared/freeze-card-button";
@@ -124,10 +128,36 @@ export default function CardDetails() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [applyToAll, setApplyToAll] = useState(false);
   const [confirmApplyAllOpen, setConfirmApplyAllOpen] = useState(false);
+  const [otpMethod, setOtpMethod] = useState<"app" | "sms" | "email">("app");
 
   useEffect(() => {
     if (card) setCardName(card.label || "");
   }, [card?.id]);
+
+  const { data: threeDsData } = useGetCard3ds(cardId, {
+    query: { enabled: !!cardId }
+  });
+
+  const updateThreeDsMutation = useUpdateCard3ds({
+    mutation: {
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({ queryKey: getGetCard3dsQueryKey(cardId) });
+        toast({
+          title: data.threeDsEnabled ? "3D Secure enabled" : "3D Secure disabled",
+          description: data.threeDsEnabled
+            ? "Online purchases will require additional verification."
+            : "Additional verification for online purchases has been turned off.",
+        });
+      },
+      onError: () => {
+        toast({
+          title: "Failed to update 3D Secure",
+          description: "Please try again later.",
+          variant: "destructive",
+        });
+      },
+    },
+  });
 
   const contactsMutation = useUpdateCardContacts({
     mutation: {
@@ -174,6 +204,7 @@ export default function CardDetails() {
       },
     });
   };
+
 
   const deleteMutation = useDeleteCard({
     mutation: {
@@ -418,6 +449,73 @@ export default function CardDetails() {
                   <p className="text-xs text-muted-foreground">Permanently close this card</p>
                 </div>
               </Button>
+            </div>
+
+            <div className="border-t border-border/50 pt-4 space-y-3">
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4" /> 3D Secure
+              </h4>
+              <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-muted/50 border border-border/50">
+                <div className="space-y-1 flex-1 mr-4">
+                  <p className="text-sm font-medium">3D Secure Verification</p>
+                  <p className="text-xs text-muted-foreground">
+                    Adds an extra verification step for online purchases to help protect against unauthorized use of your card.
+                  </p>
+                </div>
+                <Switch
+                  checked={threeDsData?.threeDsEnabled ?? true}
+                  onCheckedChange={(checked) => {
+                    updateThreeDsMutation.mutate({ cardId, data: { enabled: checked } });
+                  }}
+                  disabled={updateThreeDsMutation.isPending}
+                />
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <p className="text-sm font-medium">OTP Delivery Method</p>
+                <p className="text-xs text-muted-foreground">
+                  Choose how you receive one-time passwords for 3D Secure verification.
+                </p>
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  {([
+                    { value: "app" as const, label: "In-App", icon: <Smartphone className="w-4 h-4" />, recommended: true },
+                    { value: "sms" as const, label: "SMS", icon: <MessageSquare className="w-4 h-4" /> },
+                    { value: "email" as const, label: "Email", icon: <Mail className="w-4 h-4" /> },
+                  ]).map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setOtpMethod(option.value);
+                        toast({
+                          title: "OTP method updated",
+                          description: `Verification codes will be sent via ${option.label}.`,
+                        });
+                      }}
+                      className={cn(
+                        "flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border text-sm font-medium transition-all relative",
+                        otpMethod === option.value
+                          ? "bg-primary/10 border-primary text-primary"
+                          : "bg-muted/50 border-border/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                    >
+                      {option.icon}
+                      <span className="text-xs">{option.label}</span>
+                      {option.recommended && (
+                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap">
+                          Recommended
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-start gap-1.5 pt-2">
+                <Asterisk className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  To connect your card to Apple Pay or Google Pay, OTP verification codes will be sent via <span className="font-medium text-foreground/70">Email</span> or <span className="font-medium text-foreground/70">SMS</span> only. Make sure your contact details are up to date on each of your cards.
+                </p>
+              </div>
             </div>
 
             <div className="border-t border-border/50 pt-4 space-y-4">

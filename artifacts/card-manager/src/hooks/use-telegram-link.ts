@@ -6,7 +6,8 @@ export {
 } from "@workspace/api-client-react";
 
 export type {
-  TelegramLinkResponse,
-  TelegramLink,
-  LinkTelegramRequest,
+  GetCardTelegram200,
+  GetCardTelegram200TelegramLink,
+  LinkTelegram201,
+  LinkTelegramBody,
 } from "@workspace/api-client-react";
