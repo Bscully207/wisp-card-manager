@@ -209,6 +209,21 @@ export const TopUpCardResponse = zod.object({
 });
 
 /**
+ * @summary Update card PIN
+ */
+export const UpdateCardPinParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const UpdateCardPinBody = zod.object({
+  pin: zod.string().regex(/^\d{6}$/, "PIN must be exactly 6 digits"),
+});
+
+export const UpdateCardPinResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
  * @summary Freeze or unfreeze a card
  */
 export const FreezeCardParams = zod.object({

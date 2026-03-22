@@ -13,7 +13,7 @@ import { formatCurrency, cn } from "@/lib/utils";
 import { 
   PlusCircle, Trash2, Eye, EyeOff, ReceiptText, 
   Mail, Save, CreditCard as CreditCardIcon, 
-  Settings as SettingsIcon, CheckCircle2, XCircle
+  Settings as SettingsIcon, CheckCircle2, XCircle, KeyRound
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +24,7 @@ import { format } from "date-fns";
 import { TopUpDialog } from "@/components/shared/top-up-dialog";
 import { TransactionItem } from "@/components/shared/transaction-item";
 import { FreezeCardButton } from "@/components/shared/freeze-card-button";
+import { ChangePinDialog } from "@/components/shared/change-pin-dialog";
 
 type TabType = "topup" | "details" | "settings";
 
@@ -62,6 +63,7 @@ export default function CardDetails() {
   const [activeTab, setActiveTab] = useState<TabType>("details");
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [changePinOpen, setChangePinOpen] = useState(false);
   const [showCvv, setShowCvv] = useState(false);
   const [cardName, setCardName] = useState("");
   const [cardEmail, setCardEmail] = useState("");
@@ -250,6 +252,18 @@ export default function CardDetails() {
 
               <Button
                 variant="outline"
+                className="w-full justify-start rounded-xl h-14 text-left"
+                onClick={() => setChangePinOpen(true)}
+              >
+                <KeyRound className="w-5 h-5 mr-3 text-primary" />
+                <div>
+                  <p className="font-medium">Change PIN</p>
+                  <p className="text-xs text-muted-foreground">Update your 6-digit card PIN</p>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
                 className="w-full justify-start rounded-xl h-14 text-left border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50"
                 onClick={() => setDeleteOpen(true)}
               >
@@ -313,6 +327,13 @@ export default function CardDetails() {
           )}
         </CardContent>
       </Card>
+
+      <ChangePinDialog
+        open={changePinOpen}
+        onOpenChange={setChangePinOpen}
+        cardId={cardId}
+        cardLabel={card.label}
+      />
 
       <TopUpDialog
         open={topUpOpen}

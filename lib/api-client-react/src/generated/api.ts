@@ -32,6 +32,7 @@ import type {
   SupportTicket,
   TopUpRequest,
   Transaction,
+  UpdateCardPinRequest,
   UpdateProfileRequest,
   User,
 } from "./api.schemas";
@@ -1092,6 +1093,93 @@ export const useFreezeCard = <
   TContext
 > => {
   return useMutation(getFreezeCardMutationOptions(options));
+};
+
+/**
+ * @summary Update card PIN
+ */
+export const getUpdateCardPinUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/pin`;
+};
+
+export const updateCardPin = async (
+  cardId: number,
+  updateCardPinRequest: UpdateCardPinRequest,
+  options?: RequestInit,
+): Promise<MessageResponse> => {
+  return customFetch<MessageResponse>(getUpdateCardPinUrl(cardId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateCardPinRequest),
+  });
+};
+
+export const getUpdateCardPinMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCardPin>>,
+    TError,
+    { cardId: number; data: BodyType<UpdateCardPinRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateCardPin>>,
+  TError,
+  { cardId: number; data: BodyType<UpdateCardPinRequest> },
+  TContext
+> => {
+  const mutationKey = ["updateCardPin"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateCardPin>>,
+    { cardId: number; data: BodyType<UpdateCardPinRequest> }
+  > = (props) => {
+    const { cardId, data } = props ?? {};
+
+    return updateCardPin(cardId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateCardPinMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateCardPin>>
+>;
+export type UpdateCardPinMutationBody = BodyType<UpdateCardPinRequest>;
+export type UpdateCardPinMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update card PIN
+ */
+export const useUpdateCardPin = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCardPin>>,
+    TError,
+    { cardId: number; data: BodyType<UpdateCardPinRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateCardPin>>,
+  TError,
+  { cardId: number; data: BodyType<UpdateCardPinRequest> },
+  TContext
+> => {
+  return useMutation(getUpdateCardPinMutationOptions(options));
 };
 
 /**

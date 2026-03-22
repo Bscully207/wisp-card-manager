@@ -26,5 +26,6 @@ export * from "./topUpRequest";
 export * from "./transaction";
 export * from "./transactionStatus";
 export * from "./transactionType";
+export * from "./updateCardPinRequest";
 export * from "./updateProfileRequest";
 export * from "./user";

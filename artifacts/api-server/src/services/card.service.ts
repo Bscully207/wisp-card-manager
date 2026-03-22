@@ -144,6 +144,15 @@ export async function freezeCard(cardId: number, userId: number, frozen: boolean
   return updatedCard;
 }
 
+export async function updateCardPin(cardId: number, userId: number, _pin: string) {
+  const card = await getCardByIdForUser(cardId, userId);
+  if (!card) return null;
+
+  // Stubbed: In production, this would call the Kiml API:
+  // PUT /card/update-card-pin { cardId, pin }
+  return { success: true };
+}
+
 export async function deleteCard(cardId: number, userId: number) {
   const [card] = await db.delete(cardsTable).where(
     and(eq(cardsTable.id, cardId), eq(cardsTable.userId, userId))

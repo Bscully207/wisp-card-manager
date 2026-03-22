@@ -12,6 +12,9 @@ import {
   FreezeCardParams,
   FreezeCardBody,
   FreezeCardResponse,
+  UpdateCardPinParams,
+  UpdateCardPinBody,
+  UpdateCardPinResponse,
   GetCardTransactionsParams,
   GetCardTransactionsResponse,
   GetCardDetailsWithTransactionsParams,
@@ -24,6 +27,7 @@ import {
   createCard,
   topUpCard,
   freezeCard,
+  updateCardPin,
   deleteCard,
   getCardTransactions,
   toCardResponse,
@@ -124,6 +128,28 @@ router.post("/cards/:cardId/topup", requireAuth, async (req, res): Promise<void>
   }
 
   res.json(TopUpCardResponse.parse(toCardResponse(result.card)));
+});
+
+router.put("/cards/:cardId/pin", requireAuth, async (req, res): Promise<void> => {
+  const params = UpdateCardPinParams.safeParse({ cardId: parseCardId(req.params.cardId) });
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid card ID" });
+    return;
+  }
+
+  const body = UpdateCardPinBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: "Validation error", message: body.error.message });
+    return;
+  }
+
+  const result = await updateCardPin(params.data.cardId, req.session.userId!, body.data.pin);
+  if (!result) {
+    res.status(404).json({ error: "Not found", message: "Card not found" });
+    return;
+  }
+
+  res.json(UpdateCardPinResponse.parse({ message: "PIN updated successfully" }));
 });
 
 router.post("/cards/:cardId/freeze", requireAuth, async (req, res): Promise<void> => {

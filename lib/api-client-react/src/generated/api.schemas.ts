@@ -101,6 +101,10 @@ export interface TopUpRequest {
   description?: string;
 }
 
+export interface UpdateCardPinRequest {
+  pin: string;
+}
+
 export interface FreezeCardRequest {
   frozen: boolean;
 }
