@@ -6,7 +6,7 @@ import { usersTable } from "./users";
 export const CARD_TYPES = ["virtual", "physical"] as const;
 export type CardType = (typeof CARD_TYPES)[number];
 
-export const CARD_STATUSES = ["active", "frozen", "expired", "cancelled"] as const;
+export const CARD_STATUSES = ["active", "frozen", "expired", "cancelled", "pending_activation"] as const;
 export type CardStatus = (typeof CARD_STATUSES)[number];
 
 export const cardsTable = pgTable("cards", {
@@ -26,6 +26,7 @@ export const cardsTable = pgTable("cards", {
   contactEmail: varchar("contact_email", { length: 255 }),
   contactPhone: varchar("contact_phone", { length: 30 }),
   contactPhoneDialCode: varchar("contact_phone_dial_code", { length: 10 }),
+  activationCode: varchar("activation_code", { length: 20 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

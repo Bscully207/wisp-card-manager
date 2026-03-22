@@ -6,10 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { CardStatus } from "./cardStatus";
+import type { CardType } from "./cardType";
 
 export interface Card {
   id: number;
   userId: number;
+  type?: CardType;
   cardNumber: string;
   cardholderName: string;
   expiryMonth: number;

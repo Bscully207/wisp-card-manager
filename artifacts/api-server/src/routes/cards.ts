@@ -26,6 +26,9 @@ import {
   UpdateCardContactsParams,
   UpdateCardContactsBody,
   UpdateCardContactsResponse,
+  ActivatePhysicalCardParams,
+  ActivatePhysicalCardBody,
+  ActivatePhysicalCardResponse,
 } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/requireAuth.js";
 import {
@@ -39,6 +42,7 @@ import {
   getCardTransactions,
   getCardBalanceHistory,
   updateCardContacts,
+  activatePhysicalCard,
   toCardResponse,
 } from "../services/card.service.js";
 
@@ -73,6 +77,7 @@ router.post("/cards", requireAuth, async (req, res): Promise<void> => {
     currency: parsed.data.currency || "EUR",
     label: parsed.data.label,
     color: parsed.data.color,
+    type: parsed.data.type || "virtual",
   });
 
   if (!card) {
@@ -402,6 +407,35 @@ router.put("/cards/:cardId/contacts", requireAuth, async (req, res): Promise<voi
       : "Contact details updated successfully",
     updatedCount: result.updatedCount,
   }));
+});
+
+router.put("/cards/:cardId/activate", requireAuth, async (req, res): Promise<void> => {
+  const params = ActivatePhysicalCardParams.safeParse({ cardId: parseCardId(req.params.cardId) });
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid card ID" });
+    return;
+  }
+
+  const body = ActivatePhysicalCardBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: "Validation error", message: body.error.message });
+    return;
+  }
+
+  const result = await activatePhysicalCard(params.data.cardId, req.session.userId!, body.data.activationCode);
+
+  if ("error" in result) {
+    if (result.error === "not_found") {
+      res.status(404).json({ error: "Not found", message: "Card not found" });
+    } else if (result.error === "invalid_code") {
+      res.status(400).json({ error: "Bad request", message: "Invalid activation code" });
+    } else {
+      res.status(400).json({ error: "Bad request", message: "Card cannot be activated" });
+    }
+    return;
+  }
+
+  res.json(ActivatePhysicalCardResponse.parse(toCardResponse(result.card)));
 });
 
 export default router;

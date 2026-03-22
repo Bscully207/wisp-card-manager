@@ -52,9 +52,10 @@ artifacts-monorepo/
 ## Database Schema
 
 - `users` — user accounts (email, hashed password, profile info)
-- `cards` — debit cards per user (number, balance, status, color, type: virtual/physical)
+- `cards` — debit cards per user (number, balance, status, color, type: virtual/physical, activationCode for physical cards)
 - `transactions` — ledger of topup/payment/refund events
 - `support_tickets` — user support tickets with status tracking
+- `shipping` — shipping requests for physical cards (recipientName, address, city, country, zipCode, trackingNumber, status)
 - `sessions` — express-session persistence (created automatically)
 
 ## TypeScript & Composite Projects
@@ -79,10 +80,12 @@ Express 5 API server. Routes are split by domain in `src/routes/`.
 
 - Auth: `src/routes/auth.ts` — register, login, logout, /me
 - Users: `src/routes/users.ts` — profile update, change password
-- Cards: `src/routes/cards.ts` — thin controller delegating to card service
+- Cards: `src/routes/cards.ts` — thin controller delegating to card service, includes PUT /cards/:cardId/activate for physical card activation, PUT /cards/:cardId/pin for PIN change, GET /cards/:cardId/details-with-transactions for combined card+transactions fetch
+- Shipping: `src/routes/shipping.ts` — POST /shipping (create shipping request), GET /shipping (list with pagination/status filter)
 - Transactions: `src/routes/transactions.ts` — all transactions for user
 - Support: `src/routes/support.ts` — ticket management
-- Services: `src/services/card.service.ts` — card business logic (create with collision retry, transactional top-up, freeze/unfreeze, delete, transaction queries)
+- Services: `src/services/card.service.ts` — card business logic (create with collision retry, transactional top-up, freeze/unfreeze, delete, transaction queries, physical card activation)
+- Services: `src/services/shipping.service.ts` — shipping request creation and listing
 - Session middleware: `src/lib/session.ts`
 - Auth middleware: `src/middlewares/requireAuth.ts`
 
@@ -107,7 +110,7 @@ React + Vite frontend. Mobile-first responsive design with Telegram Mini App sup
 
 **Pages** under `src/pages/`:
 - `login.tsx`, `register.tsx` — auth pages (full-width on mobile, side image on desktop)
-- `dashboard.tsx` — card overview + total balance + quick actions + drag-and-drop card reorder + inline card creation wizard
+- `dashboard.tsx` — card overview + total balance + quick actions + drag-and-drop card reorder + inline card creation wizard (supports both virtual and physical cards; physical flow adds shipping address step and auto-submits shipping request on creation)
 - `notifications.tsx` — notifications page with unread/all tabs (mock data)
 - `cards.tsx` — card list + create card + top-up
 - `card-details.tsx` — single card with 4-col action tiles (mobile) or 2-col (desktop)

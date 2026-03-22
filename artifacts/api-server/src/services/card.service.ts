@@ -17,6 +17,15 @@ export function generateCvv(): string {
   return Math.floor(100 + Math.random() * 900).toString();
 }
 
+export function generateActivationCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 export function toCardResponse(card: typeof cardsTable.$inferSelect) {
   return {
     id: card.id,
@@ -34,6 +43,21 @@ export function toCardResponse(card: typeof cardsTable.$inferSelect) {
     color: card.color ?? null,
     createdAt: card.createdAt,
   };
+}
+
+export async function activatePhysicalCard(cardId: number, userId: number, activationCode: string) {
+  const card = await getCardByIdForUser(cardId, userId);
+  if (!card) return { error: "not_found" as const };
+  if (card.type !== "physical") return { error: "not_physical" as const };
+  if (card.status !== "pending_activation") return { error: "not_pending" as const };
+  if (card.activationCode !== activationCode) return { error: "invalid_code" as const };
+
+  const [updatedCard] = await db.update(cardsTable)
+    .set({ status: "active" })
+    .where(eq(cardsTable.id, card.id))
+    .returning();
+
+  return { card: updatedCard };
 }
 
 export async function getUserCards(userId: number) {
@@ -63,6 +87,7 @@ export async function createCard({ userId, currency = "EUR", label, color, type 
 
   const now = new Date();
   const defaultColor = CARD_COLORS[Math.floor(Math.random() * CARD_COLORS.length)];
+  const isPhysical = type === "physical";
 
   for (let attempt = 0; attempt < MAX_CARD_RETRIES; attempt++) {
     try {
@@ -78,9 +103,10 @@ export async function createCard({ userId, currency = "EUR", label, color, type 
         cvv: generateCvv(),
         balance: 0,
         currency,
-        status: "active",
+        status: isPhysical ? "pending_activation" : "active",
         label: label ?? null,
         color: color ?? defaultColor,
+        activationCode: isPhysical ? generateActivationCode() : null,
       }).returning();
       return card;
     } catch (err: any) {

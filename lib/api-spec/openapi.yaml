@@ -19,6 +19,8 @@ tags:
     description: Transaction history
   - name: notifications
     description: Notification management
+  - name: shipping
+    description: Shipping management
   - name: support
     description: Support tickets
 
@@ -357,7 +359,7 @@ paths:
     post:
       operationId: createCardAccessUrl
       tags: [cards]
-      summary: Create a secure access URL for viewing full card details
+      summary: Create a secure access URL for card details
       parameters:
         - name: cardId
           in: path
@@ -373,6 +375,151 @@ paths:
                 $ref: "#/components/schemas/CardAccessUrlResponse"
         "404":
           description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /cards/{cardId}/balance-history:
+    get:
+      operationId: getCardBalanceHistory
+      tags: [cards]
+      summary: Get balance history for a card
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Balance history entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+        "404":
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /cards/{cardId}/contacts:
+    put:
+      operationId: updateCardContacts
+      tags: [cards]
+      summary: Update contact information for a card
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCardContactsRequest"
+      responses:
+        "200":
+          description: Contacts updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateContactsResult"
+        "404":
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /cards/{cardId}/telegram:
+    get:
+      operationId: getCardTelegram
+      tags: [cards]
+      summary: Get Telegram link status for a card
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Telegram link status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TelegramLinkResponse"
+        "404":
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /cards/{cardId}/telegram/link:
+    post:
+      operationId: linkTelegram
+      tags: [cards]
+      summary: Link a Telegram account to a card
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LinkTelegramRequest"
+      responses:
+        "201":
+          description: Telegram linked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TelegramLinkResponse"
+        "404":
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Already linked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /cards/{cardId}/telegram/unlink:
+    post:
+      operationId: unlinkTelegram
+      tags: [cards]
+      summary: Unlink Telegram account from a card
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Telegram unlinked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TelegramLinkResponse"
+        "404":
+          description: Card not found or not linked
           content:
             application/json:
               schema:
@@ -446,6 +593,43 @@ paths:
                   $ref: "#/components/schemas/Transaction"
         "401":
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /cards/{cardId}/activate:
+    put:
+      operationId: activatePhysicalCard
+      tags: [cards]
+      summary: Activate a physical card with an activation code
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivateCardRequest"
+      responses:
+        "200":
+          description: Card activated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+        "400":
+          description: Invalid activation code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Card not found
           content:
             application/json:
               schema:
@@ -551,6 +735,73 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationSettings"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /shipping:
+    get:
+      operationId: getShippingRequests
+      tags: [shipping]
+      summary: Get shipping requests for the current user
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [in_review, dispatched, shipped, delivered, cancelled]
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: List of shipping requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShippingListResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createShippingRequest
+      tags: [shipping]
+      summary: Create a shipping request for a physical card
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateShippingRequest"
+      responses:
+        "201":
+          description: Shipping request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShippingRequest"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Not authenticated
           content:
@@ -740,6 +991,10 @@ components:
           type: integer
         userId:
           type: integer
+        type:
+          type: string
+          enum: [virtual, physical]
+          default: virtual
         cardNumber:
           type: string
         cardholderName:
@@ -757,7 +1012,7 @@ components:
           type: string
         status:
           type: string
-          enum: [active, frozen, expired, cancelled]
+          enum: [active, frozen, expired, cancelled, pending_activation]
         label:
           type: string
           nullable: true
@@ -780,6 +1035,85 @@ components:
         - status
         - createdAt
 
+    UpdateCardContactsRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        phoneNumber:
+          type: string
+        phoneDialCode:
+          type: string
+        applyToAll:
+          type: boolean
+          default: false
+      required:
+        - email
+        - phoneNumber
+
+    UpdateContactsResult:
+      type: object
+      properties:
+        message:
+          type: string
+        updatedCount:
+          type: integer
+      required:
+        - message
+        - updatedCount
+
+    TelegramLinkResponse:
+      type: object
+      properties:
+        linked:
+          type: boolean
+        telegramLink:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            cardId:
+              type: integer
+            telegramId:
+              type: string
+            telegramUsername:
+              type: string
+              nullable: true
+            telegramFirstName:
+              type: string
+              nullable: true
+            createdAt:
+              type: string
+              format: date-time
+      required:
+        - linked
+
+    LinkTelegramRequest:
+      type: object
+      properties:
+        telegramId:
+          type: string
+        telegramUsername:
+          type: string
+        telegramFirstName:
+          type: string
+      required:
+        - telegramId
+
+    CardDetailsWithTransactions:
+      type: object
+      properties:
+        card:
+          $ref: "#/components/schemas/Card"
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+      required:
+        - card
+        - transactions
+
     CreateCardRequest:
       type: object
       properties:
@@ -790,6 +1124,12 @@ components:
           default: "EUR"
         color:
           type: string
+        type:
+          type: string
+          enum:
+            - virtual
+            - physical
+          default: "virtual"
       required: []
 
     TopUpRequest:
@@ -886,6 +1226,100 @@ components:
         - createdAt
         - updatedAt
 
+    ActivateCardRequest:
+      type: object
+      properties:
+        activationCode:
+          type: string
+      required:
+        - activationCode
+
+    ShippingRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        cardId:
+          type: integer
+        userId:
+          type: integer
+        status:
+          type: string
+          enum: [in_review, dispatched, shipped, delivered, cancelled]
+        recipientName:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        zipCode:
+          type: string
+        trackingNumber:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - cardId
+        - userId
+        - status
+        - recipientName
+        - address
+        - city
+        - country
+        - zipCode
+        - createdAt
+        - updatedAt
+
+    ShippingListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShippingRequest"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - items
+        - total
+        - page
+        - limit
+
+    CreateShippingRequest:
+      type: object
+      properties:
+        cardId:
+          type: integer
+        recipientName:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        zipCode:
+          type: string
+      required:
+        - cardId
+        - recipientName
+        - address
+        - city
+        - country
+        - zipCode
+
     CreateSupportTicketRequest:
       type: object
       properties:
@@ -957,23 +1391,11 @@ components:
       properties:
         pin:
           type: string
-          minLength: 4
-          maxLength: 4
+          pattern: "^\\d{6}$"
+          minLength: 6
+          maxLength: 6
       required:
         - pin
-
-    CardDetailsWithTransactions:
-      type: object
-      properties:
-        card:
-          $ref: "#/components/schemas/Card"
-        transactions:
-          type: array
-          items:
-            $ref: "#/components/schemas/Transaction"
-      required:
-        - card
-        - transactions
 
     UpdateNotificationSettingsRequest:
       type: object
@@ -987,34 +1409,15 @@ components:
         marketingAlerts:
           type: boolean
 
-    UpdateCardPinRequest:
-      type: object
-      required:
-        - pin
-      properties:
-        pin:
-          type: string
-
     CardAccessUrlResponse:
       type: object
-      required:
-        - url
-        - expiresAt
       properties:
         url:
           type: string
         expiresAt:
           type: string
-
-    CardDetailsWithTransactions:
-      type: object
+          format: date-time
       required:
-        - card
-        - transactions
-      properties:
-        card:
-          $ref: "#/components/schemas/Card"
-        transactions:
-          type: array
-          items:
-            $ref: "#/components/schemas/Transaction"
+        - url
+        - expiresAt
+

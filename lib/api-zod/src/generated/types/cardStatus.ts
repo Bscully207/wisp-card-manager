@@ -13,4 +13,5 @@ export const CardStatus = {
   frozen: "frozen",
   expired: "expired",
   cancelled: "cancelled",
+  pending_activation: "pending_activation",
 } as const;

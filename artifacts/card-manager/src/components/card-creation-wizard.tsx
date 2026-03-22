@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useCreateCard, useGetMe, getGetCardsQueryKey, type Card } from "@workspace/api-client-react";
+import { useCreateCard, useCreateShippingRequest, useGetMe, getGetCardsQueryKey, getGetShippingRequestsQueryKey, type Card } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   CreditCard, Smartphone, Package, ChevronRight, ChevronLeft, 
-  Check, Loader2, PartyPopper, Mail, Phone, Tag, User
+  Check, Loader2, PartyPopper, Mail, Phone, Tag, User, MapPin, KeyRound
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,13 @@ interface WizardData {
   phone: string;
   termsAccepted: boolean[];
   referralCode: string;
+  shippingAddress: {
+    recipientName: string;
+    address: string;
+    city: string;
+    country: string;
+    zipCode: string;
+  };
 }
 
 // ============================================================
@@ -51,7 +58,12 @@ function validateReferralCode(code: string): { valid: boolean; discount: number;
   return { valid: false, discount: 0, label: "" };
 }
 
-const STEPS = ["Card Type", "Details", "Terms", "Payment", "Success"];
+function getSteps(cardType: "virtual" | "physical" | null) {
+  if (cardType === "physical") {
+    return ["Card Type", "Details", "Shipping", "Terms", "Payment", "Success"];
+  }
+  return ["Card Type", "Details", "Terms", "Payment", "Success"];
+}
 
 const TERMS = [
   "The card works in most places where Visa is accepted, declines may occasionally occur",
@@ -65,6 +77,14 @@ interface CardCreationWizardProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const EMPTY_SHIPPING = {
+  recipientName: "",
+  address: "",
+  city: "",
+  country: "",
+  zipCode: "",
+};
+
 export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardProps) {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
@@ -73,6 +93,7 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
   
   const [step, setStep] = useState(0);
   const [createdCard, setCreatedCard] = useState<Card | null>(null);
+  const [shippingSubmitted, setShippingSubmitted] = useState(false);
   const [data, setData] = useState<WizardData>({
     cardType: null,
     currency: "USD",
@@ -82,6 +103,29 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
     phone: "",
     termsAccepted: [false, false, false, false],
     referralCode: "",
+    shippingAddress: { ...EMPTY_SHIPPING },
+  });
+
+  const steps = getSteps(data.cardType);
+  const totalSteps = steps.length;
+  const successStepIndex = totalSteps - 1;
+  const paymentStepIndex = totalSteps - 2;
+  const termsStepIndex = totalSteps - 3;
+  const shippingStepIndex = data.cardType === "physical" ? 2 : -1;
+
+  const [shippingFailed, setShippingFailed] = useState(false);
+
+  const shippingMutation = useCreateShippingRequest({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetShippingRequestsQueryKey() });
+        setShippingSubmitted(true);
+      },
+      onError: () => {
+        setShippingFailed(true);
+        toast({ title: "Shipping request failed", description: "Your card was created but shipping could not be submitted. You can request shipping from the card details page.", variant: "destructive" });
+      },
+    },
   });
 
   const createMutation = useCreateCard({
@@ -89,7 +133,20 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
       onSuccess: (card) => {
         queryClient.invalidateQueries({ queryKey: getGetCardsQueryKey() });
         setCreatedCard(card);
-        setStep(4);
+        setStep(successStepIndex);
+
+        if (data.cardType === "physical" && isShippingValid()) {
+          shippingMutation.mutate({
+            data: {
+              cardId: card.id,
+              recipientName: data.shippingAddress.recipientName.trim(),
+              address: data.shippingAddress.address.trim(),
+              city: data.shippingAddress.city.trim(),
+              country: data.shippingAddress.country.trim(),
+              zipCode: data.shippingAddress.zipCode.trim(),
+            },
+          });
+        }
       },
       onError: (err: Error) => {
         toast({ title: "Failed to create card", description: err.message, variant: "destructive" });
@@ -100,6 +157,8 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
   const resetWizard = () => {
     setStep(0);
     setCreatedCard(null);
+    setShippingSubmitted(false);
+    setShippingFailed(false);
     setData({
       cardType: null,
       currency: "USD",
@@ -109,6 +168,7 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
       phone: "",
       termsAccepted: [false, false, false, false],
       referralCode: "",
+      shippingAddress: { ...EMPTY_SHIPPING },
     });
   };
 
@@ -120,6 +180,10 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
         ...prev,
         email: user?.email || "",
         nameOnCard: prev.nameOnCard || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : ""),
+        shippingAddress: {
+          ...prev.shippingAddress,
+          recipientName: prev.shippingAddress.recipientName || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : ""),
+        },
       }));
     }
     onOpenChange(v);
@@ -127,45 +191,55 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+  const isShippingValid = () => {
+    const s = data.shippingAddress;
+    return s.recipientName.trim() && s.address.trim() && s.city.trim() && s.country.trim() && s.zipCode.trim();
+  };
+
   const canProceed = () => {
     switch (step) {
-      case 0: return data.cardType === "virtual";
+      case 0: return data.cardType !== null;
       case 1: return data.label.trim().length > 0 && data.nameOnCard.trim().length > 0 && isValidEmail(data.email);
-      case 2: return data.termsAccepted.every(Boolean);
-      case 3: return !createMutation.isPending;
-      default: return true;
+      default: break;
     }
+    if (step === shippingStepIndex) return isShippingValid();
+    if (step === termsStepIndex) return data.termsAccepted.every(Boolean);
+    if (step === paymentStepIndex) return !createMutation.isPending;
+    return true;
   };
 
   const handleNext = () => {
-    if (step === 3) {
+    if (step === paymentStepIndex) {
       createMutation.mutate({
         data: {
           label: data.label,
           currency: data.currency,
+          type: data.cardType || "virtual",
         }
       });
       return;
     }
-    if (step < 4) setStep(step + 1);
+    if (step < successStepIndex) setStep(step + 1);
   };
 
   const handleBack = () => {
-    if (step > 0 && step < 4) setStep(step - 1);
+    if (step > 0 && step < successStepIndex) setStep(step - 1);
   };
+
+  const currentStepName = steps[step];
 
   return (
     <ResponsiveDialog
       open={open}
       onOpenChange={handleOpenChange}
-      title={step < 4 ? "Create New Card" : step === 4 ? "Card Created" : ""}
-      description={step <= 4 ? `Step ${step + 1} of 5` : undefined}
+      title={step < successStepIndex ? "Create New Card" : step === successStepIndex ? "Card Created" : ""}
+      description={step <= successStepIndex ? `Step ${step + 1} of ${totalSteps}` : undefined}
       className="sm:max-w-lg bg-card border-border/50 shadow-2xl"
     >
       <div className="space-y-6">
-        {step < 5 && (
+        {step < totalSteps && (
           <div className="flex items-center justify-center gap-2">
-            {STEPS.map((s, i) => (
+            {steps.map((s, i) => (
               <div key={s} className="flex items-center gap-2">
                 <div className={cn(
                   "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all",
@@ -175,7 +249,7 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
                 )}>
                   {i < step ? <Check className="w-3.5 h-3.5" /> : i + 1}
                 </div>
-                {i < 4 && <div className={cn("w-4 h-0.5", i < step ? "bg-primary" : "bg-muted")} />}
+                {i < totalSteps - 1 && <div className={cn("w-4 h-0.5", i < step ? "bg-primary" : "bg-muted")} />}
               </div>
             ))}
           </div>
@@ -189,19 +263,25 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.2 }}
           >
-            {step === 0 && (
+            {currentStepName === "Card Type" && (
               <StepCardType 
                 selected={data.cardType} 
                 onSelect={(type) => setData(prev => ({ ...prev, cardType: type }))} 
               />
             )}
-            {step === 1 && (
+            {currentStepName === "Details" && (
               <StepDetails 
                 data={data} 
                 onChange={(updates) => setData(prev => ({ ...prev, ...updates }))} 
               />
             )}
-            {step === 2 && (
+            {currentStepName === "Shipping" && (
+              <StepShipping
+                address={data.shippingAddress}
+                onChange={(address) => setData(prev => ({ ...prev, shippingAddress: { ...prev.shippingAddress, ...address } }))}
+              />
+            )}
+            {currentStepName === "Terms" && (
               <StepTerms 
                 accepted={data.termsAccepted} 
                 onToggle={(i) => setData(prev => {
@@ -211,18 +291,21 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
                 })} 
               />
             )}
-            {step === 3 && (
+            {currentStepName === "Payment" && (
               <StepPayment 
                 data={data} 
                 isPending={createMutation.isPending}
                 onReferralChange={(code) => setData(prev => ({ ...prev, referralCode: code }))}
               />
             )}
-            {step === 4 && (
+            {currentStepName === "Success" && (
               <StepSuccess 
                 card={createdCard}
                 nameOnCard={data.nameOnCard}
                 nickname={data.label}
+                isPhysical={data.cardType === "physical"}
+                shippingSubmitted={shippingSubmitted}
+                shippingFailed={shippingFailed}
                 onViewCard={() => {
                   handleOpenChange(false);
                   if (createdCard) setLocation(`/cards/${createdCard.id}`);
@@ -232,7 +315,7 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
           </motion.div>
         </AnimatePresence>
 
-        {step < 4 && (
+        {step < successStepIndex && (
           <div className="flex items-center gap-3 pt-2">
             {step > 0 && (
               <Button variant="outline" onClick={handleBack} className="rounded-xl">
@@ -244,7 +327,7 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
               disabled={!canProceed()}
               onClick={handleNext}
             >
-              {step === 3 ? (
+              {step === paymentStepIndex ? (
                 createMutation.isPending ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
                 ) : (
@@ -290,12 +373,21 @@ function StepCardType({ selected, onSelect }: { selected: "virtual" | "physical"
         </button>
 
         <button
-          disabled
-          className="relative p-5 rounded-2xl border-2 border-border/30 text-left opacity-50 cursor-not-allowed"
+          onClick={() => onSelect("physical")}
+          className={cn(
+            "relative p-5 rounded-2xl border-2 text-left transition-all",
+            selected === "physical"
+              ? "border-primary bg-primary/5 shadow-lg"
+              : "border-border/50 hover:border-primary/30 hover:bg-foreground/5"
+          )}
         >
-          <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-muted text-[10px] font-semibold text-muted-foreground uppercase">Coming soon</span>
-          <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-3">
-            <Package className="w-6 h-6 text-muted-foreground" />
+          {selected === "physical" && (
+            <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+              <Check className="w-3.5 h-3.5 text-primary-foreground" />
+            </div>
+          )}
+          <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center mb-3">
+            <Package className="w-6 h-6 text-primary" />
           </div>
           <h4 className="font-semibold mb-1">Physical Card</h4>
           <p className="text-xs text-muted-foreground">Delivered to your address. Use anywhere worldwide.</p>
@@ -309,7 +401,9 @@ function StepDetails({ data, onChange }: { data: WizardData; onChange: (updates:
   return (
     <div className="space-y-4">
       <h3 className="font-display text-lg font-semibold">Card Details</h3>
-      <p className="text-sm text-muted-foreground">Configure your new virtual card.</p>
+      <p className="text-sm text-muted-foreground">
+        Configure your new {data.cardType === "physical" ? "physical" : "virtual"} card.
+      </p>
 
       <div className="space-y-4">
         <div className="space-y-1.5">
@@ -375,6 +469,73 @@ function StepDetails({ data, onChange }: { data: WizardData; onChange: (updates:
             value={data.phone}
             onChange={(e) => onChange({ phone: e.target.value })}
             placeholder="+1 555 123 4567"
+            className="bg-muted/50"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StepShipping({ address, onChange }: { address: WizardData["shippingAddress"]; onChange: (updates: Partial<WizardData["shippingAddress"]>) => void }) {
+  return (
+    <div className="space-y-4">
+      <h3 className="font-display text-lg font-semibold">Shipping Address</h3>
+      <p className="text-sm text-muted-foreground">Enter the delivery address for your physical card.</p>
+
+      <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50 border border-border/30">
+        <Package className="w-8 h-8 text-primary shrink-0" />
+        <div>
+          <p className="text-sm font-medium">Delivery Details</p>
+          <p className="text-xs text-muted-foreground">Your card will be shipped via registered mail</p>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Recipient Name</label>
+          <Input
+            value={address.recipientName}
+            onChange={(e) => onChange({ recipientName: e.target.value })}
+            placeholder="John Doe"
+            className="bg-muted/50"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Street Address</label>
+          <Input
+            value={address.address}
+            onChange={(e) => onChange({ address: e.target.value })}
+            placeholder="123 Main Street, Apt 4B"
+            className="bg-muted/50"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">City</label>
+            <Input
+              value={address.city}
+              onChange={(e) => onChange({ city: e.target.value })}
+              placeholder="Berlin"
+              className="bg-muted/50"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Zip Code</label>
+            <Input
+              value={address.zipCode}
+              onChange={(e) => onChange({ zipCode: e.target.value })}
+              placeholder="10115"
+              className="bg-muted/50"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Country</label>
+          <Input
+            value={address.country}
+            onChange={(e) => onChange({ country: e.target.value })}
+            placeholder="Germany"
             className="bg-muted/50"
           />
         </div>
@@ -455,6 +616,20 @@ function StepPayment({ data, isPending, onReferralChange }: { data: WizardData; 
           <span className="font-medium">{data.currency}</span>
         </div>
 
+        {data.cardType === "physical" && (
+          <div className="border-t border-border/50 pt-3 space-y-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <MapPin className="w-3.5 h-3.5" /> Shipping Address
+            </div>
+            <p className="text-sm pl-5">
+              {data.shippingAddress.recipientName}<br />
+              {data.shippingAddress.address}<br />
+              {data.shippingAddress.city}, {data.shippingAddress.zipCode}<br />
+              {data.shippingAddress.country}
+            </p>
+          </div>
+        )}
+
         <div className="border-t border-border/50 pt-3 space-y-3">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Referral Code</label>
@@ -506,7 +681,15 @@ function StepPayment({ data, isPending, onReferralChange }: { data: WizardData; 
   );
 }
 
-function StepSuccess({ card, nameOnCard, nickname, onViewCard }: { card: Card | null; nameOnCard: string; nickname: string; onViewCard: () => void }) {
+function StepSuccess({ card, nameOnCard, nickname, isPhysical, shippingSubmitted, shippingFailed, onViewCard }: { 
+  card: Card | null; 
+  nameOnCard: string; 
+  nickname: string;
+  isPhysical: boolean;
+  shippingSubmitted: boolean;
+  shippingFailed: boolean;
+  onViewCard: () => void;
+}) {
   return (
     <motion.div 
       initial={{ scale: 0.9, opacity: 0 }}
@@ -524,20 +707,59 @@ function StepSuccess({ card, nameOnCard, nickname, onViewCard }: { card: Card | 
       </motion.div>
 
       <div>
-        <h3 className="font-display text-2xl font-bold">Your card is ready!</h3>
+        <h3 className="font-display text-2xl font-bold">
+          {isPhysical ? "Your card is on its way!" : "Your card is ready!"}
+        </h3>
         <p className="text-muted-foreground text-sm mt-1">
-          {card?.label ? `"${card.label}"` : "Your new virtual card"} has been created successfully.
+          {card?.label ? `"${card.label}"` : isPhysical ? "Your new physical card" : "Your new virtual card"} has been created successfully.
         </p>
       </div>
 
+      {isPhysical && (
+        <div className="w-full max-w-xs space-y-3">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
+            <KeyRound className="w-5 h-5 text-yellow-400 shrink-0" />
+            <p className="text-xs text-left">
+              Your card requires activation. You'll receive an activation code with your shipped card.
+            </p>
+          </div>
+          {shippingSubmitted && (
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+              <Package className="w-5 h-5 text-emerald-400 shrink-0" />
+              <p className="text-xs text-left">
+                Shipping request submitted. Track delivery on the card details page.
+              </p>
+            </div>
+          )}
+          {shippingFailed && (
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-red-500/10 border border-red-500/30">
+              <Package className="w-5 h-5 text-red-400 shrink-0" />
+              <p className="text-xs text-left">
+                Shipping request failed. You can request shipping from the card details page.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       {card && (
-        <div className="w-full max-w-xs rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-900 p-4 text-white text-left shadow-xl">
+        <div className={cn(
+          "w-full max-w-xs rounded-2xl p-4 text-white text-left shadow-xl",
+          isPhysical
+            ? "bg-gradient-to-br from-amber-600 to-orange-900"
+            : "bg-gradient-to-br from-blue-600 to-indigo-900"
+        )}>
           <p className="text-white/70 text-xs uppercase tracking-wider mb-1">{card.label || nickname || "Debit Card"}</p>
           <p className="font-display text-lg font-bold">{card.currency} Account</p>
           <p className="font-mono text-sm mt-3 tracking-widest text-white/80">
             <span className="amount">•••• •••• •••• {card.cardNumber.slice(-4)}</span>
           </p>
-          <p className="text-xs text-white/60 mt-2">{nameOnCard || card.cardholderName}</p>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs text-white/60">{nameOnCard || card.cardholderName}</p>
+            {isPhysical && (
+              <span className="text-[10px] uppercase font-semibold bg-white/20 px-2 py-0.5 rounded-full">Physical</span>
+            )}
+          </div>
         </div>
       )}
 

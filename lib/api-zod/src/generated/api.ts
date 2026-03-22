@@ -113,9 +113,12 @@ export const ChangePasswordResponse = zod.object({
 /**
  * @summary Get all cards for the current user
  */
+export const getCardsResponseTypeDefault = `virtual`;
+
 export const GetCardsResponseItem = zod.object({
   id: zod.number(),
   userId: zod.number(),
+  type: zod.enum(["virtual", "physical"]).default(getCardsResponseTypeDefault),
   cardNumber: zod.string(),
   cardholderName: zod.string(),
   expiryMonth: zod.number(),
@@ -123,7 +126,13 @@ export const GetCardsResponseItem = zod.object({
   cvv: zod.string(),
   balance: zod.number(),
   currency: zod.string(),
-  status: zod.enum(["active", "frozen", "expired", "cancelled"]),
+  status: zod.enum([
+    "active",
+    "frozen",
+    "expired",
+    "cancelled",
+    "pending_activation",
+  ]),
   label: zod.string().nullish(),
   color: zod.string().nullish(),
   createdAt: zod.date(),
@@ -134,11 +143,13 @@ export const GetCardsResponse = zod.array(GetCardsResponseItem);
  * @summary Create a new debit card
  */
 export const createCardBodyCurrencyDefault = `EUR`;
+export const createCardBodyTypeDefault = `virtual`;
 
 export const CreateCardBody = zod.object({
   label: zod.string().optional(),
   currency: zod.string().default(createCardBodyCurrencyDefault),
   color: zod.string().optional(),
+  type: zod.enum(["virtual", "physical"]).default(createCardBodyTypeDefault),
 });
 
 /**
@@ -148,9 +159,12 @@ export const GetCardParams = zod.object({
   cardId: zod.coerce.number(),
 });
 
+export const getCardResponseTypeDefault = `virtual`;
+
 export const GetCardResponse = zod.object({
   id: zod.number(),
   userId: zod.number(),
+  type: zod.enum(["virtual", "physical"]).default(getCardResponseTypeDefault),
   cardNumber: zod.string(),
   cardholderName: zod.string(),
   expiryMonth: zod.number(),
@@ -158,7 +172,13 @@ export const GetCardResponse = zod.object({
   cvv: zod.string(),
   balance: zod.number(),
   currency: zod.string(),
-  status: zod.enum(["active", "frozen", "expired", "cancelled"]),
+  status: zod.enum([
+    "active",
+    "frozen",
+    "expired",
+    "cancelled",
+    "pending_activation",
+  ]),
   label: zod.string().nullish(),
   color: zod.string().nullish(),
   createdAt: zod.date(),
@@ -189,9 +209,12 @@ export const TopUpCardBody = zod.object({
   description: zod.string().optional(),
 });
 
+export const topUpCardResponseTypeDefault = `virtual`;
+
 export const TopUpCardResponse = zod.object({
   id: zod.number(),
   userId: zod.number(),
+  type: zod.enum(["virtual", "physical"]).default(topUpCardResponseTypeDefault),
   cardNumber: zod.string(),
   cardholderName: zod.string(),
   expiryMonth: zod.number(),
@@ -199,7 +222,13 @@ export const TopUpCardResponse = zod.object({
   cvv: zod.string(),
   balance: zod.number(),
   currency: zod.string(),
-  status: zod.enum(["active", "frozen", "expired", "cancelled"]),
+  status: zod.enum([
+    "active",
+    "frozen",
+    "expired",
+    "cancelled",
+    "pending_activation",
+  ]),
   label: zod.string().nullish(),
   color: zod.string().nullish(),
   createdAt: zod.date(),
@@ -216,9 +245,14 @@ export const FreezeCardBody = zod.object({
   frozen: zod.boolean(),
 });
 
+export const freezeCardResponseTypeDefault = `virtual`;
+
 export const FreezeCardResponse = zod.object({
   id: zod.number(),
   userId: zod.number(),
+  type: zod
+    .enum(["virtual", "physical"])
+    .default(freezeCardResponseTypeDefault),
   cardNumber: zod.string(),
   cardholderName: zod.string(),
   expiryMonth: zod.number(),
@@ -226,7 +260,13 @@ export const FreezeCardResponse = zod.object({
   cvv: zod.string(),
   balance: zod.number(),
   currency: zod.string(),
-  status: zod.enum(["active", "frozen", "expired", "cancelled"]),
+  status: zod.enum([
+    "active",
+    "frozen",
+    "expired",
+    "cancelled",
+    "pending_activation",
+  ]),
   label: zod.string().nullish(),
   color: zod.string().nullish(),
   createdAt: zod.date(),
@@ -239,8 +279,17 @@ export const UpdateCardPinParams = zod.object({
   cardId: zod.coerce.number(),
 });
 
+export const updateCardPinBodyPinMin = 6;
+export const updateCardPinBodyPinMax = 6;
+
+export const updateCardPinBodyPinRegExp = new RegExp("^\\d{6}$");
+
 export const UpdateCardPinBody = zod.object({
-  pin: zod.string(),
+  pin: zod
+    .string()
+    .min(updateCardPinBodyPinMin)
+    .max(updateCardPinBodyPinMax)
+    .regex(updateCardPinBodyPinRegExp),
 });
 
 export const UpdateCardPinResponse = zod.object({
@@ -248,7 +297,7 @@ export const UpdateCardPinResponse = zod.object({
 });
 
 /**
- * @summary Create a secure access URL for viewing full card details
+ * @summary Create a secure access URL for card details
  */
 export const CreateCardAccessUrlParams = zod.object({
   cardId: zod.coerce.number(),
@@ -256,7 +305,106 @@ export const CreateCardAccessUrlParams = zod.object({
 
 export const CreateCardAccessUrlResponse = zod.object({
   url: zod.string(),
-  expiresAt: zod.string(),
+  expiresAt: zod.date(),
+});
+
+/**
+ * @summary Get balance history for a card
+ */
+export const GetCardBalanceHistoryParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const GetCardBalanceHistoryResponseItem = zod.object({
+  id: zod.number(),
+  cardId: zod.number(),
+  userId: zod.number(),
+  type: zod.enum(["topup", "payment", "refund", "fee"]),
+  amount: zod.number(),
+  balanceBefore: zod.number(),
+  balanceAfter: zod.number(),
+  description: zod.string().nullish(),
+  status: zod.enum(["pending", "completed", "failed"]),
+  createdAt: zod.date(),
+});
+export const GetCardBalanceHistoryResponse = zod.array(
+  GetCardBalanceHistoryResponseItem,
+);
+
+/**
+ * @summary Update contact information for a card
+ */
+export const UpdateCardContactsParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const updateCardContactsBodyApplyToAllDefault = false;
+
+export const UpdateCardContactsBody = zod.object({
+  email: zod.string(),
+  phoneNumber: zod.string(),
+  phoneDialCode: zod.string().optional(),
+  applyToAll: zod.boolean().default(updateCardContactsBodyApplyToAllDefault),
+});
+
+export const UpdateCardContactsResponse = zod.object({
+  message: zod.string(),
+  updatedCount: zod.number(),
+});
+
+/**
+ * @summary Get Telegram link status for a card
+ */
+export const GetCardTelegramParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const GetCardTelegramResponse = zod.object({
+  linked: zod.boolean(),
+  telegramLink: zod
+    .object({
+      id: zod.number().optional(),
+      cardId: zod.number().optional(),
+      telegramId: zod.string().optional(),
+      telegramUsername: zod.string().nullish(),
+      telegramFirstName: zod.string().nullish(),
+      createdAt: zod.date().optional(),
+    })
+    .nullish(),
+});
+
+/**
+ * @summary Link a Telegram account to a card
+ */
+export const LinkTelegramParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const LinkTelegramBody = zod.object({
+  telegramId: zod.string(),
+  telegramUsername: zod.string().optional(),
+  telegramFirstName: zod.string().optional(),
+});
+
+/**
+ * @summary Unlink Telegram account from a card
+ */
+export const UnlinkTelegramParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const UnlinkTelegramResponse = zod.object({
+  linked: zod.boolean(),
+  telegramLink: zod
+    .object({
+      id: zod.number().optional(),
+      cardId: zod.number().optional(),
+      telegramId: zod.string().optional(),
+      telegramUsername: zod.string().nullish(),
+      telegramFirstName: zod.string().nullish(),
+      createdAt: zod.date().optional(),
+    })
+    .nullish(),
 });
 
 /**
@@ -266,10 +414,15 @@ export const GetCardDetailsWithTransactionsParams = zod.object({
   cardId: zod.coerce.number(),
 });
 
+export const getCardDetailsWithTransactionsResponseCardTypeDefault = `virtual`;
+
 export const GetCardDetailsWithTransactionsResponse = zod.object({
   card: zod.object({
     id: zod.number(),
     userId: zod.number(),
+    type: zod
+      .enum(["virtual", "physical"])
+      .default(getCardDetailsWithTransactionsResponseCardTypeDefault),
     cardNumber: zod.string(),
     cardholderName: zod.string(),
     expiryMonth: zod.number(),
@@ -277,7 +430,13 @@ export const GetCardDetailsWithTransactionsResponse = zod.object({
     cvv: zod.string(),
     balance: zod.number(),
     currency: zod.string(),
-    status: zod.enum(["active", "frozen", "expired", "cancelled"]),
+    status: zod.enum([
+      "active",
+      "frozen",
+      "expired",
+      "cancelled",
+      "pending_activation",
+    ]),
     label: zod.string().nullish(),
     color: zod.string().nullish(),
     createdAt: zod.date(),
@@ -322,29 +481,6 @@ export const GetCardTransactionsResponse = zod.array(
 );
 
 /**
- * @summary Get balance history for a specific card
- */
-export const GetCardBalanceHistoryParams = zod.object({
-  cardId: zod.coerce.number(),
-});
-
-export const GetCardBalanceHistoryResponseItem = zod.object({
-  id: zod.number(),
-  cardId: zod.number(),
-  userId: zod.number(),
-  type: zod.enum(["topup", "fee", "refund"]),
-  amount: zod.number(),
-  balanceBefore: zod.number(),
-  balanceAfter: zod.number(),
-  description: zod.string().nullish(),
-  status: zod.enum(["pending", "completed", "failed"]),
-  createdAt: zod.date(),
-});
-export const GetCardBalanceHistoryResponse = zod.array(
-  GetCardBalanceHistoryResponseItem,
-);
-
-/**
  * @summary Get all transactions for the current user
  */
 export const GetAllTransactionsResponseItem = zod.object({
@@ -362,6 +498,44 @@ export const GetAllTransactionsResponseItem = zod.object({
 export const GetAllTransactionsResponse = zod.array(
   GetAllTransactionsResponseItem,
 );
+
+/**
+ * @summary Activate a physical card with an activation code
+ */
+export const ActivatePhysicalCardParams = zod.object({
+  cardId: zod.coerce.number(),
+});
+
+export const ActivatePhysicalCardBody = zod.object({
+  activationCode: zod.string(),
+});
+
+export const activatePhysicalCardResponseTypeDefault = `virtual`;
+
+export const ActivatePhysicalCardResponse = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  type: zod
+    .enum(["virtual", "physical"])
+    .default(activatePhysicalCardResponseTypeDefault),
+  cardNumber: zod.string(),
+  cardholderName: zod.string(),
+  expiryMonth: zod.number(),
+  expiryYear: zod.number(),
+  cvv: zod.string(),
+  balance: zod.number(),
+  currency: zod.string(),
+  status: zod.enum([
+    "active",
+    "frozen",
+    "expired",
+    "cancelled",
+    "pending_activation",
+  ]),
+  label: zod.string().nullish(),
+  color: zod.string().nullish(),
+  createdAt: zod.date(),
+});
 
 /**
  * @summary Get all notifications for the current user
@@ -433,6 +607,60 @@ export const UpdateNotificationSettingsResponse = zod.object({
 });
 
 /**
+ * @summary Get shipping requests for the current user
+ */
+export const getShippingRequestsQueryPageDefault = 1;
+export const getShippingRequestsQueryLimitDefault = 10;
+
+export const GetShippingRequestsQueryParams = zod.object({
+  status: zod
+    .enum(["in_review", "dispatched", "shipped", "delivered", "cancelled"])
+    .optional(),
+  page: zod.coerce.number().default(getShippingRequestsQueryPageDefault),
+  limit: zod.coerce.number().default(getShippingRequestsQueryLimitDefault),
+});
+
+export const GetShippingRequestsResponse = zod.object({
+  items: zod.array(
+    zod.object({
+      id: zod.number(),
+      cardId: zod.number(),
+      userId: zod.number(),
+      status: zod.enum([
+        "in_review",
+        "dispatched",
+        "shipped",
+        "delivered",
+        "cancelled",
+      ]),
+      recipientName: zod.string(),
+      address: zod.string(),
+      city: zod.string(),
+      country: zod.string(),
+      zipCode: zod.string(),
+      trackingNumber: zod.string().nullish(),
+      createdAt: zod.date(),
+      updatedAt: zod.date(),
+    }),
+  ),
+  total: zod.number(),
+  page: zod.number(),
+  limit: zod.number(),
+});
+
+/**
+ * @summary Create a shipping request for a physical card
+ */
+export const CreateShippingRequestBody = zod.object({
+  cardId: zod.number(),
+  recipientName: zod.string(),
+  address: zod.string(),
+  city: zod.string(),
+  country: zod.string(),
+  zipCode: zod.string(),
+});
+
+/**
  * @summary Get all support tickets for the current user
  */
 export const GetSupportTicketsResponseItem = zod.object({
@@ -456,75 +684,4 @@ export const CreateSupportTicketBody = zod.object({
   subject: zod.string(),
   message: zod.string(),
   category: zod.enum(["billing", "card", "account", "technical", "other"]),
-});
-
-/**
- * @summary Update card contact details
- */
-export const UpdateCardContactsParams = zod.object({
-  cardId: zod.coerce.number(),
-});
-
-export const UpdateCardContactsBody = zod.object({
-  email: zod.string().email(),
-  phoneDialCode: zod.string(),
-  phoneNumber: zod.string(),
-  applyToAll: zod.boolean().default(false),
-});
-
-export const UpdateCardContactsResponse = zod.object({
-  message: zod.string(),
-  updatedCount: zod.number(),
-});
-
-/**
- * @summary Get telegram link for a card
- */
-export const GetCardTelegramParams = zod.object({
-  cardId: zod.coerce.number(),
-});
-
-export const TelegramLinkItem = zod.object({
-  id: zod.number(),
-  cardId: zod.number(),
-  userId: zod.number(),
-  telegramId: zod.string(),
-  telegramUsername: zod.string().nullish(),
-  telegramFirstName: zod.string().nullish(),
-  createdAt: zod.date(),
-});
-
-export const GetCardTelegramResponse = zod.object({
-  linked: zod.boolean(),
-  telegramLink: TelegramLinkItem.nullish(),
-});
-
-/**
- * @summary Link telegram to a card
- */
-export const LinkTelegramParams = zod.object({
-  cardId: zod.coerce.number(),
-});
-
-export const LinkTelegramBody = zod.object({
-  telegramId: zod.string(),
-  telegramUsername: zod.string().optional(),
-  telegramFirstName: zod.string().optional(),
-});
-
-export const LinkTelegramResponse = zod.object({
-  linked: zod.boolean(),
-  telegramLink: TelegramLinkItem.nullish(),
-});
-
-/**
- * @summary Unlink telegram from a card
- */
-export const UnlinkTelegramParams = zod.object({
-  cardId: zod.coerce.number(),
-});
-
-export const UnlinkTelegramResponse = zod.object({
-  linked: zod.boolean(),
-  telegramLink: TelegramLinkItem.nullish(),
 });

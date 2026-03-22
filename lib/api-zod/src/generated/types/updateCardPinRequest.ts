@@ -7,5 +7,10 @@
  */
 
 export interface UpdateCardPinRequest {
+  /**
+   * @minLength 6
+   * @maxLength 6
+   * @pattern ^\d{6}$
+   */
   pin: string;
 }

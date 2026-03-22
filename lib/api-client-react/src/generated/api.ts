@@ -17,16 +17,18 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  ActivateCardRequest,
   AuthResponse,
-  BalanceHistoryEntry,
   Card,
   CardAccessUrlResponse,
   CardDetailsWithTransactions,
   ChangePasswordRequest,
   CreateCardRequest,
+  CreateShippingRequest,
   CreateSupportTicketRequest,
   ErrorResponse,
   FreezeCardRequest,
+  GetShippingRequestsParams,
   HealthStatus,
   LinkTelegramRequest,
   LoginRequest,
@@ -34,13 +36,15 @@ import type {
   Notification,
   NotificationSettings,
   RegisterRequest,
+  ShippingListResponse,
+  ShippingRequest,
   SupportTicket,
   TelegramLinkResponse,
   TopUpRequest,
   Transaction,
   UpdateCardContactsRequest,
-  UpdateCardContactsResponse,
   UpdateCardPinRequest,
+  UpdateContactsResult,
   UpdateNotificationSettingsRequest,
   UpdateProfileRequest,
   User,
@@ -1192,7 +1196,7 @@ export const useUpdateCardPin = <
 };
 
 /**
- * @summary Create a secure access URL for viewing full card details
+ * @summary Create a secure access URL for card details
  */
 export const getCreateCardAccessUrlUrl = (cardId: number) => {
   return `/api/cards/${cardId}/access-url`;
@@ -1253,7 +1257,7 @@ export type CreateCardAccessUrlMutationResult = NonNullable<
 export type CreateCardAccessUrlMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Create a secure access URL for viewing full card details
+ * @summary Create a secure access URL for card details
  */
 export const useCreateCardAccessUrl = <
   TError = ErrorType<ErrorResponse>,
@@ -1273,6 +1277,441 @@ export const useCreateCardAccessUrl = <
   TContext
 > => {
   return useMutation(getCreateCardAccessUrlMutationOptions(options));
+};
+
+/**
+ * @summary Get balance history for a card
+ */
+export const getGetCardBalanceHistoryUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/balance-history`;
+};
+
+export const getCardBalanceHistory = async (
+  cardId: number,
+  options?: RequestInit,
+): Promise<Transaction[]> => {
+  return customFetch<Transaction[]>(getGetCardBalanceHistoryUrl(cardId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCardBalanceHistoryQueryKey = (cardId: number) => {
+  return [`/api/cards/${cardId}/balance-history`] as const;
+};
+
+export const getGetCardBalanceHistoryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCardBalanceHistory>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  cardId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCardBalanceHistory>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetCardBalanceHistoryQueryKey(cardId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCardBalanceHistory>>
+  > = ({ signal }) =>
+    getCardBalanceHistory(cardId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!cardId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCardBalanceHistory>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCardBalanceHistoryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCardBalanceHistory>>
+>;
+export type GetCardBalanceHistoryQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get balance history for a card
+ */
+
+export function useGetCardBalanceHistory<
+  TData = Awaited<ReturnType<typeof getCardBalanceHistory>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  cardId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCardBalanceHistory>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCardBalanceHistoryQueryOptions(cardId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update contact information for a card
+ */
+export const getUpdateCardContactsUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/contacts`;
+};
+
+export const updateCardContacts = async (
+  cardId: number,
+  updateCardContactsRequest: UpdateCardContactsRequest,
+  options?: RequestInit,
+): Promise<UpdateContactsResult> => {
+  return customFetch<UpdateContactsResult>(getUpdateCardContactsUrl(cardId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateCardContactsRequest),
+  });
+};
+
+export const getUpdateCardContactsMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCardContacts>>,
+    TError,
+    { cardId: number; data: BodyType<UpdateCardContactsRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateCardContacts>>,
+  TError,
+  { cardId: number; data: BodyType<UpdateCardContactsRequest> },
+  TContext
+> => {
+  const mutationKey = ["updateCardContacts"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateCardContacts>>,
+    { cardId: number; data: BodyType<UpdateCardContactsRequest> }
+  > = (props) => {
+    const { cardId, data } = props ?? {};
+
+    return updateCardContacts(cardId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateCardContactsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateCardContacts>>
+>;
+export type UpdateCardContactsMutationBody =
+  BodyType<UpdateCardContactsRequest>;
+export type UpdateCardContactsMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update contact information for a card
+ */
+export const useUpdateCardContacts = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCardContacts>>,
+    TError,
+    { cardId: number; data: BodyType<UpdateCardContactsRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateCardContacts>>,
+  TError,
+  { cardId: number; data: BodyType<UpdateCardContactsRequest> },
+  TContext
+> => {
+  return useMutation(getUpdateCardContactsMutationOptions(options));
+};
+
+/**
+ * @summary Get Telegram link status for a card
+ */
+export const getGetCardTelegramUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/telegram`;
+};
+
+export const getCardTelegram = async (
+  cardId: number,
+  options?: RequestInit,
+): Promise<TelegramLinkResponse> => {
+  return customFetch<TelegramLinkResponse>(getGetCardTelegramUrl(cardId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCardTelegramQueryKey = (cardId: number) => {
+  return [`/api/cards/${cardId}/telegram`] as const;
+};
+
+export const getGetCardTelegramQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCardTelegram>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  cardId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCardTelegram>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCardTelegramQueryKey(cardId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCardTelegram>>> = ({
+    signal,
+  }) => getCardTelegram(cardId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!cardId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCardTelegram>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCardTelegramQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCardTelegram>>
+>;
+export type GetCardTelegramQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get Telegram link status for a card
+ */
+
+export function useGetCardTelegram<
+  TData = Awaited<ReturnType<typeof getCardTelegram>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  cardId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCardTelegram>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCardTelegramQueryOptions(cardId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Link a Telegram account to a card
+ */
+export const getLinkTelegramUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/telegram/link`;
+};
+
+export const linkTelegram = async (
+  cardId: number,
+  linkTelegramRequest: LinkTelegramRequest,
+  options?: RequestInit,
+): Promise<TelegramLinkResponse> => {
+  return customFetch<TelegramLinkResponse>(getLinkTelegramUrl(cardId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(linkTelegramRequest),
+  });
+};
+
+export const getLinkTelegramMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof linkTelegram>>,
+    TError,
+    { cardId: number; data: BodyType<LinkTelegramRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof linkTelegram>>,
+  TError,
+  { cardId: number; data: BodyType<LinkTelegramRequest> },
+  TContext
+> => {
+  const mutationKey = ["linkTelegram"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof linkTelegram>>,
+    { cardId: number; data: BodyType<LinkTelegramRequest> }
+  > = (props) => {
+    const { cardId, data } = props ?? {};
+
+    return linkTelegram(cardId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LinkTelegramMutationResult = NonNullable<
+  Awaited<ReturnType<typeof linkTelegram>>
+>;
+export type LinkTelegramMutationBody = BodyType<LinkTelegramRequest>;
+export type LinkTelegramMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Link a Telegram account to a card
+ */
+export const useLinkTelegram = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof linkTelegram>>,
+    TError,
+    { cardId: number; data: BodyType<LinkTelegramRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof linkTelegram>>,
+  TError,
+  { cardId: number; data: BodyType<LinkTelegramRequest> },
+  TContext
+> => {
+  return useMutation(getLinkTelegramMutationOptions(options));
+};
+
+/**
+ * @summary Unlink Telegram account from a card
+ */
+export const getUnlinkTelegramUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/telegram/unlink`;
+};
+
+export const unlinkTelegram = async (
+  cardId: number,
+  options?: RequestInit,
+): Promise<TelegramLinkResponse> => {
+  return customFetch<TelegramLinkResponse>(getUnlinkTelegramUrl(cardId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getUnlinkTelegramMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unlinkTelegram>>,
+    TError,
+    { cardId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof unlinkTelegram>>,
+  TError,
+  { cardId: number },
+  TContext
+> => {
+  const mutationKey = ["unlinkTelegram"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof unlinkTelegram>>,
+    { cardId: number }
+  > = (props) => {
+    const { cardId } = props ?? {};
+
+    return unlinkTelegram(cardId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UnlinkTelegramMutationResult = NonNullable<
+  Awaited<ReturnType<typeof unlinkTelegram>>
+>;
+
+export type UnlinkTelegramMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Unlink Telegram account from a card
+ */
+export const useUnlinkTelegram = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unlinkTelegram>>,
+    TError,
+    { cardId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof unlinkTelegram>>,
+  TError,
+  { cardId: number },
+  TContext
+> => {
+  return useMutation(getUnlinkTelegramMutationOptions(options));
 };
 
 /**
@@ -1460,267 +1899,6 @@ export function useGetCardTransactions<
 }
 
 /**
- * @summary Get card details with transactions (combined endpoint)
- */
-export const getGetCardDetailsWithTransactionsUrl = (cardId: number) => {
-  return `/api/cards/${cardId}/details-with-transactions`;
-};
-
-export const getCardDetailsWithTransactions = async (
-  cardId: number,
-  options?: RequestInit,
-): Promise<CardDetailsWithTransactions> => {
-  return customFetch<CardDetailsWithTransactions>(
-    getGetCardDetailsWithTransactionsUrl(cardId),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
-
-export const getGetCardDetailsWithTransactionsQueryKey = (cardId: number) => {
-  return [`/api/cards/${cardId}/details-with-transactions`] as const;
-};
-
-export const getGetCardDetailsWithTransactionsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getCardDetailsWithTransactions>>,
-  TError = ErrorType<ErrorResponse>,
->(
-  cardId: number,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getCardDetailsWithTransactions>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey =
-    queryOptions?.queryKey ?? getGetCardDetailsWithTransactionsQueryKey(cardId);
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getCardDetailsWithTransactions>>
-  > = ({ signal }) =>
-    getCardDetailsWithTransactions(cardId, { signal, ...requestOptions });
-
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!cardId,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getCardDetailsWithTransactions>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type GetCardDetailsWithTransactionsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getCardDetailsWithTransactions>>
->;
-export type GetCardDetailsWithTransactionsQueryError = ErrorType<ErrorResponse>;
-
-export function useGetCardDetailsWithTransactions<
-  TData = Awaited<ReturnType<typeof getCardDetailsWithTransactions>>,
-  TError = ErrorType<ErrorResponse>,
->(
-  cardId: number,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getCardDetailsWithTransactions>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetCardDetailsWithTransactionsQueryOptions(
-    cardId,
-    options,
-  );
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Get balance history for a specific card
- */
-export const getGetCardBalanceHistoryUrl = (cardId: number) => {
-  return `/api/cards/${cardId}/balance-history`;
-};
-
-export const getCardBalanceHistory = async (
-  cardId: number,
-  options?: RequestInit,
-): Promise<BalanceHistoryEntry[]> => {
-  return customFetch<BalanceHistoryEntry[]>(
-    getGetCardBalanceHistoryUrl(cardId),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
-
-export const getGetCardBalanceHistoryQueryKey = (cardId: number) => {
-  return [`/api/cards/${cardId}/balance-history`] as const;
-};
-
-export const getGetCardBalanceHistoryQueryOptions = <
-  TData = Awaited<ReturnType<typeof getCardBalanceHistory>>,
-  TError = ErrorType<ErrorResponse>,
->(
-  cardId: number,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getCardBalanceHistory>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey =
-    queryOptions?.queryKey ?? getGetCardBalanceHistoryQueryKey(cardId);
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getCardBalanceHistory>>
-  > = ({ signal }) => getCardBalanceHistory(cardId, { signal, ...requestOptions });
-
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!cardId,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getCardBalanceHistory>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type GetCardBalanceHistoryQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getCardBalanceHistory>>
->;
-export type GetCardBalanceHistoryQueryError = ErrorType<ErrorResponse>;
-
-export function useGetCardBalanceHistory<
-  TData = Awaited<ReturnType<typeof getCardBalanceHistory>>,
-  TError = ErrorType<ErrorResponse>,
->(
-  cardId: number,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getCardBalanceHistory>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetCardBalanceHistoryQueryOptions(cardId, options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Create a secure access URL for viewing full card details
- */
-export const getCreateCardAccessUrlUrl = (cardId: number) => {
-  return `/api/cards/${cardId}/access-url`;
-};
-
-export const createCardAccessUrl = async (
-  cardId: number,
-  options?: RequestInit,
-): Promise<CardAccessUrlResponse> => {
-  return customFetch<CardAccessUrlResponse>(getCreateCardAccessUrlUrl(cardId), {
-    ...options,
-    method: "POST",
-  });
-};
-
-export const getCreateCardAccessUrlMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createCardAccessUrl>>,
-    TError,
-    { cardId: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof createCardAccessUrl>>,
-  TError,
-  { cardId: number },
-  TContext
-> => {
-  const mutationKey = ["createCardAccessUrl"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createCardAccessUrl>>,
-    { cardId: number }
-  > = (props) => {
-    const { cardId } = props ?? {};
-
-    return createCardAccessUrl(cardId, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type CreateCardAccessUrlMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createCardAccessUrl>>
->;
-export type CreateCardAccessUrlMutationError = ErrorType<ErrorResponse>;
-
-/**
- * @summary Create a secure access URL for viewing full card details
- */
-export const useCreateCardAccessUrl = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createCardAccessUrl>>,
-    TError,
-    { cardId: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof createCardAccessUrl>>,
-  TError,
-  { cardId: number },
-  TContext
-> => {
-  return useMutation(getCreateCardAccessUrlMutationOptions(options));
-};
-
-/**
  * @summary Get all transactions for the current user
  */
 export const getGetAllTransactionsUrl = () => {
@@ -1794,6 +1972,93 @@ export function useGetAllTransactions<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Activate a physical card with an activation code
+ */
+export const getActivatePhysicalCardUrl = (cardId: number) => {
+  return `/api/cards/${cardId}/activate`;
+};
+
+export const activatePhysicalCard = async (
+  cardId: number,
+  activateCardRequest: ActivateCardRequest,
+  options?: RequestInit,
+): Promise<Card> => {
+  return customFetch<Card>(getActivatePhysicalCardUrl(cardId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(activateCardRequest),
+  });
+};
+
+export const getActivatePhysicalCardMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof activatePhysicalCard>>,
+    TError,
+    { cardId: number; data: BodyType<ActivateCardRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof activatePhysicalCard>>,
+  TError,
+  { cardId: number; data: BodyType<ActivateCardRequest> },
+  TContext
+> => {
+  const mutationKey = ["activatePhysicalCard"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof activatePhysicalCard>>,
+    { cardId: number; data: BodyType<ActivateCardRequest> }
+  > = (props) => {
+    const { cardId, data } = props ?? {};
+
+    return activatePhysicalCard(cardId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ActivatePhysicalCardMutationResult = NonNullable<
+  Awaited<ReturnType<typeof activatePhysicalCard>>
+>;
+export type ActivatePhysicalCardMutationBody = BodyType<ActivateCardRequest>;
+export type ActivatePhysicalCardMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Activate a physical card with an activation code
+ */
+export const useActivatePhysicalCard = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof activatePhysicalCard>>,
+    TError,
+    { cardId: number; data: BodyType<ActivateCardRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof activatePhysicalCard>>,
+  TError,
+  { cardId: number; data: BodyType<ActivateCardRequest> },
+  TContext
+> => {
+  return useMutation(getActivatePhysicalCardMutationOptions(options));
+};
 
 /**
  * @summary Get all notifications for the current user
@@ -2199,6 +2464,192 @@ export const useUpdateNotificationSettings = <
 };
 
 /**
+ * @summary Get shipping requests for the current user
+ */
+export const getGetShippingRequestsUrl = (
+  params?: GetShippingRequestsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/shipping?${stringifiedParams}`
+    : `/api/shipping`;
+};
+
+export const getShippingRequests = async (
+  params?: GetShippingRequestsParams,
+  options?: RequestInit,
+): Promise<ShippingListResponse> => {
+  return customFetch<ShippingListResponse>(getGetShippingRequestsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetShippingRequestsQueryKey = (
+  params?: GetShippingRequestsParams,
+) => {
+  return [`/api/shipping`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetShippingRequestsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getShippingRequests>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params?: GetShippingRequestsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getShippingRequests>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetShippingRequestsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getShippingRequests>>
+  > = ({ signal }) =>
+    getShippingRequests(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getShippingRequests>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetShippingRequestsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getShippingRequests>>
+>;
+export type GetShippingRequestsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get shipping requests for the current user
+ */
+
+export function useGetShippingRequests<
+  TData = Awaited<ReturnType<typeof getShippingRequests>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params?: GetShippingRequestsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getShippingRequests>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetShippingRequestsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a shipping request for a physical card
+ */
+export const getCreateShippingRequestUrl = () => {
+  return `/api/shipping`;
+};
+
+export const createShippingRequest = async (
+  createShippingRequest: CreateShippingRequest,
+  options?: RequestInit,
+): Promise<ShippingRequest> => {
+  return customFetch<ShippingRequest>(getCreateShippingRequestUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createShippingRequest),
+  });
+};
+
+export const getCreateShippingRequestMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createShippingRequest>>,
+    TError,
+    { data: BodyType<CreateShippingRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createShippingRequest>>,
+  TError,
+  { data: BodyType<CreateShippingRequest> },
+  TContext
+> => {
+  const mutationKey = ["createShippingRequest"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createShippingRequest>>,
+    { data: BodyType<CreateShippingRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createShippingRequest(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateShippingRequestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createShippingRequest>>
+>;
+export type CreateShippingRequestMutationBody = BodyType<CreateShippingRequest>;
+export type CreateShippingRequestMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create a shipping request for a physical card
+ */
+export const useCreateShippingRequest = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createShippingRequest>>,
+    TError,
+    { data: BodyType<CreateShippingRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createShippingRequest>>,
+  TError,
+  { data: BodyType<CreateShippingRequest> },
+  TContext
+> => {
+  return useMutation(getCreateShippingRequestMutationOptions(options));
+};
+
+/**
  * @summary Get all support tickets for the current user
  */
 export const getGetSupportTicketsUrl = () => {
@@ -2358,327 +2809,4 @@ export const useCreateSupportTicket = <
   TContext
 > => {
   return useMutation(getCreateSupportTicketMutationOptions(options));
-};
-
-/**
- * @summary Update card contact details
- */
-export const getUpdateCardContactsUrl = (cardId: number) => {
-  return `/api/cards/${cardId}/contacts`;
-};
-
-export const updateCardContacts = async (
-  cardId: number,
-  updateCardContactsRequest: UpdateCardContactsRequest,
-  options?: RequestInit,
-): Promise<UpdateCardContactsResponse> => {
-  return customFetch<UpdateCardContactsResponse>(getUpdateCardContactsUrl(cardId), {
-    ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(updateCardContactsRequest),
-  });
-};
-
-export const getUpdateCardContactsMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof updateCardContacts>>,
-    TError,
-    { cardId: number; data: BodyType<UpdateCardContactsRequest> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof updateCardContacts>>,
-  TError,
-  { cardId: number; data: BodyType<UpdateCardContactsRequest> },
-  TContext
-> => {
-  const mutationKey = ["updateCardContacts"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof updateCardContacts>>,
-    { cardId: number; data: BodyType<UpdateCardContactsRequest> }
-  > = (props) => {
-    const { cardId, data } = props ?? {};
-
-    return updateCardContacts(cardId, data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type UpdateCardContactsMutationResult = NonNullable<
-  Awaited<ReturnType<typeof updateCardContacts>>
->;
-export type UpdateCardContactsMutationBody = BodyType<UpdateCardContactsRequest>;
-export type UpdateCardContactsMutationError = ErrorType<ErrorResponse>;
-
-/**
- * @summary Update card contact details
- */
-export const useUpdateCardContacts = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof updateCardContacts>>,
-    TError,
-    { cardId: number; data: BodyType<UpdateCardContactsRequest> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof updateCardContacts>>,
-  TError,
-  { cardId: number; data: BodyType<UpdateCardContactsRequest> },
-  TContext
-> => {
-  return useMutation(getUpdateCardContactsMutationOptions(options));
-};
-
-/**
- * @summary Get telegram link for a card
- */
-export const getGetCardTelegramUrl = (cardId: number) => {
-  return `/api/cards/${cardId}/telegram`;
-};
-
-export const getCardTelegram = async (
-  cardId: number,
-  options?: RequestInit,
-): Promise<TelegramLinkResponse> => {
-  return customFetch<TelegramLinkResponse>(getGetCardTelegramUrl(cardId), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getGetCardTelegramQueryKey = (cardId: number) => {
-  return [`/api/cards/${cardId}/telegram`] as const;
-};
-
-export const getGetCardTelegramQueryOptions = <
-  TData = Awaited<ReturnType<typeof getCardTelegram>>,
-  TError = ErrorType<ErrorResponse>,
->(
-  cardId: number,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getCardTelegram>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-  const queryKey = queryOptions?.queryKey ?? getGetCardTelegramQueryKey(cardId);
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getCardTelegram>>
-  > = ({ signal }) => getCardTelegram(cardId, { signal, ...requestOptions });
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getCardTelegram>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type GetCardTelegramQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getCardTelegram>>
->;
-export type GetCardTelegramQueryError = ErrorType<ErrorResponse>;
-
-export function useGetCardTelegram<
-  TData = Awaited<ReturnType<typeof getCardTelegram>>,
-  TError = ErrorType<ErrorResponse>,
->(
-  cardId: number,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getCardTelegram>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetCardTelegramQueryOptions(cardId, options);
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Link telegram to a card
- */
-export const getLinkTelegramUrl = (cardId: number) => {
-  return `/api/cards/${cardId}/telegram/link`;
-};
-
-export const linkTelegram = async (
-  cardId: number,
-  linkTelegramRequest: LinkTelegramRequest,
-  options?: RequestInit,
-): Promise<TelegramLinkResponse> => {
-  return customFetch<TelegramLinkResponse>(getLinkTelegramUrl(cardId), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(linkTelegramRequest),
-  });
-};
-
-export const getLinkTelegramMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof linkTelegram>>,
-    TError,
-    { cardId: number; data: BodyType<LinkTelegramRequest> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof linkTelegram>>,
-  TError,
-  { cardId: number; data: BodyType<LinkTelegramRequest> },
-  TContext
-> => {
-  const mutationKey = ["linkTelegram"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof linkTelegram>>,
-    { cardId: number; data: BodyType<LinkTelegramRequest> }
-  > = (props) => {
-    const { cardId, data } = props ?? {};
-    return linkTelegram(cardId, data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type LinkTelegramMutationResult = NonNullable<
-  Awaited<ReturnType<typeof linkTelegram>>
->;
-export type LinkTelegramMutationBody = BodyType<LinkTelegramRequest>;
-export type LinkTelegramMutationError = ErrorType<ErrorResponse>;
-
-export const useLinkTelegram = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof linkTelegram>>,
-    TError,
-    { cardId: number; data: BodyType<LinkTelegramRequest> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof linkTelegram>>,
-  TError,
-  { cardId: number; data: BodyType<LinkTelegramRequest> },
-  TContext
-> => {
-  return useMutation(getLinkTelegramMutationOptions(options));
-};
-
-/**
- * @summary Unlink telegram from a card
- */
-export const getUnlinkTelegramUrl = (cardId: number) => {
-  return `/api/cards/${cardId}/telegram/unlink`;
-};
-
-export const unlinkTelegram = async (
-  cardId: number,
-  options?: RequestInit,
-): Promise<TelegramLinkResponse> => {
-  return customFetch<TelegramLinkResponse>(getUnlinkTelegramUrl(cardId), {
-    ...options,
-    method: "POST",
-  });
-};
-
-export const getUnlinkTelegramMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof unlinkTelegram>>,
-    TError,
-    { cardId: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof unlinkTelegram>>,
-  TError,
-  { cardId: number },
-  TContext
-> => {
-  const mutationKey = ["unlinkTelegram"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof unlinkTelegram>>,
-    { cardId: number }
-  > = (props) => {
-    const { cardId } = props ?? {};
-    return unlinkTelegram(cardId, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type UnlinkTelegramMutationResult = NonNullable<
-  Awaited<ReturnType<typeof unlinkTelegram>>
->;
-export type UnlinkTelegramMutationError = ErrorType<ErrorResponse>;
-
-export const useUnlinkTelegram = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof unlinkTelegram>>,
-    TError,
-    { cardId: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof unlinkTelegram>>,
-  TError,
-  { cardId: number },
-  TContext
-> => {
-  return useMutation(getUnlinkTelegramMutationOptions(options));
 };

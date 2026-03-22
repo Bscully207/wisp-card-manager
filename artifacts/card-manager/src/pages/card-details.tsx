@@ -16,7 +16,7 @@ import {
   PlusCircle, Trash2, Eye, EyeOff, ReceiptText, 
   Mail, Phone, Save, CreditCard as CreditCardIcon, 
   Settings as SettingsIcon, CheckCircle2, XCircle, KeyRound,
-  Wallet, Link, Unlink, Send, Download
+  Wallet, Link, Unlink, Send, Download, Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,6 +41,9 @@ import { SecureCardViewer } from "@/components/secure-card-viewer";
 import { useTelegram } from "@/hooks/use-telegram";
 import { useGetCardTelegram, useLinkTelegram, useUnlinkTelegram, getGetCardTelegramQueryKey } from "@/hooks/use-telegram-link";
 import { ExportDialog } from "@/components/shared/export-dialog";
+import { ActivateCardDialog } from "@/components/shared/activate-card-dialog";
+import { ShippingAddressForm } from "@/components/shared/shipping-address-form";
+import { ShippingTracking } from "@/components/shared/shipping-tracking";
 
 const DIAL_CODES = [
   { code: "+1", label: "US/CA +1" },
@@ -112,6 +115,8 @@ export default function CardDetails() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [changePinOpen, setChangePinOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [activateOpen, setActivateOpen] = useState(false);
+  const [shippingOpen, setShippingOpen] = useState(false);
   const [showCvv, setShowCvv] = useState(false);
   const [cardName, setCardName] = useState("");
   const [cardEmail, setCardEmail] = useState("");
@@ -189,6 +194,8 @@ export default function CardDetails() {
   }
 
   const isFrozen = card.status === "frozen";
+  const isPhysical = card.type === "physical";
+  const isPendingActivation = card.status === "pending_activation";
 
   const spendingTransactions = transactions.filter(tx => tx.type === "payment" || tx.type === "fee");
 
@@ -201,6 +208,38 @@ export default function CardDetails() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <CreditCard card={card} className="pointer-events-none" />
+
+      {isPendingActivation && (
+        <Card className="border-yellow-500/30 bg-yellow-500/5 backdrop-blur">
+          <CardContent className="p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-yellow-500/20">
+                <KeyRound className="w-5 h-5 text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">Card Pending Activation</p>
+                <p className="text-xs text-muted-foreground">Enter the activation code from your mail to start using this card</p>
+              </div>
+            </div>
+            <Button size="sm" onClick={() => setActivateOpen(true)} className="shrink-0">
+              Activate
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {isPhysical && (
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            className="flex-1 rounded-xl h-12 border-border/50"
+            onClick={() => setShippingOpen(true)}
+          >
+            <Package className="w-4 h-4 mr-2" />
+            Request Shipping
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-3 gap-2">
         {tabs.map((tab) => (
@@ -284,12 +323,14 @@ export default function CardDetails() {
                     "px-2 py-0.5 rounded-full text-xs font-semibold uppercase",
                     card.status === "active" ? "bg-emerald-500/20 text-emerald-400" :
                     card.status === "frozen" ? "bg-blue-500/20 text-blue-400" :
+                    card.status === "pending_activation" ? "bg-yellow-500/20 text-yellow-400" :
                     "bg-red-500/20 text-red-400"
                   )}>
-                    {card.status}
+                    {card.status === "pending_activation" ? "Pending Activation" : card.status}
                   </span>
                 } 
               />
+              <InfoRow label="Card Type" value={<span className="capitalize">{card.type}</span>} />
               <InfoRow label="Cardholder Name" value={card.cardholderName} />
               <InfoRow label="Created" value={format(new Date(card.createdAt), "MMM d, yyyy")} />
               
@@ -330,8 +371,8 @@ export default function CardDetails() {
                   <span>Virtual Card – Supported</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <XCircle className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Physical Card – Not Supported</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Physical Card – Supported</span>
                 </div>
               </div>
             </div>
@@ -540,12 +581,26 @@ export default function CardDetails() {
         cardLabel={card.label}
       />
 
+      {isPhysical && <ShippingTracking cardId={cardId} />}
+
       <TopUpDialog
         open={topUpOpen}
         onOpenChange={setTopUpOpen}
         cardId={cardId}
         cardLabel={card.label}
         currency={card.currency}
+      />
+
+      <ActivateCardDialog
+        open={activateOpen}
+        onOpenChange={setActivateOpen}
+        cardId={cardId}
+      />
+
+      <ShippingAddressForm
+        open={shippingOpen}
+        onOpenChange={setShippingOpen}
+        cardId={cardId}
       />
 
       <ResponsiveDialog

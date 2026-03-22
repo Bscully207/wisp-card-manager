@@ -5,9 +5,11 @@
  * Debit Card Management API
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateCardRequestType } from "./createCardRequestType";
 
 export interface CreateCardRequest {
   label?: string;
   currency?: string;
   color?: string;
+  type?: CreateCardRequestType;
 }

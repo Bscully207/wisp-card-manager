@@ -6,7 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface CardAccessUrlResponse {
-  url: string;
-  expiresAt: Date;
+export interface ActivateCardRequest {
+  activationCode: string;
 }

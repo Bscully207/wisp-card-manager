@@ -64,6 +64,13 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+export type CardType = (typeof CardType)[keyof typeof CardType];
+
+export const CardType = {
+  virtual: "virtual",
+  physical: "physical",
+} as const;
+
 export type CardStatus = (typeof CardStatus)[keyof typeof CardStatus];
 
 export const CardStatus = {
@@ -71,11 +78,13 @@ export const CardStatus = {
   frozen: "frozen",
   expired: "expired",
   cancelled: "cancelled",
+  pending_activation: "pending_activation",
 } as const;
 
 export interface Card {
   id: number;
   userId: number;
+  type?: CardType;
   cardNumber: string;
   cardholderName: string;
   expiryMonth: number;
@@ -89,20 +98,36 @@ export interface Card {
   createdAt: string;
 }
 
-export interface CreateCardRequest {
-  label?: string;
-  currency?: string;
-  color?: string;
+export interface UpdateCardContactsRequest {
+  email: string;
+  phoneNumber: string;
+  phoneDialCode?: string;
+  applyToAll?: boolean;
 }
 
-export interface TopUpRequest {
-  /** @minimum 0.01 */
-  amount: number;
-  description?: string;
+export interface UpdateContactsResult {
+  message: string;
+  updatedCount: number;
 }
 
-export interface FreezeCardRequest {
-  frozen: boolean;
+export type TelegramLinkResponseTelegramLink = {
+  id?: number;
+  cardId?: number;
+  telegramId?: string;
+  telegramUsername?: string | null;
+  telegramFirstName?: string | null;
+  createdAt?: string;
+} | null;
+
+export interface TelegramLinkResponse {
+  linked: boolean;
+  telegramLink?: TelegramLinkResponseTelegramLink;
+}
+
+export interface LinkTelegramRequest {
+  telegramId: string;
+  telegramUsername?: string;
+  telegramFirstName?: string;
 }
 
 export type TransactionType =
@@ -142,26 +167,29 @@ export interface CardDetailsWithTransactions {
   transactions: Transaction[];
 }
 
-export type BalanceHistoryType =
-  (typeof BalanceHistoryType)[keyof typeof BalanceHistoryType];
+export type CreateCardRequestType =
+  (typeof CreateCardRequestType)[keyof typeof CreateCardRequestType];
 
-export const BalanceHistoryType = {
-  topup: "topup",
-  fee: "fee",
-  refund: "refund",
+export const CreateCardRequestType = {
+  virtual: "virtual",
+  physical: "physical",
 } as const;
 
-export interface BalanceHistoryEntry {
-  id: number;
-  cardId: number;
-  userId: number;
-  type: BalanceHistoryType;
+export interface CreateCardRequest {
+  label?: string;
+  currency?: string;
+  color?: string;
+  type?: CreateCardRequestType;
+}
+
+export interface TopUpRequest {
+  /** @minimum 0.01 */
   amount: number;
-  balanceBefore: number;
-  balanceAfter: number;
-  description?: string | null;
-  status: TransactionStatus;
-  createdAt: string;
+  description?: string;
+}
+
+export interface FreezeCardRequest {
+  frozen: boolean;
 }
 
 export type SupportTicketCategory =
@@ -194,6 +222,52 @@ export interface SupportTicket {
   status: SupportTicketStatus;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ActivateCardRequest {
+  activationCode: string;
+}
+
+export type ShippingRequestStatus =
+  (typeof ShippingRequestStatus)[keyof typeof ShippingRequestStatus];
+
+export const ShippingRequestStatus = {
+  in_review: "in_review",
+  dispatched: "dispatched",
+  shipped: "shipped",
+  delivered: "delivered",
+  cancelled: "cancelled",
+} as const;
+
+export interface ShippingRequest {
+  id: number;
+  cardId: number;
+  userId: number;
+  status: ShippingRequestStatus;
+  recipientName: string;
+  address: string;
+  city: string;
+  country: string;
+  zipCode: string;
+  trackingNumber?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ShippingListResponse {
+  items: ShippingRequest[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface CreateShippingRequest {
+  cardId: number;
+  recipientName: string;
+  address: string;
+  city: string;
+  country: string;
+  zipCode: string;
 }
 
 export type CreateSupportTicketRequestCategory =
@@ -243,6 +317,15 @@ export interface NotificationSettings {
   marketingAlerts: boolean;
 }
 
+export interface UpdateCardPinRequest {
+  /**
+   * @minLength 6
+   * @maxLength 6
+   * @pattern ^\d{6}$
+   */
+  pin: string;
+}
+
 export interface UpdateNotificationSettingsRequest {
   transactionAlerts?: boolean;
   topupAlerts?: boolean;
@@ -250,44 +333,24 @@ export interface UpdateNotificationSettingsRequest {
   marketingAlerts?: boolean;
 }
 
-export interface UpdateCardPinRequest {
-  pin: string;
-}
-
 export interface CardAccessUrlResponse {
   url: string;
   expiresAt: string;
 }
 
-export interface UpdateCardContactsRequest {
-  email: string;
-  phoneDialCode: string;
-  phoneNumber: string;
-  applyToAll?: boolean;
-}
+export type GetShippingRequestsParams = {
+  status?: GetShippingRequestsStatus;
+  page?: number;
+  limit?: number;
+};
 
-export interface UpdateCardContactsResponse {
-  message: string;
-  updatedCount: number;
-}
+export type GetShippingRequestsStatus =
+  (typeof GetShippingRequestsStatus)[keyof typeof GetShippingRequestsStatus];
 
-export interface TelegramLink {
-  id: number;
-  cardId: number;
-  userId: number;
-  telegramId: string;
-  telegramUsername?: string | null;
-  telegramFirstName?: string | null;
-  createdAt: string;
-}
-
-export interface TelegramLinkResponse {
-  linked: boolean;
-  telegramLink?: TelegramLink | null;
-}
-
-export interface LinkTelegramRequest {
-  telegramId: string;
-  telegramUsername?: string;
-  telegramFirstName?: string;
-}
+export const GetShippingRequestsStatus = {
+  in_review: "in_review",
+  dispatched: "dispatched",
+  shipped: "shipped",
+  delivered: "delivered",
+  cancelled: "cancelled",
+} as const;
