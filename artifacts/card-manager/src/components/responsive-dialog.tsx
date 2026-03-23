@@ -1,13 +1,7 @@
 import * as React from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+import { X } from "lucide-react";
 
 interface ResponsiveDialogProps {
   open: boolean;
@@ -42,15 +36,26 @@ export function ResponsiveDialog({
 
   if (useMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[100dvh] max-h-[100dvh] rounded-none px-4 pb-8 safe-area-bottom">
-          <DrawerHeader className="text-left px-0">
-            <DrawerTitle className="font-display text-2xl">{title}</DrawerTitle>
-            {description && <DrawerDescription>{description}</DrawerDescription>}
-          </DrawerHeader>
-          <div className="px-0 overflow-y-auto flex-1">{children}</div>
-        </DrawerContent>
-      </Drawer>
+      <>
+        {open && (
+          <div className="fixed inset-0 z-50 flex flex-col bg-background">
+            <div className="flex items-center justify-between px-4 pt-4 pb-2 safe-area-top">
+              <div>
+                <h2 className="font-display text-2xl font-semibold">{title}</h2>
+                {description && <p className="text-sm text-muted-foreground">{description}</p>}
+              </div>
+              <button
+                onClick={() => onOpenChange(false)}
+                className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-muted/80 hover:bg-muted transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 pb-8 safe-area-bottom">{children}</div>
+          </div>
+        )}
+      </>
     );
   }
 
