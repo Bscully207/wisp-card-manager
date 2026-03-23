@@ -351,7 +351,7 @@ All endpoints are prefixed with `/api`. All endpoints marked "Auth" require an a
   - Processing step uses `useJobPolling` for async card creation
   - Includes referral code support with configurable discount tiers
 - **layout.tsx** — App shell with sidebar (desktop) and bottom navigation (mobile). Exports `ROOT_PATHS`.
-- **responsive-dialog.tsx** — Dialog (desktop) / Drawer (mobile) wrapper with ref-based locking to prevent Dialog↔Drawer switching while open
+- **responsive-dialog.tsx** — Dialog (desktop) / full-screen overlay with X close button (mobile). No swipe/drag-to-close on mobile — prevents accidental dismissal during multi-step flows. Ref-based locking prevents mode switching while open.
 - **theme-provider.tsx** — Light/dark/system theme with localStorage persistence
 - **secure-card-viewer.tsx** — Requests secure access URL and displays in iframe (stubbed as "Coming Soon" until Kiml connected)
 
@@ -404,7 +404,8 @@ Card sort order is persisted to `localStorage` under key `"wisp-card-order"`. Th
 ### Responsive Layout
 - **Mobile**: Bottom navigation bar (`fixed bottom-0`, `h-16`), content has `pb-24`
 - **Desktop**: Left sidebar navigation, content has `pb-6`
-- Dialog vs. Drawer pattern via `ResponsiveDialog` — locks mode when dialog opens to prevent switching
+- Dialog (desktop) vs. full-screen overlay with X close button (mobile) via `ResponsiveDialog` — locks mode when dialog opens to prevent switching
+- Switch toggles enlarged for mobile touch targets (h-7 w-12 track, h-5 w-5 thumb)
 
 ### Telegram Mini App Integration
 - `useTelegram` hook provides `isTelegram` flag, `webApp` SDK instance, and `telegramUser` identity

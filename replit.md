@@ -126,8 +126,9 @@ React + Vite frontend. Mobile-first responsive design with Telegram Mini App sup
 - Viewport meta: `user-scalable=no, viewport-fit=cover`
 
 **Responsive Dialogs**:
-- `src/components/responsive-dialog.tsx` — uses `Dialog` on desktop, `Drawer` (vaul) on mobile
-- Ref-based locking prevents Dialog↔Drawer switching while open
+- `src/components/responsive-dialog.tsx` — uses `Dialog` on desktop, full-screen overlay with X close button on mobile
+- No swipe/drag-to-close on mobile — prevents accidental dismissal during multi-step flows (wizard, settings)
+- Ref-based locking prevents Dialog↔overlay switching while open
 - All modals use `ResponsiveDialog`
 
 **Pages** under `src/pages/`:
@@ -169,6 +170,7 @@ React + Vite frontend. Mobile-first responsive design with Telegram Mini App sup
 **CSS**:
 - Safe area insets via `safe-area-bottom` / `safe-area-top` classes
 - 44px minimum tap targets on mobile
+- Switch toggles enlarged for mobile (h-7 w-12 track, h-5 w-5 thumb)
 - 16px font-size on inputs to prevent iOS zoom
 - Telegram theme CSS variables support
 
