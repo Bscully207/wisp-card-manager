@@ -35,7 +35,7 @@ Wisp is a fintech debit card management application built as a Telegram Mini App
 | State Management | TanStack React Query v5 |
 | Routing | Wouter (lightweight client-side router) |
 | UI Components | shadcn/ui (Radix UI primitives) |
-| Animations | Framer Motion |
+| Animations | Framer Motion (selective — NOT used in wizard step transitions due to Telegram WebView compatibility) |
 | Drag & Drop | @dnd-kit/core + @dnd-kit/sortable |
 | Backend | Express 5, TypeScript, Node.js 24 |
 | Database | PostgreSQL via Drizzle ORM |
@@ -404,7 +404,7 @@ Card sort order is persisted to `localStorage` under key `"wisp-card-order"`. Th
 ### Responsive Layout
 - **Mobile**: Bottom navigation bar (`fixed bottom-0`, `h-16`), content has `pb-24`
 - **Desktop**: Left sidebar navigation, content has `pb-6`
-- Dialog (desktop) vs. full-screen overlay with X close button (mobile) via `ResponsiveDialog` — locks mode when dialog opens to prevent switching
+- `ResponsiveDialog`: Radix Dialog (centered modal) on desktop; `DialogPrimitive.Content` (full-screen overlay with X close) on mobile — uses Radix primitives directly on mobile to avoid CSS class merge conflicts with tailwind-merge
 - Switch toggles enlarged for mobile touch targets (h-7 w-12 track, h-5 w-5 thumb)
 
 ### Telegram Mini App Integration
@@ -421,7 +421,9 @@ Multi-step wizard flow with async job polling:
 4. **Terms** — 4 acceptance checkboxes
 5. **Payment** — Fee summary ($25 issuance) with optional referral code discount
 6. **Processing** — Async job polling with progress indicator (uses `useJobPolling`)
-7. **Success** — Animated confirmation with "View Card" button
+7. **Success** — Confirmation with "View Card" button
+
+**Important**: Wizard step transitions use plain conditional rendering (no framer-motion `AnimatePresence`). Framer-motion's `AnimatePresence mode="wait"` with `initial={{ opacity: 0 }}` caused invisible/white page content in Telegram WebView (due to `prefers-reduced-motion` or WebView animation timer issues).
 
 ### Transaction & Balance History Separation
 - **Transactions**: Spending/payment entries — displayed in "Transactions" tab

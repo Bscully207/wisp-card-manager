@@ -17,7 +17,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Build**: esbuild (CJS bundle)
 - **Auth**: Session-based (express-session + connect-pg-simple)
 - **Password hashing**: bcrypt
-- **Frontend**: React 19 + Vite 7 + Tailwind v4 + shadcn/ui + framer-motion
+- **Frontend**: React 19 + Vite 7 + Tailwind v4 + shadcn/ui
 - **External Card Issuer**: Kiml Cards API (not yet connected — all operations are local stubs)
 
 ## Application: Wisp — Debit Card Manager
@@ -126,10 +126,14 @@ React + Vite frontend. Mobile-first responsive design with Telegram Mini App sup
 - Viewport meta: `user-scalable=no, viewport-fit=cover`
 
 **Responsive Dialogs**:
-- `src/components/responsive-dialog.tsx` — uses `Dialog` on desktop, full-screen overlay with X close button on mobile
-- No swipe/drag-to-close on mobile — prevents accidental dismissal during multi-step flows (wizard, settings)
-- Ref-based locking prevents Dialog↔overlay switching while open
+- `src/components/responsive-dialog.tsx` — Radix Dialog on desktop (centered modal); on mobile uses `DialogPrimitive.Content` directly for full-screen overlay (bypasses styled `DialogContent` to avoid CSS class merge conflicts with tailwind-merge)
+- Mobile: full-screen with custom header (title + X close button), scrollable content area
+- No swipe/drag-to-close on mobile — prevents accidental dismissal during multi-step flows
 - All modals use `ResponsiveDialog`
+
+**Animation Compatibility (Telegram WebView)**:
+- Card creation wizard does NOT use framer-motion for step transitions — plain conditional rendering ensures content always appears (framer-motion `AnimatePresence mode="wait"` + `initial={{ opacity: 0 }}` caused invisible content in Telegram WebView due to `prefers-reduced-motion` or animation timer issues)
+- framer-motion is still used elsewhere in the app (credit-card component, pill-switcher, transaction-item) but NOT inside ResponsiveDialog flows
 
 **Pages** under `src/pages/`:
 - `login.tsx`, `register.tsx` — auth pages (full-width on mobile, side image on desktop)
