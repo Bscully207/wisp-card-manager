@@ -29,7 +29,8 @@ import {
   SidebarMenuButton, 
   SidebarTrigger,
   SidebarHeader,
-  SidebarFooter
+  SidebarFooter,
+  useSidebar
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -87,6 +88,17 @@ function ThemeSubmenu() {
   );
 }
 
+function SidebarDividerTrigger() {
+  const { state } = useSidebar();
+  const leftPos = state === "expanded" ? "calc(var(--sidebar-width, 16rem) - 12px)" : "4px";
+  return (
+    <SidebarTrigger
+      className="hidden md:flex fixed top-1/2 -translate-y-1/2 z-[60] !w-6 !h-6 rounded-full border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted shadow-sm transition-all duration-200 ease-linear [&>svg]:!size-3.5"
+      style={{ left: leftPos }}
+    />
+  );
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -129,12 +141,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen w-full bg-background text-foreground selection:bg-primary/30">
         <div className="hidden md:block">
           <Sidebar className="border-r border-border/50 bg-card/30 backdrop-blur-xl">
-            <SidebarHeader className="h-16 flex items-center justify-between px-6 border-b border-border/50">
-              <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity">
-                <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-white_1773484134261.png`} alt="Wisp" className="h-8 dark:block hidden" />
-                <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-black_1773484130598.png`} alt="Wisp" className="h-8 dark:hidden block" />
-              </Link>
-              <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+            <SidebarHeader className="!p-0 h-16 border-b border-border/50">
+              <div className="flex items-center justify-center w-full h-full">
+                <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity">
+                  <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-white_1773484134261.png`} alt="Wisp" className="h-8 dark:block hidden" />
+                  <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-black_1773484130598.png`} alt="Wisp" className="h-8 dark:hidden block" />
+                </Link>
+              </div>
             </SidebarHeader>
             <SidebarContent className="px-4 py-6">
               <SidebarGroup>
@@ -202,6 +215,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="flex flex-col flex-1 w-full min-w-0">
+          <SidebarDividerTrigger />
           <header className="flex h-14 md:h-16 shrink-0 items-center gap-4 px-4 md:px-6 border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
             <div className="md:hidden flex items-center gap-2">
               {isSubPage ? (
