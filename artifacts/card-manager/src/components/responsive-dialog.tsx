@@ -1,8 +1,8 @@
 import * as React from "react";
-import { createPortal } from "react-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ResponsiveDialogProps {
   open: boolean;
@@ -22,50 +22,40 @@ export function ResponsiveDialog({
   className,
 }: ResponsiveDialogProps) {
   const isMobile = useIsMobile();
-  const lockedRef = React.useRef(isMobile);
-  const wasOpenRef = React.useRef(open);
-
-  if (open && !wasOpenRef.current) {
-    lockedRef.current = isMobile;
-  }
-  if (!open) {
-    lockedRef.current = isMobile;
-  }
-  wasOpenRef.current = open;
-
-  const useMobile = open ? lockedRef.current : isMobile;
-
-  if (useMobile) {
-    if (!open) return null;
-    return createPortal(
-      <div className="fixed inset-0 z-50 flex flex-col bg-background" style={{ minHeight: "100dvh" }}>
-        <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0 safe-area-top">
-          <div className="min-w-0 flex-1">
-            <h2 className="font-display text-2xl font-semibold">{title}</h2>
-            {description && <p className="text-sm text-muted-foreground">{description}</p>}
-          </div>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="shrink-0 ml-3 w-10 h-10 rounded-full flex items-center justify-center bg-muted/80 hover:bg-muted transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto px-4 pb-8 safe-area-bottom">{children}</div>
-      </div>,
-      document.body
-    );
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={className || "sm:max-w-md bg-card border-border/50 shadow-2xl"}>
-        <DialogHeader>
-          <DialogTitle className="font-display text-2xl">{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
-        </DialogHeader>
-        {children}
+      <DialogContent
+        hideClose={isMobile}
+        className={cn(
+          isMobile
+            ? "fixed inset-0 w-full h-[100dvh] max-w-full translate-x-0 translate-y-0 left-0 top-0 rounded-none flex flex-col p-0 border-0 gap-0 data-[state=open]:slide-in-from-bottom-0 data-[state=closed]:slide-out-to-bottom-0 data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100"
+            : className || "sm:max-w-md bg-card border-border/50 shadow-2xl"
+        )}
+      >
+        {isMobile ? (
+          <>
+            <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0 safe-area-top">
+              <div className="min-w-0 flex-1">
+                <DialogTitle className="font-display text-2xl font-semibold">{title}</DialogTitle>
+                {description && <DialogDescription className="text-sm text-muted-foreground mt-1">{description}</DialogDescription>}
+              </div>
+              <DialogClose className="shrink-0 ml-3 w-10 h-10 rounded-full flex items-center justify-center bg-muted/80 hover:bg-muted transition-colors">
+                <X className="w-5 h-5" />
+                <span className="sr-only">Close</span>
+              </DialogClose>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 pb-8 safe-area-bottom">{children}</div>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle className="font-display text-2xl">{title}</DialogTitle>
+              {description && <DialogDescription>{description}</DialogDescription>}
+            </DialogHeader>
+            {children}
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
