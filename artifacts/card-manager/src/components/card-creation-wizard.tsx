@@ -5,7 +5,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useJobPolling } from "@/hooks/use-job-polling";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
 import { 
   CreditCard, Smartphone, Package, ChevronRight, ChevronLeft, 
   Check, Loader2, PartyPopper, Mail, Phone, Tag, User, MapPin, KeyRound, AlertCircle, RotateCcw
@@ -302,78 +301,70 @@ export function CardCreationWizard({ open, onOpenChange }: CardCreationWizardPro
           </div>
         )}
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={step}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-          >
-            {currentStepName === "Card Type" && (
-              <StepCardType 
-                selected={data.cardType} 
-                onSelect={(type) => setData(prev => ({ ...prev, cardType: type }))} 
-              />
-            )}
-            {currentStepName === "Details" && (
-              <StepDetails 
-                data={data} 
-                onChange={(updates) => setData(prev => ({ ...prev, ...updates }))} 
-              />
-            )}
-            {currentStepName === "Shipping" && (
-              <StepShipping
-                address={data.shippingAddress}
-                onChange={(address) => setData(prev => ({ ...prev, shippingAddress: { ...prev.shippingAddress, ...address } }))}
-              />
-            )}
-            {currentStepName === "Terms" && (
-              <StepTerms 
-                accepted={data.termsAccepted} 
-                onToggle={(i) => setData(prev => {
-                  const newTerms = [...prev.termsAccepted];
-                  newTerms[i] = !newTerms[i];
-                  return { ...prev, termsAccepted: newTerms };
-                })} 
-              />
-            )}
-            {currentStepName === "Payment" && (
-              <StepPayment 
-                data={data} 
-                isPending={createMutation.isPending}
-                onReferralChange={(code) => setData(prev => ({ ...prev, referralCode: code }))}
-              />
-            )}
-            {currentStepName === "Processing" && (
-              <StepProcessing
-                jobStatus={jobStatus}
-                jobFailed={jobFailed}
-                jobError={jobData?.error ?? null}
-                pollingError={pollingError}
-                onRetry={() => {
-                  setActiveJobId(null);
-                  setStep(paymentStepIndex);
-                }}
-                onRetryPolling={retryPolling}
-              />
-            )}
-            {currentStepName === "Success" && (
-              <StepSuccess 
-                card={createdCard}
-                nameOnCard={data.nameOnCard}
-                nickname={data.label}
-                isPhysical={data.cardType === "physical"}
-                shippingSubmitted={shippingSubmitted}
-                shippingFailed={shippingFailed}
-                onViewCard={() => {
-                  handleOpenChange(false);
-                  if (createdCard) setLocation(`/cards/${createdCard.id}`);
-                }} 
-              />
-            )}
-          </motion.div>
-        </AnimatePresence>
+        <div key={step}>
+          {currentStepName === "Card Type" && (
+            <StepCardType 
+              selected={data.cardType} 
+              onSelect={(type) => setData(prev => ({ ...prev, cardType: type }))} 
+            />
+          )}
+          {currentStepName === "Details" && (
+            <StepDetails 
+              data={data} 
+              onChange={(updates) => setData(prev => ({ ...prev, ...updates }))} 
+            />
+          )}
+          {currentStepName === "Shipping" && (
+            <StepShipping
+              address={data.shippingAddress}
+              onChange={(address) => setData(prev => ({ ...prev, shippingAddress: { ...prev.shippingAddress, ...address } }))}
+            />
+          )}
+          {currentStepName === "Terms" && (
+            <StepTerms 
+              accepted={data.termsAccepted} 
+              onToggle={(i) => setData(prev => {
+                const newTerms = [...prev.termsAccepted];
+                newTerms[i] = !newTerms[i];
+                return { ...prev, termsAccepted: newTerms };
+              })} 
+            />
+          )}
+          {currentStepName === "Payment" && (
+            <StepPayment 
+              data={data} 
+              isPending={createMutation.isPending}
+              onReferralChange={(code) => setData(prev => ({ ...prev, referralCode: code }))}
+            />
+          )}
+          {currentStepName === "Processing" && (
+            <StepProcessing
+              jobStatus={jobStatus}
+              jobFailed={jobFailed}
+              jobError={jobData?.error ?? null}
+              pollingError={pollingError}
+              onRetry={() => {
+                setActiveJobId(null);
+                setStep(paymentStepIndex);
+              }}
+              onRetryPolling={retryPolling}
+            />
+          )}
+          {currentStepName === "Success" && (
+            <StepSuccess 
+              card={createdCard}
+              nameOnCard={data.nameOnCard}
+              nickname={data.label}
+              isPhysical={data.cardType === "physical"}
+              shippingSubmitted={shippingSubmitted}
+              shippingFailed={shippingFailed}
+              onViewCard={() => {
+                handleOpenChange(false);
+                if (createdCard) setLocation(`/cards/${createdCard.id}`);
+              }} 
+            />
+          )}
+        </div>
 
         {step <= paymentStepIndex && (
           <div className="flex items-center gap-3 pt-2">
@@ -793,11 +784,9 @@ function StepProcessing({ jobStatus, jobFailed, jobError, pollingError, onRetry,
       </div>
       <div className="w-full max-w-xs">
         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-primary rounded-full"
-            initial={{ width: "10%" }}
-            animate={{ width: "90%" }}
-            transition={{ duration: 8, ease: "easeOut" }}
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-[8s] ease-out"
+            style={{ width: "90%" }}
           />
         </div>
       </div>
@@ -815,20 +804,10 @@ function StepSuccess({ card, nameOnCard, nickname, isPhysical, shippingSubmitted
   onViewCard: () => void;
 }) {
   return (
-    <motion.div 
-      initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 200, damping: 20 }}
-      className="flex flex-col items-center text-center py-4 space-y-5"
-    >
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-        className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center"
-      >
+    <div className="flex flex-col items-center text-center py-4 space-y-5">
+      <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center">
         <PartyPopper className="w-10 h-10 text-emerald-400" />
-      </motion.div>
+      </div>
 
       <div>
         <h3 className="font-display text-2xl font-bold">
@@ -890,6 +869,6 @@ function StepSuccess({ card, nameOnCard, nickname, isPhysical, shippingSubmitted
       <Button className="w-full max-w-xs rounded-xl" onClick={onViewCard}>
         <CreditCard className="w-4 h-4 mr-2" /> View My Card
       </Button>
-    </motion.div>
+    </div>
   );
 }
