@@ -91,7 +91,7 @@ function ThemeSubmenu() {
 function SidebarDividerTrigger() {
   const { state, toggleSidebar } = useSidebar();
   const isExpanded = state === "expanded";
-  const leftPos = isExpanded ? "calc(var(--sidebar-width, 16rem) - 12px)" : "4px";
+  const leftPos = isExpanded ? "calc(var(--sidebar-width, 16rem) - 12px)" : "calc(var(--sidebar-width-icon, 3rem) - 12px)";
   return (
     <button
       onClick={toggleSidebar}
@@ -145,16 +145,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <SidebarProvider style={{ "--sidebar-width": "16rem" } as React.CSSProperties}>
       <div className="flex min-h-screen w-full bg-background text-foreground selection:bg-primary/30">
         <div className="hidden md:block">
-          <Sidebar className="border-r border-border/50 bg-card/30 backdrop-blur-xl">
+          <Sidebar collapsible="icon" className="border-r border-border/50 bg-card/30 backdrop-blur-xl">
             <SidebarHeader className="!p-0 h-16 border-b border-border/50">
               <div className="flex items-center justify-center w-full h-full">
-                <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity">
-                  <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-white_1773484134261.png`} alt="Wisp" className="h-8 dark:block hidden" />
-                  <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-black_1773484130598.png`} alt="Wisp" className="h-8 dark:hidden block" />
+                <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity overflow-hidden">
+                  <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-white_1773484134261.png`} alt="Wisp" className="h-8 dark:block hidden group-data-[collapsible=icon]:hidden" />
+                  <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-black_1773484130598.png`} alt="Wisp" className="h-8 dark:hidden block group-data-[collapsible=icon]:hidden" />
+                  <img src={`${import.meta.env.BASE_URL}favicon.png`} alt="Wisp" className="h-7 w-7 hidden group-data-[collapsible=icon]:block" />
                 </Link>
               </div>
             </SidebarHeader>
-            <SidebarContent className="px-4 py-6">
+            <SidebarContent className="px-4 py-6 group-data-[collapsible=icon]:px-1.5">
               <SidebarGroup>
                 <SidebarGroupLabel className="text-muted-foreground font-medium mb-2 px-2">Menu</SidebarGroupLabel>
                 <SidebarGroupContent>
@@ -180,18 +181,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </SidebarGroupContent>
               </SidebarGroup>
             </SidebarContent>
-            <SidebarFooter className="p-4 border-t border-border/50">
+            <SidebarFooter className="p-4 border-t border-border/50 group-data-[collapsible=icon]:p-1.5">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg hover:bg-foreground/5 transition-colors cursor-pointer text-left">
+                  <button className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg hover:bg-foreground/5 transition-colors cursor-pointer text-left group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center">
                     <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                       {user.firstName?.[0] || user.email[0].toUpperCase()}{user.lastName?.[0] || ""}
                     </div>
-                    <div className="flex flex-col flex-1 min-w-0">
+                    <div className="flex flex-col flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
                       <span className="text-sm font-semibold leading-tight truncate">{user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email.split("@")[0]}</span>
                       <span className="text-xs text-muted-foreground truncate">{user.email}</span>
                     </div>
-                    <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0 group-data-[collapsible=icon]:hidden" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top" align="start" className="w-56">
