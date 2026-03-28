@@ -151,11 +151,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity overflow-hidden">
                   <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-white_1773484134261.png`} alt="Wisp" className="h-8 dark:block hidden group-data-[collapsible=icon]:hidden" />
                   <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-black_1773484130598.png`} alt="Wisp" className="h-8 dark:hidden block group-data-[collapsible=icon]:hidden" />
-                  <img src={`${import.meta.env.BASE_URL}favicon.png`} alt="Wisp" className="h-7 w-7 hidden group-data-[collapsible=icon]:block" />
+                  <img src={`${import.meta.env.BASE_URL}images/wisp-icon.png`} alt="Wisp" className="h-6 hidden group-data-[collapsible=icon]:block mix-blend-screen dark:mix-blend-lighten" />
                 </Link>
               </div>
             </SidebarHeader>
-            <SidebarContent className="px-4 py-6 group-data-[collapsible=icon]:px-1.5">
+            <SidebarContent className="px-4 py-6 group-data-[collapsible=icon]:px-0">
               <SidebarGroup>
                 <SidebarGroupLabel className="text-muted-foreground font-medium mb-2 px-2">Menu</SidebarGroupLabel>
                 <SidebarGroupContent>
@@ -169,9 +169,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             isActive={isActive}
                             className={isActive ? "bg-primary/10 text-primary hover:bg-primary/15" : "hover:bg-foreground/5"}
                           >
-                            <Link href={item.url} className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all" style={{ fontSize: '15px' }}>
-                              <item.icon className="w-5 h-5" />
-                              <span style={{ fontWeight: isActive ? 600 : 500 }}>{item.title}</span>
+                            <Link href={item.url} className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:gap-0" style={{ fontSize: '15px' }}>
+                              <item.icon className="w-5 h-5 shrink-0" />
+                              <span className="group-data-[collapsible=icon]:hidden" style={{ fontWeight: isActive ? 600 : 500 }}>{item.title}</span>
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -181,7 +181,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </SidebarGroupContent>
               </SidebarGroup>
             </SidebarContent>
-            <SidebarFooter className="p-4 border-t border-border/50 group-data-[collapsible=icon]:p-1.5">
+            <SidebarFooter className="p-4 border-t border-border/50 group-data-[collapsible=icon]:p-0">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg hover:bg-foreground/5 transition-colors cursor-pointer text-left group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center">
