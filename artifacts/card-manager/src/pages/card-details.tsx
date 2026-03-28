@@ -7,9 +7,6 @@ import {
   useGetCardBalanceHistory,
   useDeleteCard,
   useUpdateCardContacts,
-  useGetCard3ds,
-  useUpdateCard3ds,
-  getGetCard3dsQueryKey,
   getGetCardsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -36,7 +33,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Switch } from "@/components/ui/switch";
+
 import { TopUpDialog } from "@/components/shared/top-up-dialog";
 import { TransactionItem } from "@/components/shared/transaction-item";
 import { FreezeCardButton } from "@/components/shared/freeze-card-button";
@@ -133,31 +130,6 @@ export default function CardDetails() {
   useEffect(() => {
     if (card) setCardName(card.label || "");
   }, [card?.id]);
-
-  const { data: threeDsData } = useGetCard3ds(cardId, {
-    query: { enabled: !!cardId }
-  });
-
-  const updateThreeDsMutation = useUpdateCard3ds({
-    mutation: {
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: getGetCard3dsQueryKey(cardId) });
-        toast({
-          title: data.threeDsEnabled ? "3D Secure enabled" : "3D Secure disabled",
-          description: data.threeDsEnabled
-            ? "Online purchases will require additional verification."
-            : "Additional verification for online purchases has been turned off.",
-        });
-      },
-      onError: () => {
-        toast({
-          title: "Failed to update 3D Secure",
-          description: "Please try again later.",
-          variant: "destructive",
-        });
-      },
-    },
-  });
 
   const contactsMutation = useUpdateCardContacts({
     mutation: {
@@ -312,6 +284,8 @@ export default function CardDetails() {
       {activeTab === "details" && (
         <Card className="border-border/50 bg-card/50 backdrop-blur">
           <CardContent className="p-4 md:p-6 space-y-6">
+            <SecureCardViewer cardId={cardId} cardLabel={card.label} />
+
             <div>
               <h3 className="font-display text-lg font-semibold mb-1">About your card</h3>
               <p className="text-sm text-muted-foreground">View and manage your card information.</p>
@@ -408,9 +382,6 @@ export default function CardDetails() {
               </div>
             </div>
 
-            <div className="border-t border-border/50 pt-4">
-              <SecureCardViewer cardId={cardId} cardLabel={card.label} />
-            </div>
           </CardContent>
         </Card>
       )}
@@ -455,20 +426,11 @@ export default function CardDetails() {
               <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4" /> 3D Secure
               </h4>
-              <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-muted/50 border border-border/50">
-                <div className="space-y-1 flex-1 mr-4">
-                  <p className="text-sm font-medium">3D Secure Verification</p>
-                  <p className="text-xs text-muted-foreground">
-                    Adds an extra verification step for online purchases to help protect against unauthorized use of your card.
-                  </p>
-                </div>
-                <Switch
-                  checked={threeDsData?.threeDsEnabled ?? true}
-                  onCheckedChange={(checked) => {
-                    updateThreeDsMutation.mutate({ cardId, data: { enabled: checked } });
-                  }}
-                  disabled={updateThreeDsMutation.isPending}
-                />
+              <div className="py-3 px-4 rounded-xl bg-muted/50 border border-border/50 space-y-1">
+                <p className="text-sm font-medium">3D Secure Verification</p>
+                <p className="text-xs text-muted-foreground">
+                  Adds an extra verification step for online purchases to help protect against unauthorized use of your card.
+                </p>
               </div>
 
               <div className="space-y-2 pt-2">
