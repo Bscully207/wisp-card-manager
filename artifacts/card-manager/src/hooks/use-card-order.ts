@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   PointerSensor,
   KeyboardSensor,
@@ -28,6 +28,7 @@ function setStoredOrder(ids: number[]) {
 
 export function useCardOrder(cardIds: number[]) {
   const [orderedIds, setOrderedIds] = useState<number[]>([]);
+  const prevIdsRef = useRef<string>("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -35,6 +36,9 @@ export function useCardOrder(cardIds: number[]) {
   );
 
   useEffect(() => {
+    const key = cardIds.join(",");
+    if (key === prevIdsRef.current) return;
+    prevIdsRef.current = key;
     if (cardIds.length > 0) {
       const storedOrder = getStoredOrder();
       const validStored = storedOrder.filter((id: number) => cardIds.includes(id));
