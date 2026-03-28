@@ -39,12 +39,14 @@ export function useCardOrder(cardIds: number[]) {
     const key = cardIds.join(",");
     if (key === prevIdsRef.current) return;
     prevIdsRef.current = key;
-    if (cardIds.length > 0) {
-      const storedOrder = getStoredOrder();
-      const validStored = storedOrder.filter((id: number) => cardIds.includes(id));
-      const missing = cardIds.filter(id => !validStored.includes(id));
-      setOrderedIds([...validStored, ...missing]);
+    if (cardIds.length === 0) {
+      setOrderedIds([]);
+      return;
     }
+    const storedOrder = getStoredOrder();
+    const validStored = storedOrder.filter((id: number) => cardIds.includes(id));
+    const missing = cardIds.filter(id => !validStored.includes(id));
+    setOrderedIds([...validStored, ...missing]);
   }, [cardIds]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
