@@ -11,6 +11,7 @@ import {
   Moon,
   Monitor,
   ChevronLeft,
+  ChevronRight,
   Settings,
   ChevronUp,
   Bell,
@@ -27,7 +28,6 @@ import {
   SidebarMenu, 
   SidebarMenuItem, 
   SidebarMenuButton, 
-  SidebarTrigger,
   SidebarHeader,
   SidebarFooter,
   useSidebar
@@ -89,13 +89,18 @@ function ThemeSubmenu() {
 }
 
 function SidebarDividerTrigger() {
-  const { state } = useSidebar();
-  const leftPos = state === "expanded" ? "calc(var(--sidebar-width, 16rem) - 12px)" : "4px";
+  const { state, toggleSidebar } = useSidebar();
+  const isExpanded = state === "expanded";
+  const leftPos = isExpanded ? "calc(var(--sidebar-width, 16rem) - 12px)" : "4px";
   return (
-    <SidebarTrigger
-      className="hidden md:flex fixed top-1/2 -translate-y-1/2 z-[60] !w-6 !h-6 rounded-full border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted shadow-sm transition-all duration-200 ease-linear [&>svg]:!size-3.5"
+    <button
+      onClick={toggleSidebar}
+      className="hidden md:flex items-center justify-center fixed top-1/2 -translate-y-1/2 z-[60] w-6 h-6 rounded-full border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted shadow-sm transition-all duration-200 ease-linear cursor-pointer"
       style={{ left: leftPos }}
-    />
+    >
+      {isExpanded ? <ChevronLeft className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+      <span className="sr-only">Toggle Sidebar</span>
+    </button>
   );
 }
 
