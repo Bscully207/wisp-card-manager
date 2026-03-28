@@ -1,8 +1,8 @@
-# Workspace
+# Wisp — Debit Card Manager
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+Wisp is a fintech debit card management platform built as a Telegram Mini App (mobile-first, desktop-compatible). It's a pnpm workspace monorepo using TypeScript throughout. Each package manages its own dependencies.
 
 ## Stack
 
@@ -17,12 +17,16 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Build**: esbuild (CJS bundle)
 - **Auth**: Session-based (express-session + connect-pg-simple)
 - **Password hashing**: bcrypt
-- **Frontend**: React 19 + Vite 7 + Tailwind v4 + shadcn/ui
+- **Frontend**: React 19 + Vite 7 + Tailwind CSS v4 + shadcn/ui
+- **Routing**: Wouter (lightweight client-side router)
+- **State management**: TanStack React Query v5
+- **Animations**: Framer Motion (selective usage — see gotchas below)
+- **Drag & Drop**: @dnd-kit/core + @dnd-kit/sortable
+- **Telegram SDK**: @twa-dev/sdk
 - **External Card Issuer**: Kiml Cards API (not yet connected — all operations are local stubs)
 
-## Application: Wisp — Debit Card Manager
+## Features
 
-A fintech-style platform for managing top-up debit cards (Telegram Mini App). Features:
 - User registration and login (email/password, session-based auth)
 - Dashboard showing all cards, total balance, quick actions
 - Card management (create virtual/physical, view, freeze/unfreeze, delete, change PIN, update contacts)
@@ -36,23 +40,24 @@ A fintech-style platform for managing top-up debit cards (Telegram Mini App). Fe
 - Secure card detail viewing (iframe-based, stubbed until Kiml connected)
 - Async job polling for card creation
 - Notification center with individual/bulk read and notification preferences
-- Profile/settings management with appearance theming
+- Profile/settings management with appearance theming (light/dark/system)
 - Support ticket creation and tracking
 - PWA installable (Chrome desktop)
+- Drag-and-drop card reordering with localStorage persistence
 
 ## Structure
 
 ```text
-artifacts-monorepo/
+/
 ├── artifacts/
-│   ├── api-server/         # Express API server
-│   ├── card-manager/       # React + Vite frontend (Wisp)
-│   └── mockup-sandbox/     # Component preview server (dev only)
+│   ├── card-manager/       # React + Vite frontend (Telegram Mini App)
+│   ├── api-server/         # Express.js REST API backend
+│   └── mockup-sandbox/     # Component preview server (development only)
 ├── lib/
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
+│   ├── db/                 # Drizzle ORM schema + database connection
+│   ├── api-spec/           # OpenAPI specification (source of truth)
+│   ├── api-zod/            # Zod validation schemas (auto-generated)
+│   └── api-client-react/   # React Query hooks (auto-generated)
 ├── scripts/                # Utility scripts (post-merge, etc.)
 ├── pnpm-workspace.yaml
 ├── tsconfig.base.json
@@ -88,106 +93,52 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 - `pnpm --filter @workspace/db run push` — push DB schema changes
 - `pnpm --filter @workspace/db run push --force` — push with destructive changes
 
-## Packages
+## Package Details
 
 ### `artifacts/api-server` (`@workspace/api-server`)
 
-Express 5 API server. Routes are split by domain in `src/routes/`.
+Express 5 API server. Entry point: `src/index.ts` → `src/app.ts`. All routes under `/api`.
 
-- Auth: `src/routes/auth.ts` — register, login, logout, /me
-- Users: `src/routes/users.ts` — profile update, change password
-- Cards: `src/routes/cards.ts` — full card lifecycle: CRUD, freeze, PIN, contacts, 3DS, activation, topup, access-url, transactions, balance-history, exports, telegram linking
-- Shipping: `src/routes/shipping.ts` — POST /shipping (create), GET /shipping (list with pagination/status)
-- Transactions: `src/routes/transactions.ts` — all transactions for user with type filter and CSV export
-- Notifications: `src/routes/notifications.ts` — list, mark read (single + all), preferences CRUD
-- Support: `src/routes/support.ts` — ticket management
-- Jobs: `src/routes/jobs.ts` — async job creation and polling
-- Services: `src/services/card.service.ts` — card business logic (create with collision retry, transactional top-up, freeze, PIN, contacts, 3DS, activation, delete, transaction/balance queries)
-- Services: `src/services/job.service.ts` — async job lifecycle (create, update status, complete, fail)
-- Services: `src/services/shipping.service.ts` — shipping request creation and listing
-- Services: `src/services/telegram.service.ts` — Telegram account linking/unlinking per card
-- Session middleware: `src/lib/session.ts`
-- Auth middleware: `src/middlewares/requireAuth.ts`
+- **Auth routes** (`src/routes/auth.ts`): register, login, logout, /me
+- **User routes** (`src/routes/users.ts`): profile update, change password
+- **Card routes** (`src/routes/cards.ts`): full card lifecycle — CRUD, freeze, PIN, contacts, 3DS, activation, topup, access-url, transactions, balance-history, exports, telegram linking
+- **Shipping routes** (`src/routes/shipping.ts`): create shipping request, list with pagination/status filter
+- **Transaction routes** (`src/routes/transactions.ts`): all user transactions with type filter and CSV export
+- **Notification routes** (`src/routes/notifications.ts`): list, mark read (single + all), preferences CRUD
+- **Support routes** (`src/routes/support.ts`): ticket management
+- **Telegram routes** (`src/routes/telegram.ts`): Telegram account linking/unlinking per card
+- **Job routes** (`src/routes/jobs.ts`): async job creation and polling
+- **Health check** (`src/routes/health.ts`): GET /healthz
+- **Services**: `card.service.ts`, `job.service.ts`, `shipping.service.ts`, `telegram.service.ts`
+- **Middleware**: `requireAuth.ts` (session check), `session.ts` (express-session config)
 
 ### `artifacts/card-manager` (`@workspace/card-manager`)
 
 React + Vite frontend. Mobile-first responsive design with Telegram Mini App support.
 
-**Layout**:
-- Desktop (≥768px): Sidebar navigation via shadcn `SidebarProvider`
-- Mobile (<768px): Fixed bottom navigation bar (5 icons), compact top header with logo
-- Layout component: `src/components/layout.tsx`
-
-**Telegram Mini App**:
-- Telegram WebApp script loaded in `index.html`
-- `src/hooks/use-telegram.tsx` — calls `WebApp.ready()` + `WebApp.expand()`, sets CSS vars from theme, exposes telegramUser identity
-- `useTelegramBackButton()` hook for hardware back button integration
-- Telegram-specific features (card linking) only shown inside Telegram
-- Viewport meta: `user-scalable=no, viewport-fit=cover`
-
-**Responsive Dialogs**:
-- `src/components/responsive-dialog.tsx` — Radix Dialog on desktop (centered modal); on mobile uses `DialogPrimitive.Content` directly for full-screen overlay (bypasses styled `DialogContent` to avoid CSS class merge conflicts with tailwind-merge)
-- Mobile: full-screen with custom header (title + X close button), scrollable content area
-- No swipe/drag-to-close on mobile — prevents accidental dismissal during multi-step flows
-- All modals use `ResponsiveDialog`
-
-**Animation Compatibility (Telegram WebView)**:
-- Card creation wizard does NOT use framer-motion for step transitions — plain conditional rendering ensures content always appears (framer-motion `AnimatePresence mode="wait"` + `initial={{ opacity: 0 }}` caused invisible content in Telegram WebView due to `prefers-reduced-motion` or animation timer issues)
-- framer-motion is still used elsewhere in the app (credit-card component, pill-switcher, transaction-item) but NOT inside ResponsiveDialog flows
-
-**Pages** under `src/pages/`:
-- `login.tsx`, `register.tsx` — auth pages (full-width on mobile, side image on desktop)
-- `dashboard.tsx` — card overview + total balance + quick actions + drag-and-drop card reorder + inline card creation wizard (supports virtual and physical; physical adds shipping address step)
-- `cards.tsx` — card grid + create card + top-up
-- `card-details.tsx` — single card with Details/Settings tabs, transaction/balance history tabs, export, PIN change, 3DS, contacts, Telegram linking, physical card activation/shipping
-- `transactions.tsx` — filterable by type (All/Payments/Top-ups) with CSV export
-- `notifications.tsx` — unread/all tabs, per-notification mark-read, mark-all-read
-- `settings.tsx` — profile, security, appearance, Telegram account, notification preferences, legal
-- `support.tsx` — support tickets
-- /profile route redirects to /settings
-
-**Key Components**:
-- `card-creation-wizard.tsx` — 6-step (virtual) or 7-step (physical) wizard with async job polling
-- `secure-card-viewer.tsx` — secure URL iframe viewer (stubbed as "Coming Soon")
-- `change-pin-dialog.tsx` — 6-digit PIN change with confirmation
-- `activate-card-dialog.tsx` — physical card activation code entry
-- `shipping-address-form.tsx` / `shipping-tracking.tsx` — physical card delivery flow
-- `export-dialog.tsx` — date range picker for CSV exports
-- `notification-preferences.tsx` — toggle switches for notification types
-
-**Shared Hooks** (`src/hooks/`):
-- `use-card-order.ts` — DnD card ordering with localStorage persistence
-- `use-mobile.tsx` — responsive breakpoint detection (768px), synchronous initial value
-- `use-notifications.tsx` — notification state from API (unread count, mark-as-read)
-- `use-telegram.tsx` — Telegram WebApp SDK integration + user identity
-- `use-telegram-link.ts` — per-card Telegram linking hooks
-- `use-job-polling.ts` — polls job status at configurable intervals, auto-stops on completion
-- `use-toast.ts` — shadcn toast notifications
-
-**PWA (Progressive Web App)**:
-- Web App Manifest at `public/manifest.json` — name, icons, display mode, theme color
-- Service worker at `public/sw.js` — minimal (no caching), registered in `main.tsx` for Chrome install eligibility
-- PWA icons at `public/icons/` — 192x192 and 512x512 (regular + maskable) + apple-touch-icon
-- Branded favicon.svg with Wisp "W" on blue-indigo gradient
-- Chrome shows "Install" option in address bar; installed app opens in standalone window
-
-**CSS**:
-- Safe area insets via `safe-area-bottom` / `safe-area-top` classes
-- 44px minimum tap targets on mobile
-- Switch toggles enlarged for mobile (h-7 w-12 track, h-5 w-5 thumb)
-- 16px font-size on inputs to prevent iOS zoom
-- Telegram theme CSS variables support
+- **Entry**: `src/main.tsx` → `src/App.tsx`
+- **Router**: Wouter with `BASE_URL` prefix
+- **Provider stack**: `QueryClientProvider` → `ThemeProvider` → `NotificationProvider` → `TooltipProvider` → `WouterRouter`
+- **Layout**: `src/components/layout.tsx` — sidebar (desktop ≥768px) + bottom nav (mobile)
+- **Pages**: login, register, dashboard, cards, card-details, transactions, notifications, settings, support, not-found
+- **Fonts**: Manrope (Google Fonts)
+- **CSS**: Tailwind v4 with custom HSL theme variables, container queries (built-in, no plugin), `tw-animate-css`
 
 ### `lib/db` (`@workspace/db`)
 
-Database layer using Drizzle ORM with PostgreSQL. Schema files in `src/schema/`:
-- `users.ts`, `cards.ts`, `transactions.ts`, `support_tickets.ts`
-- `telegram_links.ts`, `notifications.ts`, `shipping.ts`, `jobs.ts`
+Drizzle ORM + PostgreSQL. Schema files in `src/schema/` (users, cards, transactions, support_tickets, telegram_links, notifications, shipping, jobs).
 
 ### `lib/api-spec` (`@workspace/api-spec`)
 
-OpenAPI 3.1 spec + Orval codegen config. Run codegen:
-`pnpm --filter @workspace/api-spec run codegen`
+OpenAPI 3.1 spec + Orval codegen config. Run `pnpm --filter @workspace/api-spec run codegen` to regenerate client.
+
+### `lib/api-client-react` (`@workspace/api-client-react`)
+
+Auto-generated TanStack Query hooks. Custom fetch in `src/custom-fetch.ts` handles session cookies (`credentials: "include"`), JSON parsing, and error wrapping via `ApiError` class.
+
+### `lib/api-zod` (`@workspace/api-zod`)
+
+Auto-generated Zod schemas from the OpenAPI spec.
 
 ## Demo Accounts
 
@@ -205,8 +156,26 @@ OpenAPI 3.1 spec + Orval codegen config. Run codegen:
 | SESSION_SECRET | Express session secret (optional, has default) |
 | KIML_API_KEY | Kiml Cards API key (needed for production integration) |
 
+## Critical Gotchas
+
+1. **Framer Motion in Telegram WebView**: NEVER use `AnimatePresence`/`motion.div` with step transitions inside `ResponsiveDialog` flows. Telegram WebView's `prefers-reduced-motion` or animation timers cause invisible content. Framer Motion is safe in standalone components (credit-card, pill-switcher, transaction-item).
+
+2. **Container Queries (CreditCard)**: Tailwind v4 has container queries built-in — no `@tailwindcss/container-queries` plugin. The `CreditCard` component uses `@container` wrapper + `cqw` base units + stepped breakpoints (`@[280px]`, `@[380px]`, `@[480px]`).
+
+3. **Sidebar collapsed mode**: Uses `group-data-[collapsible=icon]` Tailwind variant. Content padding switches to `px-0`, menu links get `justify-center px-0 gap-0`, and logo switches from full text to wind icon with `mix-blend-screen`/`mix-blend-lighten` for transparent background.
+
+4. **useCardOrder infinite re-render prevention**: Uses `useRef` + `cardIds.join(",")` comparison to avoid re-running the ordering effect on every render.
+
+5. **Login sync**: Both login and register forms use `queryClient.setQueryData(getGetMeQueryKey(), data.user ?? data)` synchronously on success to avoid a race condition with the auth check redirect.
+
+6. **ResponsiveDialog**: Uses Radix `DialogPrimitive.Content` directly on mobile (full-screen overlay) to avoid CSS class merge conflicts with tailwind-merge. Desktop uses styled `DialogContent`.
+
 ## Kiml API Integration
 
 The app is designed to work with Kiml Cards (`https://api.kimlcards.com`) as the card issuing provider. Currently all operations are locally stubbed. See `DOCUMENTATION.md` for the complete Kiml API integration guide with endpoint mapping, step-by-step checklist, and data model differences.
 
 Reference: `attached_assets/kimlcards_api_reference_1774179317612.md`
+
+## GitHub
+
+Repository: https://github.com/Bscully207/wisp-card-manager
