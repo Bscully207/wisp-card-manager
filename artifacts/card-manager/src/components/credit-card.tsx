@@ -39,33 +39,34 @@ export function CreditCard({ card, className, compact, onClick }: CreditCardProp
         "relative w-full rounded-2xl text-white overflow-hidden shadow-xl cursor-pointer group",
         "bg-gradient-to-br",
         getGradient(card.color),
-        compact ? "aspect-[1.8/1] p-3 sm:p-4" : "aspect-[1.586/1] p-4 sm:p-6",
+        compact ? "p-3 sm:p-4" : "p-4 sm:p-5",
         isFrozen && "opacity-75 grayscale-[50%]",
         className
       )}
+      style={{ aspectRatio: compact ? "1.8 / 1" : undefined }}
     >
       <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4 blur-2xl"></div>
       <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full translate-y-1/4 -translate-x-1/4 blur-xl"></div>
       <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
 
-      <div className="relative h-full flex flex-col justify-between z-10">
+      <div className="relative flex flex-col justify-between z-10 gap-3">
         <div className="flex justify-between items-start">
           <div className="min-w-0 flex-1">
-            <p className={cn("text-white/70 font-medium uppercase tracking-wider", compact ? "text-[10px] mb-0.5" : "text-xs mb-1")}>
+            <p className={cn("text-white/70 font-medium uppercase tracking-wider", compact ? "text-[10px] mb-0.5" : "text-[10px] sm:text-xs mb-0.5 sm:mb-1")}>
               {card.label || "Debit Card"}
             </p>
-            <h3 className={cn("font-display font-bold tracking-tight amount truncate", compact ? "text-lg sm:text-xl" : "text-xl sm:text-2xl")}>
+            <h3 className={cn("font-display font-bold tracking-tight amount truncate", compact ? "text-lg sm:text-xl" : "text-lg sm:text-2xl")}>
               {formatCurrency(card.balance, card.currency)}
             </h3>
           </div>
         </div>
 
-        <div className={cn(compact ? "space-y-1" : "space-y-2 sm:space-y-4")}>
+        <div className={cn(compact ? "space-y-1" : "space-y-1.5 sm:space-y-2")}>
           <div className="flex items-center gap-2">
-            <Wifi className={cn("text-white/80 rotate-90 shrink-0", compact ? "w-4 h-4" : "w-5 h-5")} />
+            <Wifi className={cn("text-white/80 rotate-90 shrink-0", compact ? "w-4 h-4" : "w-4 h-4 sm:w-5 sm:h-5")} />
           </div>
           <div className="flex items-center gap-2">
-            <div className={cn("rounded bg-gradient-to-br from-yellow-200 to-yellow-500 opacity-80", compact ? "w-7 h-5" : "w-8 h-6 sm:w-10 sm:h-8")} />
+            <div className={cn("rounded bg-gradient-to-br from-yellow-200 to-yellow-500 opacity-80", compact ? "w-7 h-5" : "w-8 h-6")} />
             {isFrozen && (
               <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-200 text-xs font-bold border border-red-500/30 backdrop-blur-md">
                 FROZEN
@@ -73,20 +74,20 @@ export function CreditCard({ card, className, compact, onClick }: CreditCardProp
             )}
           </div>
 
-          <div className={cn("font-mono text-white/90 drop-shadow-sm amount", compact ? "text-xs sm:text-sm tracking-[0.12em]" : "text-sm sm:text-lg tracking-[0.15em] sm:tracking-[0.2em]")}>
+          <div className={cn("font-mono text-white/90 drop-shadow-sm amount", compact ? "text-xs sm:text-sm tracking-[0.12em]" : "text-xs sm:text-base tracking-[0.12em] sm:tracking-[0.2em]")}>
             {formatCardNumber(card.cardNumber)}
           </div>
 
           <div className="flex justify-between items-end">
             <div className="min-w-0">
-              <p className="text-[10px] text-white/60 uppercase tracking-widest mb-0.5">Cardholder</p>
-              <p className={cn("font-medium tracking-wide truncate", compact ? "text-xs max-w-[140px]" : "text-sm max-w-[180px]")}>
+              <p className="text-[9px] sm:text-[10px] text-white/60 uppercase tracking-widest mb-0.5">Cardholder</p>
+              <p className={cn("font-medium tracking-wide truncate", compact ? "text-xs max-w-[140px]" : "text-xs sm:text-sm max-w-[180px]")}>
                 {card.cardholderName}
               </p>
             </div>
             <div className="text-right shrink-0">
-              <p className="text-[10px] text-white/60 uppercase tracking-widest mb-0.5">Expires</p>
-              <p className={cn("font-mono tracking-widest", compact ? "text-xs" : "text-sm")}>
+              <p className="text-[9px] sm:text-[10px] text-white/60 uppercase tracking-widest mb-0.5">Expires</p>
+              <p className={cn("font-mono tracking-widest", compact ? "text-xs" : "text-xs sm:text-sm")}>
                 {card.expiryMonth.toString().padStart(2, '0')}/{card.expiryYear.toString().slice(-2)}
               </p>
             </div>
