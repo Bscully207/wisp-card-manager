@@ -151,7 +151,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/dashboard" className="flex items-center hover:opacity-80 transition-opacity overflow-hidden">
                   <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-white_1773484134261.png`} alt="Wisp" className="h-8 dark:block hidden group-data-[collapsible=icon]:hidden" />
                   <img src={`${import.meta.env.BASE_URL}images/wisp-logo-design-black_1773484130598.png`} alt="Wisp" className="h-8 dark:hidden block group-data-[collapsible=icon]:hidden" />
-                  <img src={`${import.meta.env.BASE_URL}images/wisp-icon.png`} alt="Wisp" className="h-6 hidden group-data-[collapsible=icon]:block mix-blend-screen dark:mix-blend-lighten" />
+                  <img src={`${import.meta.env.BASE_URL}images/wisp-icon.png`} alt="Wisp" className="w-8 object-contain hidden group-data-[collapsible=icon]:block mix-blend-screen dark:mix-blend-lighten" />
                 </Link>
               </div>
             </SidebarHeader>
@@ -181,10 +181,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </SidebarGroupContent>
               </SidebarGroup>
             </SidebarContent>
-            <SidebarFooter className="p-4 border-t border-border/50 group-data-[collapsible=icon]:p-0">
+            <SidebarFooter className="p-4 border-t border-border/50 group-data-[collapsible=icon]:p-1.5">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg hover:bg-foreground/5 transition-colors cursor-pointer text-left group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center">
+                  <button className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg hover:bg-foreground/5 transition-colors cursor-pointer text-left group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-1 group-data-[collapsible=icon]:justify-center">
                     <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                       {user.firstName?.[0] || user.email[0].toUpperCase()}{user.lastName?.[0] || ""}
                     </div>
