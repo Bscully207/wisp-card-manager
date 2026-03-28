@@ -40,8 +40,8 @@ export function RegisterForm() {
 
   const registerMutation = useRegister({
     mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      onSuccess: (data: any) => {
+        queryClient.setQueryData(getGetMeQueryKey(), data.user ?? data);
         toast({ title: "Account created successfully!" });
         setLocation("/dashboard");
       },

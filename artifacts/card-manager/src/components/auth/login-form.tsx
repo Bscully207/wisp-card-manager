@@ -35,8 +35,8 @@ export function LoginForm() {
 
   const loginMutation = useLogin({
     mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      onSuccess: (data: any) => {
+        queryClient.setQueryData(getGetMeQueryKey(), data.user ?? data);
         toast({ title: "Welcome back!" });
         setLocation("/dashboard");
       },
