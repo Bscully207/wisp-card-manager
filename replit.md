@@ -34,7 +34,7 @@ Wisp is a fintech debit card management platform built as a Telegram Mini App (m
 - Top-up functionality per card
 - Transaction history (per-card and across all cards) with type filtering
 - Balance history (top-ups, fees, refunds) separated from transactions
-- CSV export for both transactions and balance history
+- CSV export for transactions (per-card and cross-card with date range filtering)
 - Physical card activation (activation code) and shipping tracking
 - Telegram account linking per card
 - Secure card detail viewing (iframe-based, stubbed until Kiml connected)
@@ -91,7 +91,7 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 - `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API client from OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes
-- `pnpm --filter @workspace/db run push --force` — push with destructive changes
+- `pnpm --filter @workspace/db run push-force` — push with destructive changes
 
 ## Package Details
 

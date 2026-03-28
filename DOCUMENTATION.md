@@ -92,9 +92,9 @@ pnpm install
 ### Push Database Schema
 
 ```bash
-pnpm --filter @workspace/db run db:push
+pnpm --filter @workspace/db run push
 # If destructive changes are needed:
-pnpm --filter @workspace/db run db:push --force
+pnpm --filter @workspace/db run push-force
 ```
 
 ### Start Development Servers
@@ -505,9 +505,9 @@ Business logic is separated into service files in `src/services/`:
 
 `src/lib/session.ts` sets up `express-session` with `connect-pg-simple` for PostgreSQL session storage. Session cookie config:
 - `httpOnly: true`
-- `secure: true` in production
 - `sameSite: "lax"`
-- 24-hour max age
+- 7-day max age (`7 * 24 * 60 * 60 * 1000`)
+- **Note**: `secure` flag is NOT currently set — should be added for production (HTTPS-only cookies)
 
 ---
 
@@ -560,7 +560,7 @@ The `Layout` component wraps all authenticated pages and provides two navigation
 - Footer: User dropdown (profile, notifications, settings, support, theme, logout)
 - Sidebar width: `16rem` expanded, `3rem` (icon-only) collapsed
 
-**Mobile (<768px)**: Fixed bottom navigation bar with 5 icon buttons (Dashboard, Cards, Transactions, Notifications, Settings). Active state uses primary color fill. Content has `pb-24` to clear the bar.
+**Mobile (<768px)**: Fixed bottom navigation bar with 3 icon buttons (Dashboard, Cards, Transactions). Notifications and Settings are accessible via the top header bar (bell icon + avatar dropdown menu). Active state uses primary color fill. Content has `pb-24` to clear the bottom bar.
 
 **Auth guard**: `Layout` calls `useGetMe()`. If not authenticated, redirects to `/login`. Shows a spinner during loading.
 
@@ -740,7 +740,6 @@ All endpoints prefixed with `/api`. Endpoints marked "Auth" require an active se
 | GET | /cards/:cardId/transactions | Yes | `?type=topup\|payment\|refund\|fee` | Card transactions |
 | GET | /cards/:cardId/transactions/export | Yes | `?startDate&endDate` | Export CSV |
 | GET | /cards/:cardId/balance-history | Yes | — | Balance history |
-| GET | /cards/:cardId/balance-history/export | Yes | `?startDate&endDate` | Export balance CSV |
 | GET | /cards/:cardId/details-with-transactions | Yes | — | Combined card + transactions |
 | POST | /cards/:cardId/access-url | Yes | — | Generate secure view URL |
 | GET | /cards/:cardId/telegram | Yes | — | Get Telegram link |
@@ -751,7 +750,7 @@ All endpoints prefixed with `/api`. Endpoints marked "Auth" require an active se
 
 | Method | Path | Auth | Body/Query | Description |
 |--------|------|------|------------|-------------|
-| GET | /transactions | Yes | `?type&cardId` | All user transactions |
+| GET | /transactions | Yes | `?type` | All user transactions (filter by type only) |
 | GET | /transactions/export | Yes | `?startDate&endDate&cardId` | Export all as CSV |
 
 ### Notifications (`/notifications`)
@@ -860,9 +859,8 @@ Card sort order is persisted to `localStorage` under key `"wisp-card-order"`. Th
 ### Transaction vs Balance History
 
 Two separate data views for the same underlying `transactions` table:
-- **Transactions**: All types — shown in "Transactions" tab on card-details and /transactions page
-- **Balance History**: Only `topup`, `fee`, `refund` types — shown in "Balance History" tab on card-details
-- Both have independent CSV export endpoints with date range filtering
+- **Transactions**: All types — shown in "Transactions" tab on card-details and /transactions page. Has CSV export endpoint with date range filtering.
+- **Balance History**: Only `topup`, `fee`, `refund` types — shown in "Balance History" tab on card-details. View-only (no separate export endpoint).
 
 ### Theme System
 
