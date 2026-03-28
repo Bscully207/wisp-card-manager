@@ -44,7 +44,6 @@ function SortableCard({ card, onTopUp, onNavigate }: {
         </button>
         <CreditCard
           card={card}
-          compact
           onClick={() => onNavigate(`/cards/${card.id}`)}
         />
       </div>
